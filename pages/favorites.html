@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your saved favorite products. Access your wishlist anytime.">
+    <title>My Favorites - The Gadget Hub Store</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    
+    <style>
+        .favorites-header {
+            padding: 8rem 0 3rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--surface) 100%);
+        }
+        
+        .favorites-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .favorites-count {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state p {
+            color: var(--text-secondary);
+            max-width: 400px;
+            margin: 0 auto 2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/" class="logo-link">
+                    <i class="fas fa-cube logo-icon"></i>
+                    <span class="logo-text">The Gadget Hub Store</span>
+                </a>
+            </div>
+            
+            <div class="nav-menu" id="navMenu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/pages/shop.html" class="nav-link">Shop</a>
+                <a href="/pages/categories.html" class="nav-link">Categories</a>
+                <a href="/pages/trending.html" class="nav-link">Trending</a>
+                <a href="/pages/deals.html" class="nav-link">Deals</a>
+                <a href="#about" class="nav-link">About</a>
+            </div>
+            
+            <div class="nav-actions">
+                <button class="nav-icon-btn" id="searchBtn" aria-label="Search">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="nav-icon-btn" id="favoritesBtn" aria-label="Favorites">
+                    <i class="fas fa-heart"></i>
+                    <span class="badge" id="favoritesCount">0</span>
+                </button>
+                <button class="nav-icon-btn" id="accountBtn" aria-label="Account">
+                    <i class="far fa-user"></i>
+                </button>
+                <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   class="nav-cta-btn">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Visit AliExpress Store</span>
+                </a>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Mobile Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <!-- Same as index.html -->
+    </div>
+    
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <!-- Same as index.html -->
+    </div>
+    
+    <!-- Favorites Header -->
+    <section class="favorites-header">
+        <div class="container">
+            <div class="section-badge">
+                <i class="fas fa-heart"></i>
+                <span>My Wishlist</span>
+            </div>
+            <h1>My Favorite Products</h1>
+            <p>Your curated collection of tech gadgets</p>
+        </div>
+    </section>
+    
+    <!-- Favorites Content -->
+    <section class="section">
+        <div class="container">
+            <div class="favorites-toolbar">
+                <div class="favorites-count" id="favoritesCountText">
+                    Loading...
+                </div>
+                <button class="btn btn-outline btn-small" onclick="clearAllFavorites()">
+                    <i class="fas fa-trash"></i>
+                    <span>Clear All</span>
+                </button>
+            </div>
+            
+            <div class="products-grid" id="favoritesGrid">
+                <!-- Favorites loaded dynamically -->
+                <div class="product-skeleton"></div>
+                <div class="product-skeleton"></div>
+                <div class="product-skeleton"></div>
+                <div class="product-skeleton"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer" id="footer">
+        <!-- Same as index.html -->
+    </footer>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader">
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="/js/firebase.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/products.js"></script>
+    <script src="/js/favorites.js"></script>
+    <script src="/js/search.js"></script>
+    <script src="/js/categories.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        // Update favorites count text
+        async function updateFavoritesCountText() {
+            const countElement = document.getElementById('favoritesCountText');
+            if (countElement) {
+                const count = userFavorites.length;
+                countElement.textContent = count === 1 ? '1 product' : `${count} products`;
+            }
+        }
+        
+        // Override loadFavoritesPage to include count update
+        const originalLoadFavoritesPage = loadFavoritesPage;
+        loadFavoritesPage = async function() {
+            await originalLoadFavoritesPage();
+            updateFavoritesCountText();
+        };
+        
+        // Load favorites on page load
+        loadFavoritesPage();
+    </script>
+</body>
+</html>
