@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Browse the hottest trending gadgets and tech products. Discover what's popular right now.">
+    <title>Trending Products - The Gadget Hub Store</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    
+    <style>
+        .trending-header {
+            padding: 8rem 0 3rem;
+            text-align: center;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--surface) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .trending-header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 165, 0, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease infinite;
+        }
+        
+        .trending-badge-large {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            background: var(--accent-gradient);
+            color: white;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: var(--radius-full);
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-glow);
+        }
+        
+        .trending-badge-large i {
+            font-size: 1.5rem;
+            animation: pulse 2s ease infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <!-- Same as other pages -->
+    </nav>
+    
+    <!-- Mobile Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <!-- Same as index.html -->
+    </div>
+    
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <!-- Same as index.html -->
+    </div>
+    
+    <!-- Trending Header -->
+    <section class="trending-header">
+        <div class="container">
+            <div class="trending-badge-large">
+                <i class="fas fa-fire"></i>
+                <span>Hot Right Now</span>
+            </div>
+            <h1>Trending Products</h1>
+            <p>Discover the most popular gadgets loved by tech enthusiasts worldwide</p>
+        </div>
+    </section>
+    
+    <!-- Trending Content -->
+    <section class="section">
+        <div class="container">
+            <div class="shop-toolbar">
+                <div class="products-count" id="trendingCount">
+                    Loading...
+                </div>
+                <select class="sort-select" id="sortSelect" onchange="sortTrending()">
+                    <option value="popular">Most Popular</option>
+                    <option value="newest">Newest First</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="rating">Highest Rated</option>
+                </select>
+            </div>
+            
+            <div class="products-grid" id="trendingProductsGrid">
+                <!-- Products loaded dynamically -->
+                <div class="product-skeleton"></div>
+                <div class="product-skeleton"></div>
+                <div class="product-skeleton"></div>
+                <div class="product-skeleton"></div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer" id="footer">
+        <!-- Same as index.html -->
+    </footer>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader">
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="/js/firebase.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/products.js"></script>
+    <script src="/js/favorites.js"></script>
+    <script src="/js/search.js"></script>
+    <script src="/js/categories.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        let trendingProducts = [];
+        
+        async function loadTrendingPage() {
+            try {
+                showLoading();
+                trendingProducts = await getTrendingProducts(50);
+                displayTrendingProducts();
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading trending page:', error);
+                showToast('Failed to load trending products', 'error');
+                hideLoading();
+            }
+        }
+        
+        function displayTrendingProducts() {
+            const container = document.getElementById('trendingProductsGrid');
+            const countElement = document.getElementById('trendingCount');
+            
+            if (countElement) {
+                countElement.textContent = `${trendingProducts.length} trending products`;
+            }
+            
+            renderProducts(container, trendingProducts);
+        }
+        
+        function sortTrending() {
+            const sortBy = document.getElementById('sortSelect').value;
+            trendingProducts = sortProducts(trendingProducts, sortBy);
+            displayTrendingProducts();
+        }
+        
+        loadTrendingPage();
+    </script>
+</body>
+</html>
