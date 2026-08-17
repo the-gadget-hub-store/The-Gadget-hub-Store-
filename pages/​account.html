@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Manage your account settings and preferences.">
+    <title>My Account - The Gadget Hub Store</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    
+    <style>
+        .account-header {
+            padding: 8rem 0 2rem;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--surface) 100%);
+        }
+        
+        .account-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .account-sidebar {
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+        
+        .account-menu {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        
+        .account-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .account-menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .account-menu-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+        }
+        
+        .account-menu-item.active {
+            background: var(--accent-gradient);
+            color: white;
+        }
+        
+        .account-menu-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .account-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+        }
+        
+        .account-section {
+            display: none;
+        }
+        
+        .account-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .account-section h2 {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .profile-info {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .info-item {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .info-value {
+            color: var(--text-primary);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .stat-card {
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        @media (max-width: 991px) {
+            .account-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .account-sidebar {
+                position: static;
+            }
+            
+            .info-item {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/" class="logo-link">
+                    <i class="fas fa-cube logo-icon"></i>
+                    <span class="logo-text">The Gadget Hub Store</span>
+                </a>
+            </div>
+            
+            <div class="nav-menu" id="navMenu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/pages/shop.html" class="nav-link">Shop</a>
+                <a href="/pages/categories.html" class="nav-link">Categories</a>
+                <a href="/pages/trending.html" class="nav-link">Trending</a>
+                <a href="/pages/deals.html" class="nav-link">Deals</a>
+                <a href="#about" class="nav-link">About</a>
+            </div>
+            
+            <div class="nav-actions">
+                <button class="nav-icon-btn" id="searchBtn" aria-label="Search">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="nav-icon-btn" id="favoritesBtn" aria-label="Favorites">
+                    <i class="far fa-heart"></i>
+                    <span class="badge" id="favoritesCount">0</span>
+                </button>
+                <button class="nav-icon-btn" id="accountBtn" aria-label="Account">
+                    <i class="fas fa-user"></i>
+                </button>
+                <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   class="nav-cta-btn">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Visit AliExpress Store</span>
+                </a>
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Mobile Drawer -->
+    <div class="mobile-drawer" id="mobileDrawer">
+        <!-- Same as index.html -->
+    </div>
+    
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <!-- Same as index.html -->
+    </div>
+    
+    <!-- Account Header -->
+    <section class="account-header">
+        <div class="container">
+            <h1>My Account</h1>
+            <p id="welcomeMessage">Welcome back!</p>
+        </div>
+    </section>
+    
+    <!-- Account Content -->
+    <section class="section">
+        <div class="container">
+            <div class="account-container">
+                <!-- Sidebar Menu -->
+                <aside class="account-sidebar">
+                    <div class="account-menu">
+                        <div class="account-menu-item active" data-section="profile" onclick="switchAccountSection('profile')">
+                            <i class="fas fa-user"></i>
+                            <span>Profile</span>
+                        </div>
+                        <div class="account-menu-item" data-section="favorites" onclick="switchAccountSection('favorites')">
+                            <i class="fas fa-heart"></i>
+                            <span>My Favorites</span>
+                        </div>
+                        <div class="account-menu-item" data-section="settings" onclick="switchAccountSection('settings')">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </div>
+                        <div class="account-menu-item" onclick="signOut()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Sign Out</span>
+                        </div>
+                    </div>
+                </aside>
+                
+                <!-- Main Content -->
+                <div class="account-content">
+                    <!-- Profile Section -->
+                    <div class="account-section active" id="profile-section">
+                        <h2>Profile Information</h2>
+                        <div class="profile-info">
+                            <div class="info-item">
+                                <div class="info-label">Name</div>
+                                <div class="info-value" id="userName">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Email</div>
+                                <div class="info-value" id="userEmail">-</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Member Since</div>
+                                <div class="info-value" id="memberSince">-</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <i class="fas fa-heart"></i>
+                                <div class="stat-value" id="statFavorites">0</div>
+                                <div class="stat-label">Saved Favorites</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-eye"></i>
+                                <div class="stat-value" id="statViewed">-</div>
+                                <div class="stat-label">Products Viewed</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fas fa-clock"></i>
+                                <div class="stat-value" id="statDays">-</div>
+                                <div class="stat-label">Days Active</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Favorites Section -->
+                    <div class="account-section" id="favorites-section">
+                        <h2>My Favorite Products</h2>
+                        <div class="products-grid" id="accountFavoritesGrid">
+                            <!-- Favorites loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Settings Section -->
+                    <div class="account-section" id="settings-section">
+                        <h2>Account Settings</h2>
+                        <div class="product-description-section" style="margin-top: 1.5rem;">
+                            <h3>Preferences</h3>
+                            <p style="color: var(--text-secondary); margin-top: 1rem;">
+                                Additional settings and preferences will be available soon.
+                            </p>
+                        </div>
+                        
+                        <div class="product-description-section" style="margin-top: 1.5rem;">
+                            <h3>Danger Zone</h3>
+                            <button class="btn btn-outline" style="margin-top: 1rem; border-color: var(--danger); color: var(--danger);" onclick="signOut()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer" id="footer">
+        <!-- Same as index.html -->
+    </footer>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader">
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="/js/firebase.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/products.js"></script>
+    <script src="/js/favorites.js"></script>
+    <script src="/js/search.js"></script>
+    <script src="/js/categories.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        // Load account page
+        function loadAccountPage() {
+            if (!isUserSignedIn()) {
+                showToast('Please sign in to access your account', 'info');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+                return;
+            }
+            
+            const user = getCurrentUser();
+            
+            // Update profile info
+            document.getElementById('userName').textContent = user.displayName || 'User';
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('welcomeMessage').textContent = `Welcome back, ${user.displayName || 'User'}!`;
+            
+            // Member since
+            if (user.metadata && user.metadata.creationTime) {
+                document.getElementById('memberSince').textContent = formatDate(user.metadata.creationTime);
+                
+                // Calculate days active
+                const createdDate = new Date(user.metadata.creationTime);
+                const today = new Date();
+                const daysActive = Math.floor((today - createdDate) / (1000 * 60 * 60 * 24));
+                document.getElementById('statDays').textContent = daysActive;
+            }
+            
+            // Update favorites count
+            document.getElementById('statFavorites').textContent = userFavorites.length;
+            
+            // Load favorites in account section
+            loadAccountFavorites();
+        }
+        
+        // Switch account section
+        function switchAccountSection(section) {
+            // Update menu
+            document.querySelectorAll('.account-menu-item').forEach(item => {
+                if (item.dataset.section === section) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+            
+            // Update content
+            document.querySelectorAll('.account-section').forEach(sec => {
+                if (sec.id === `${section}-section`) {
+                    sec.classList.add('active');
+                } else {
+                    sec.classList.remove('active');
+                }
+            });
+            
+            // Load section-specific data
+            if (section === 'favorites') {
+                loadAccountFavorites();
+            }
+        }
+        
+        // Load favorites in account section
+        async function loadAccountFavorites() {
+            const container = document.getElementById('accountFavoritesGrid');
+            if (!container) return;
+            
+            try {
+                const products = await getFavoriteProducts();
+                
+                if (products.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <i class="far fa-heart"></i>
+                            <h3>No Favorites Yet</h3>
+                            <p>Start adding products to your favorites!</p>
+                            <a href="/pages/shop.html" class="btn btn-primary">
+                                <span>Browse Products</span>
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    renderProducts(container, products);
+                }
+            } catch (error) {
+                console.error('Error loading account favorites:', error);
+            }
+        }
+        
+        // Initialize account page
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadAccountPage);
+        } else {
+            loadAccountPage();
+        }
+    </script>
+</body>
+</html>
