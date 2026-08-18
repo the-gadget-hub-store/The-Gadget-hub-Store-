@@ -195,11 +195,6 @@
             color: var(--success);
         }
         
-        .status-draft {
-            background: rgba(255, 214, 0, 0.1);
-            color: var(--warning);
-        }
-        
         .status-out-of-stock {
             background: rgba(255, 61, 113, 0.1);
             color: var(--danger);
@@ -298,6 +293,180 @@
             margin: 0 auto 2rem;
         }
         
+        /* MODAL STYLES */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: var(--z-modal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-base);
+        }
+        
+        .custom-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .custom-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+        
+        .custom-modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            transform: scale(0.9);
+            transition: transform var(--transition-base);
+        }
+        
+        .custom-modal.active .custom-modal-content {
+            transform: scale(1);
+        }
+        
+        .custom-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .custom-modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .custom-modal-close {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .custom-modal-close:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+        
+        .custom-modal-body {
+            padding: 2rem;
+        }
+        
+        .custom-modal-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+        
+        /* FORM STYLES */
+        .admin-form {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.9375rem;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9375rem;
+            transition: all var(--transition-fast);
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--surface);
+        }
+        
+        .form-group small {
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .form-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+        }
+        
+        .form-checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .form-checkboxes input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
         @media (max-width: 991px) {
             .admin-container {
                 grid-template-columns: 1fr;
@@ -313,6 +482,10 @@
             
             .admin-main {
                 margin-left: 0;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
             }
             
             .admin-table-container {
@@ -367,7 +540,7 @@
                     <p>Manage your product catalog</p>
                 </div>
                 <div class="admin-actions">
-                    <button class="btn btn-primary" onclick="showAddProductForm()">
+                    <button class="btn btn-primary" onclick="showAddProductForm()" id="addProductBtn">
                         <i class="fas fa-plus"></i>
                         <span>Add New Product</span>
                     </button>
@@ -418,6 +591,124 @@
         </main>
     </div>
     
+    <!-- ADD PRODUCT MODAL - THIS WAS MISSING! -->
+    <div class="custom-modal" id="productModal">
+        <div class="custom-modal-overlay" onclick="closeProductModal()"></div>
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <h3 id="modalTitle">Add New Product</h3>
+                <button class="custom-modal-close" onclick="closeProductModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="custom-modal-body">
+                <form id="productForm" class="admin-form">
+                    <div class="form-group">
+                        <label for="productTitle">Product Title *</label>
+                        <input type="text" id="productTitle" required placeholder="Enter product title">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productDescription">Description *</label>
+                        <textarea id="productDescription" rows="4" required placeholder="Enter detailed product description"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productShortDesc">Short Description</label>
+                        <input type="text" id="productShortDesc" placeholder="Brief product description">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productPrice">Price (USD) *</label>
+                            <input type="number" id="productPrice" step="0.01" required placeholder="0.00">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productOriginalPrice">Original Price (USD)</label>
+                            <input type="number" id="productOriginalPrice" step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productCategory">Category *</label>
+                            <select id="productCategory" required>
+                                <option value="">Select category</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productStock">Stock Status *</label>
+                            <select id="productStock" required>
+                                <option value="in-stock">In Stock</option>
+                                <option value="out-of-stock">Out of Stock</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productAffiliateUrl">AliExpress Affiliate URL *</label>
+                        <input type="url" id="productAffiliateUrl" required placeholder="https://s.click.aliexpress.com/...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productImages">Product Images (URLs, comma-separated) *</label>
+                        <textarea id="productImages" rows="2" required placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"></textarea>
+                        <small>Enter image URLs separated by commas</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productTags">Tags (comma-separated)</label>
+                        <input type="text" id="productTags" placeholder="wireless, audio, bluetooth">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productRating">Rating (0-5)</label>
+                            <input type="number" id="productRating" step="0.1" min="0" max="5" value="0" placeholder="4.5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="productReviews">Review Count</label>
+                            <input type="number" id="productReviews" min="0" value="0" placeholder="100">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Product Flags</label>
+                        <div class="form-checkboxes">
+                            <label>
+                                <input type="checkbox" id="productFeatured">
+                                <span>Featured</span>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="productTrending">
+                                <span>Trending</span>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="productBestseller">
+                                <span>Bestseller</span>
+                            </label>
+                            <label>
+                                <input type="checkbox" id="productNewArrival">
+                                <span>New Arrival</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" onclick="closeProductModal()" class="btn btn-outline">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="submitProductBtn">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Product</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
     
@@ -438,6 +729,138 @@
     <script>
         let allProducts = [];
         let allCategories = [];
+        
+        // ========================================
+        // MODAL FUNCTIONS - THIS WAS MISSING!
+        // ========================================
+        
+        // Show add product form
+        function showAddProductForm() {
+            console.log('Opening add product modal...');
+            const modal = document.getElementById('productModal');
+            const form = document.getElementById('productForm');
+            
+            if (!modal || !form) {
+                console.error('Modal or form not found!');
+                return;
+            }
+            
+            // Reset form
+            form.reset();
+            
+            // Set modal title
+            document.getElementById('modalTitle').textContent = 'Add New Product';
+            
+            // Update submit button
+            const submitBtn = document.getElementById('submitProductBtn');
+            submitBtn.innerHTML = '<i class="fas fa-plus"></i><span>Add Product</span>';
+            
+            // Load categories
+            loadCategoriesIntoModal();
+            
+            // Show modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Close product modal
+        function closeProductModal() {
+            console.log('Closing modal...');
+            const modal = document.getElementById('productModal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Load categories into modal dropdown
+        async function loadCategoriesIntoModal() {
+            try {
+                const categories = await getCategories();
+                const select = document.getElementById('productCategory');
+                
+                if (select) {
+                    select.innerHTML = '<option value="">Select category</option>' +
+                        categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error loading categories into modal:', error);
+            }
+        }
+        
+        // Handle form submission
+        document.getElementById('productForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            console.log('Form submitted...');
+            
+            const submitBtn = document.getElementById('submitProductBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Adding...</span>';
+            
+            // Get form data
+            const images = document.getElementById('productImages').value
+                .split(',')
+                .map(url => url.trim())
+                .filter(url => url);
+            
+            const tags = document.getElementById('productTags').value
+                .split(',')
+                .map(tag => tag.trim())
+                .filter(tag => tag);
+            
+            const productData = {
+                title: document.getElementById('productTitle').value,
+                description: document.getElementById('productDescription').value,
+                shortDescription: document.getElementById('productShortDesc').value,
+                price: parseFloat(document.getElementById('productPrice').value),
+                originalPrice: parseFloat(document.getElementById('productOriginalPrice').value) || null,
+                category: document.getElementById('productCategory').value,
+                affiliateUrl: document.getElementById('productAffiliateUrl').value,
+                images: images,
+                thumbnail: images[0] || '',
+                tags: tags,
+                rating: parseFloat(document.getElementById('productRating').value) || 0,
+                reviewCount: parseInt(document.getElementById('productReviews').value) || 0,
+                featured: document.getElementById('productFeatured').checked,
+                trending: document.getElementById('productTrending').checked,
+                bestseller: document.getElementById('productBestseller').checked,
+                newArrival: document.getElementById('productNewArrival').checked,
+                stockStatus: document.getElementById('productStock').value,
+                currency: 'USD'
+            };
+            
+            // Calculate discount
+            if (productData.originalPrice && productData.originalPrice > productData.price) {
+                productData.discount = calculateDiscount(productData.originalPrice, productData.price);
+            }
+            
+            try {
+                const result = await addProduct(productData);
+                
+                if (result.success) {
+                    showToast('Product added successfully!', 'success');
+                    closeProductModal();
+                    await loadAllProducts();
+                } else {
+                    showToast(result.message || 'Failed to add product', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error adding product:', error);
+                showToast('Failed to add product', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+        
+        // ========================================
+        // PAGE INITIALIZATION
+        // ========================================
         
         // Initialize products page
         async function initProductsPage() {
@@ -560,9 +983,6 @@
                                 <button class="btn-icon" onclick="viewProduct('${product.id}')" title="View">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button class="btn-icon" onclick="editProductModal('${product.id}')" title="Edit">
-                                    <i class="fas fa-edit"></i>
-                                </button>
                                 <button class="btn-icon btn-danger" onclick="deleteProductConfirm('${product.id}')" title="Delete">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -596,26 +1016,38 @@
             window.open(`../pages/product.html?id=${productId}`, '_blank');
         }
         
-        // Edit product modal
-        async function editProductModal(productId) {
-            const product = allProducts.find(p => p.id === productId);
-            if (!product) {
-                showToast('Product not found', 'error');
-                return;
+        // Delete product confirmation
+        function deleteProductConfirm(productId) {
+            if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+                performDeleteProduct(productId);
             }
-            
-            // For now, just show a toast - full edit form can be implemented later
-            showToast('Edit feature coming soon. Product ID: ' + productId, 'info');
-            
-            // TODO: Implement full edit modal similar to add product
+        }
+        
+        // Perform product deletion
+        async function performDeleteProduct(productId) {
+            try {
+                const result = await deleteProduct(productId);
+                
+                if (result.success) {
+                    showToast('Product deleted successfully', 'success');
+                    await loadAllProducts();
+                } else {
+                    showToast(result.message || 'Failed to delete product', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                showToast('Failed to delete product', 'error');
+            }
         }
         
         // Make functions globally accessible
-        window.initProductsPage = initProductsPage;
-        window.loadAllProducts = loadAllProducts;
+        window.showAddProductForm = showAddProductForm;
+        window.closeProductModal = closeProductModal;
         window.filterProducts = filterProducts;
         window.viewProduct = viewProduct;
-        window.editProductModal = editProductModal;
+        window.deleteProductConfirm = deleteProductConfirm;
+        window.performDeleteProduct = performDeleteProduct;
+        window.loadAllProducts = loadAllProducts;
         
         // Initialize page when DOM is ready
         if (document.readyState === 'loading') {
@@ -623,6 +1055,15 @@
         } else {
             initProductsPage();
         }
+        
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeProductModal();
+            }
+        });
+        
+        console.log('Products page script loaded');
     </script>
 </body>
 </html>
