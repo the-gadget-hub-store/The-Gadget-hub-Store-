@@ -48,12 +48,17 @@
             color: var(--text-secondary);
             transition: all var(--transition-fast);
             cursor: pointer;
+            text-decoration: none;
         }
         
-        .admin-nav-item:hover,
-        .admin-nav-item.active {
+        .admin-nav-item:hover {
             background: var(--bg-secondary);
-            color: var(--accent-primary);
+            color: var(--text-primary);
+        }
+        
+        .admin-nav-item.active {
+            background: var(--accent-gradient);
+            color: white;
         }
         
         .admin-main {
@@ -91,6 +96,63 @@
             border-radius: var(--radius-lg);
             padding: 2rem;
             margin-bottom: 2rem;
+        }
+        
+        .admin-product-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.75rem;
+        }
+        
+        .admin-product-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+        }
+        
+        .product-info {
+            flex: 1;
+        }
+        
+        .product-info h4 {
+            margin-bottom: 0.25rem;
+            font-size: 0.9375rem;
+        }
+        
+        .product-info p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .btn-icon:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            border-color: var(--accent-primary);
         }
         
         @media (max-width: 991px) {
@@ -168,7 +230,7 @@
             <div class="admin-content-card">
                 <h2>Recent Products</h2>
                 <div id="recentProductsList">
-                    Loading...
+                    <p style="color: var(--text-secondary);">Loading products...</p>
                 </div>
             </div>
             
@@ -196,16 +258,6 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
     
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loader">
-            <div class="loader-cube"></div>
-            <div class="loader-cube"></div>
-            <div class="loader-cube"></div>
-            <div class="loader-cube"></div>
-        </div>
-    </div>
-    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -220,7 +272,133 @@
     <script src="../js/admin.js"></script>
     
     <script>
-        initAdminDashboard();
+        // Initialize admin dashboard without loading overlay
+        async function initAdminDashboardSafe() {
+            try {
+                console.log('Initializing admin dashboard...');
+                
+                // Load admin stats
+                await loadAdminStatsSafe();
+                
+                // Load recent products
+                await loadRecentProductsSafe();
+                
+                console.log('Admin dashboard initialized successfully');
+            } catch (error) {
+                console.error('Error initializing admin dashboard:', error);
+                showToast('Error loading dashboard data', 'error');
+            }
+        }
+        
+        // Load admin statistics safely
+        async function loadAdminStatsSafe() {
+            try {
+                const products = await getProducts();
+                const categories = await getCategories();
+                
+                // Update stat cards
+                document.getElementById('totalProducts').textContent = products.length || 0;
+                document.getElementById('totalCategories').textContent = categories.length || 0;
+                
+                const activeProducts = products.filter(p => p.stockStatus === 'in-stock').length;
+                document.getElementById('activeProducts').textContent = activeProducts || 0;
+                
+                // Get newsletter subscribers count
+                if (isFirebaseConfigured) {
+                    const subscribersSnapshot = await db.collection('newsletterSubscribers').get();
+                    document.getElementById('totalSubscribers').textContent = subscribersSnapshot.size || 0;
+                } else {
+                    document.getElementById('totalSubscribers').textContent = '0';
+                }
+            } catch (error) {
+                console.error('Error loading admin stats:', error);
+                // Set default values on error
+                document.getElementById('totalProducts').textContent = '0';
+                document.getElementById('totalCategories').textContent = '0';
+                document.getElementById('activeProducts').textContent = '0';
+                document.getElementById('totalSubscribers').textContent = '0';
+            }
+        }
+        
+        // Load recent products safely
+        async function loadRecentProductsSafe() {
+            const container = document.getElementById('recentProductsList');
+            if (!container) return;
+            
+            try {
+                const products = await getProducts(10);
+                
+                if (products.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-secondary);">No products found. Add your first product to get started.</p>';
+                    return;
+                }
+                
+                container.innerHTML = products.map(product => `
+                    <div class="admin-product-item">
+                        <img src="${product.thumbnail || product.images[0] || '../assets/images/placeholder.jpg'}" 
+                             alt="${product.title}"
+                             onerror="this.src='../assets/images/placeholder.jpg'">
+                        <div class="product-info">
+                            <h4>${product.title}</h4>
+                            <p>${formatPrice(product.price)}</p>
+                        </div>
+                        <div class="product-actions">
+                            <button class="btn-icon" onclick="editProduct('${product.id}')" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-icon" onclick="deleteProductConfirm('${product.id}')" title="Delete">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading recent products:', error);
+                container.innerHTML = '<p style="color: var(--text-secondary);">Unable to load products. Please check your connection.</p>';
+            }
+        }
+        
+        // Edit product function
+        function editProduct(productId) {
+            window.location.href = `products.html?edit=${productId}`;
+        }
+        
+        // Delete product confirmation
+        function deleteProductConfirm(productId) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                deleteProductAction(productId);
+            }
+        }
+        
+        // Delete product action
+        async function deleteProductAction(productId) {
+            try {
+                const result = await deleteProduct(productId);
+                
+                if (result.success) {
+                    showToast('Product deleted successfully', 'success');
+                    await loadRecentProductsSafe();
+                    await loadAdminStatsSafe();
+                } else {
+                    showToast(result.message || 'Failed to delete product', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting product:', error);
+                showToast('Failed to delete product', 'error');
+            }
+        }
+        
+        // Show add product form
+        function showAddProductForm() {
+            window.location.href = 'products.html';
+        }
+        
+        // Initialize dashboard when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initAdminDashboardSafe);
+        } else {
+            initAdminDashboardSafe();
+        }
     </script>
 </body>
 </html>
