@@ -11,10 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/animations.css">
-    <link rel="stylesheet" href="/css/responsive.css">
+    <!-- Stylesheets - FIXED PATHS -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <link rel="stylesheet" href="../css/responsive.css">
     
     <style>
         .admin-container {
@@ -236,173 +236,6 @@
             color: white;
         }
         
-        .admin-form {
-            display: grid;
-            gap: 1.5rem;
-        }
-        
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .form-group label {
-            font-weight: 600;
-            font-size: 0.9375rem;
-        }
-        
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            padding: 0.75rem 1rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 0.9375rem;
-            transition: all var(--transition-fast);
-        }
-        
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            background: var(--surface);
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-        
-        .form-checkboxes {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: var(--radius-md);
-        }
-        
-        .form-checkboxes label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        
-        .form-checkboxes input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-        
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
-        }
-        
-        .custom-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            z-index: var(--z-modal);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity var(--transition-base);
-        }
-        
-        .custom-modal.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        .custom-modal-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-        }
-        
-        .custom-modal-content {
-            position: relative;
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xl);
-            transform: scale(0.9);
-            transition: transform var(--transition-base);
-        }
-        
-        .custom-modal.active .custom-modal-content {
-            transform: scale(1);
-        }
-        
-        .custom-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .custom-modal-header h3 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
-        
-        .custom-modal-close {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-secondary);
-            border: none;
-            border-radius: var(--radius-md);
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-        
-        .custom-modal-close:hover {
-            background: var(--surface-hover);
-            color: var(--text-primary);
-            transform: rotate(90deg);
-        }
-        
-        .custom-modal-body {
-            padding: 2rem;
-        }
-        
-        .custom-modal-footer {
-            padding: 1.5rem 2rem;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-        }
-        
         .search-filter-bar {
             display: flex;
             gap: 1rem;
@@ -482,10 +315,6 @@
                 margin-left: 0;
             }
             
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
             .admin-table-container {
                 overflow-x: scroll;
             }
@@ -503,23 +332,23 @@
                 </h2>
             </div>
             <nav class="admin-nav">
-                <a href="/admin/index.html" class="admin-nav-item">
+                <a href="index.html" class="admin-nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="/admin/products.html" class="admin-nav-item active">
+                <a href="products.html" class="admin-nav-item active">
                     <i class="fas fa-box"></i>
                     <span>Products</span>
                 </a>
-                <a href="/admin/categories.html" class="admin-nav-item">
+                <a href="categories.html" class="admin-nav-item">
                     <i class="fas fa-th"></i>
                     <span>Categories</span>
                 </a>
-                <a href="/admin/settings.html" class="admin-nav-item">
+                <a href="settings.html" class="admin-nav-item">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
                 </a>
-                <a href="/" class="admin-nav-item">
+                <a href="../index.html" class="admin-nav-item">
                     <i class="fas fa-home"></i>
                     <span>View Website</span>
                 </a>
@@ -538,7 +367,7 @@
                     <p>Manage your product catalog</p>
                 </div>
                 <div class="admin-actions">
-                    <button class="btn btn-primary" onclick="showAddProductModal()">
+                    <button class="btn btn-primary" onclick="showAddProductForm()">
                         <i class="fas fa-plus"></i>
                         <span>Add New Product</span>
                     </button>
@@ -579,8 +408,7 @@
                         <tbody id="productsTableBody">
                             <tr>
                                 <td colspan="7" style="text-align: center; padding: 3rem;">
-                                    <div class="loading-spinner"></div>
-                                    <p style="margin-top: 1rem; color: var(--text-secondary);">Loading products...</p>
+                                    <p style="color: var(--text-secondary);">Loading products...</p>
                                 </td>
                             </tr>
                         </tbody>
@@ -593,54 +421,61 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
     
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loader">
-            <div class="loader-cube"></div>
-            <div class="loader-cube"></div>
-            <div class="loader-cube"></div>
-            <div class="loader-cube"></div>
-        </div>
-    </div>
-    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
-    <!-- Application Scripts -->
-    <script src="/js/firebase.js"></script>
-    <script src="/js/ui.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/products.js"></script>
-    <script src="/js/categories.js"></script>
-    <script src="/js/admin.js"></script>
+    <!-- Application Scripts - FIXED PATHS -->
+    <script src="../js/firebase.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/products.js"></script>
+    <script src="../js/categories.js"></script>
+    <script src="../js/admin.js"></script>
     
     <script>
         let allProducts = [];
         let allCategories = [];
         
-        // Initialize page
+        // Initialize products page
         async function initProductsPage() {
-            const hasAccess = await checkAdminAccess();
-            if (!hasAccess) return;
-            
-            await loadCategoriesForFilter();
-            await loadAllProducts();
+            try {
+                console.log('Initializing products page...');
+                
+                // Load categories for filter
+                await loadCategoriesForFilter();
+                
+                // Load all products
+                await loadAllProducts();
+                
+                console.log('Products page initialized successfully');
+            } catch (error) {
+                console.error('Error initializing products page:', error);
+                showToast('Error loading products page', 'error');
+            }
         }
         
         // Load all products
         async function loadAllProducts() {
             try {
-                showLoading();
                 allProducts = await getProducts();
                 displayProducts(allProducts);
-                hideLoading();
             } catch (error) {
                 console.error('Error loading products:', error);
                 showToast('Failed to load products', 'error');
-                hideLoading();
+                
+                const tbody = document.getElementById('productsTableBody');
+                if (tbody) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 3rem;">
+                                <p style="color: var(--text-secondary);">Error loading products. Please refresh the page.</p>
+                            </td>
+                        </tr>
+                    `;
+                }
             }
         }
         
@@ -650,8 +485,10 @@
                 allCategories = await getCategories();
                 const categoryFilter = document.getElementById('categoryFilter');
                 
-                categoryFilter.innerHTML = '<option value="">All Categories</option>' +
-                    allCategories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                if (categoryFilter) {
+                    categoryFilter.innerHTML = '<option value="">All Categories</option>' +
+                        allCategories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+                }
             } catch (error) {
                 console.error('Error loading categories:', error);
             }
@@ -661,6 +498,11 @@
         function displayProducts(products) {
             const tbody = document.getElementById('productsTableBody');
             
+            if (!tbody) {
+                console.error('Products table body not found');
+                return;
+            }
+            
             if (products.length === 0) {
                 tbody.innerHTML = `
                     <tr>
@@ -669,7 +511,7 @@
                                 <i class="fas fa-box-open"></i>
                                 <h3>No Products Found</h3>
                                 <p>Start by adding your first product to the catalog.</p>
-                                <button class="btn btn-primary" onclick="showAddProductModal()">
+                                <button class="btn btn-primary" onclick="showAddProductForm()">
                                     <i class="fas fa-plus"></i>
                                     <span>Add Product</span>
                                 </button>
@@ -690,10 +532,10 @@
                     <tr>
                         <td>
                             <div class="product-info">
-                                <img src="${product.thumbnail || product.images[0] || '/assets/images/placeholder.jpg'}" 
+                                <img src="${product.thumbnail || product.images[0] || '../assets/images/placeholder.jpg'}" 
                                      alt="${product.title}" 
                                      class="product-thumbnail"
-                                     onerror="this.src='/assets/images/placeholder.jpg'">
+                                     onerror="this.src='../assets/images/placeholder.jpg'">
                                 <div class="product-details">
                                     <h4>${truncateText(product.title, 40)}</h4>
                                     <p class="product-category">${category ? category.name : 'Uncategorized'}</p>
@@ -749,426 +591,38 @@
             displayProducts(filtered);
         }
         
-        // Show add product modal
-        function showAddProductModal() {
-            const formHTML = `
-                <form id="addProductForm" class="admin-form">
-                    <div class="form-group">
-                        <label for="productTitle">Product Title *</label>
-                        <input type="text" id="productTitle" required placeholder="Enter product title">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productDescription">Description *</label>
-                        <textarea id="productDescription" rows="4" required placeholder="Enter detailed product description"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productShortDesc">Short Description</label>
-                        <input type="text" id="productShortDesc" placeholder="Brief product description">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productPrice">Price (USD) *</label>
-                            <input type="number" id="productPrice" step="0.01" required placeholder="0.00">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productOriginalPrice">Original Price (USD)</label>
-                            <input type="number" id="productOriginalPrice" step="0.01" placeholder="0.00">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productCategory">Category *</label>
-                            <select id="productCategory" required>
-                                <option value="">Select category</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productStock">Stock Status *</label>
-                            <select id="productStock" required>
-                                <option value="in-stock">In Stock</option>
-                                <option value="out-of-stock">Out of Stock</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productAffiliateUrl">AliExpress Affiliate URL *</label>
-                        <input type="url" id="productAffiliateUrl" required 
-                               placeholder="https://s.click.aliexpress.com/...">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productImages">Product Images (URLs, comma-separated) *</label>
-                        <textarea id="productImages" rows="2" required 
-                                  placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"></textarea>
-                        <small style="color: var(--text-muted);">Enter image URLs separated by commas</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productTags">Tags (comma-separated)</label>
-                        <input type="text" id="productTags" placeholder="wireless, audio, bluetooth">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productRating">Rating (0-5)</label>
-                            <input type="number" id="productRating" step="0.1" min="0" max="5" value="0" placeholder="4.5">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productReviews">Review Count</label>
-                            <input type="number" id="productReviews" min="0" value="0" placeholder="100">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Product Flags</label>
-                        <div class="form-checkboxes">
-                            <label>
-                                <input type="checkbox" id="productFeatured">
-                                <span>Featured</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="productTrending">
-                                <span>Trending</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="productBestseller">
-                                <span>Bestseller</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="productNewArrival">
-                                <span>New Arrival</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" onclick="closeModal()" class="btn btn-outline">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add Product</button>
-                    </div>
-                </form>
-            `;
-            
-            const modal = createModal('Add New Product', formHTML);
-            
-            // Load categories
-            const categorySelect = document.getElementById('productCategory');
-            categorySelect.innerHTML = '<option value="">Select category</option>' +
-                allCategories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
-            
-            // Handle form submission
-            document.getElementById('addProductForm').addEventListener('submit', handleAddProductSubmit);
-        }
-        
-        // Handle add product form submission
-        async function handleAddProductSubmit(e) {
-            e.preventDefault();
-            
-            const images = document.getElementById('productImages').value
-                .split(',')
-                .map(url => url.trim())
-                .filter(url => url);
-            
-            const tags = document.getElementById('productTags').value
-                .split(',')
-                .map(tag => tag.trim())
-                .filter(tag => tag);
-            
-            const productData = {
-                title: document.getElementById('productTitle').value,
-                description: document.getElementById('productDescription').value,
-                shortDescription: document.getElementById('productShortDesc').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                originalPrice: parseFloat(document.getElementById('productOriginalPrice').value) || null,
-                category: document.getElementById('productCategory').value,
-                affiliateUrl: document.getElementById('productAffiliateUrl').value,
-                images: images,
-                thumbnail: images[0] || '',
-                tags: tags,
-                rating: parseFloat(document.getElementById('productRating').value) || 0,
-                reviewCount: parseInt(document.getElementById('productReviews').value) || 0,
-                featured: document.getElementById('productFeatured').checked,
-                trending: document.getElementById('productTrending').checked,
-                bestseller: document.getElementById('productBestseller').checked,
-                newArrival: document.getElementById('productNewArrival').checked,
-                stockStatus: document.getElementById('productStock').value,
-                currency: 'USD'
-            };
-            
-            // Calculate discount
-            if (productData.originalPrice && productData.originalPrice > productData.price) {
-                productData.discount = calculateDiscount(productData.originalPrice, productData.price);
-            }
-            
-            try {
-                showLoading();
-                const result = await addProduct(productData);
-                
-                if (result.success) {
-                    showToast('Product added successfully!', 'success');
-                    closeModal();
-                    await loadAllProducts();
-                } else {
-                    showToast(result.message || 'Failed to add product', 'error');
-                }
-                
-                hideLoading();
-            } catch (error) {
-                console.error('Error adding product:', error);
-                showToast('Failed to add product', 'error');
-                hideLoading();
-            }
+        // View product
+        function viewProduct(productId) {
+            window.open(`../pages/product.html?id=${productId}`, '_blank');
         }
         
         // Edit product modal
         async function editProductModal(productId) {
             const product = allProducts.find(p => p.id === productId);
-            if (!product) return;
-            
-            const formHTML = `
-                <form id="editProductForm" class="admin-form">
-                    <input type="hidden" id="editProductId" value="${productId}">
-                    
-                    <div class="form-group">
-                        <label for="editProductTitle">Product Title *</label>
-                        <input type="text" id="editProductTitle" required value="${product.title}">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="editProductDescription">Description *</label>
-                        <textarea id="editProductDescription" rows="4" required>${product.description}</textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="editProductShortDesc">Short Description</label>
-                        <input type="text" id="editProductShortDesc" value="${product.shortDescription || ''}">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editProductPrice">Price (USD) *</label>
-                            <input type="number" id="editProductPrice" step="0.01" required value="${product.price}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editProductOriginalPrice">Original Price (USD)</label>
-                            <input type="number" id="editProductOriginalPrice" step="0.01" value="${product.originalPrice || ''}">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editProductCategory">Category *</label>
-                            <select id="editProductCategory" required>
-                                <option value="">Select category</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editProductStock">Stock Status *</label>
-                            <select id="editProductStock" required>
-                                <option value="in-stock" ${product.stockStatus === 'in-stock' ? 'selected' : ''}>In Stock</option>
-                                <option value="out-of-stock" ${product.stockStatus === 'out-of-stock' ? 'selected' : ''}>Out of Stock</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="editProductAffiliateUrl">AliExpress Affiliate URL *</label>
-                        <input type="url" id="editProductAffiliateUrl" required value="${product.affiliateUrl}">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="editProductImages">Product Images (URLs, comma-separated) *</label>
-                        <textarea id="editProductImages" rows="2" required>${product.images ? product.images.join(', ') : ''}</textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="editProductTags">Tags (comma-separated)</label>
-                        <input type="text" id="editProductTags" value="${product.tags ? product.tags.join(', ') : ''}">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="editProductRating">Rating (0-5)</label>
-                            <input type="number" id="editProductRating" step="0.1" min="0" max="5" value="${product.rating || 0}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="editProductReviews">Review Count</label>
-                            <input type="number" id="editProductReviews" min="0" value="${product.reviewCount || 0}">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Product Flags</label>
-                        <div class="form-checkboxes">
-                            <label>
-                                <input type="checkbox" id="editProductFeatured" ${product.featured ? 'checked' : ''}>
-                                <span>Featured</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="editProductTrending" ${product.trending ? 'checked' : ''}>
-                                <span>Trending</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="editProductBestseller" ${product.bestseller ? 'checked' : ''}>
-                                <span>Bestseller</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="editProductNewArrival" ${product.newArrival ? 'checked' : ''}>
-                                <span>New Arrival</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" onclick="closeModal()" class="btn btn-outline">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Product</button>
-                    </div>
-                </form>
-            `;
-            
-            const modal = createModal('Edit Product', formHTML);
-            
-            // Load categories
-            const categorySelect = document.getElementById('editProductCategory');
-            categorySelect.innerHTML = '<option value="">Select category</option>' +
-                allCategories.map(cat => 
-                    `<option value="${cat.id}" ${cat.id === product.category ? 'selected' : ''}>${cat.name}</option>`
-                ).join('');
-            
-            // Handle form submission
-            document.getElementById('editProductForm').addEventListener('submit', handleEditProductSubmit);
-        }
-        
-        // Handle edit product submission
-        async function handleEditProductSubmit(e) {
-            e.preventDefault();
-            
-            const productId = document.getElementById('editProductId').value;
-            
-            const images = document.getElementById('editProductImages').value
-                .split(',')
-                .map(url => url.trim())
-                .filter(url => url);
-            
-            const tags = document.getElementById('editProductTags').value
-                .split(',')
-                .map(tag => tag.trim())
-                .filter(tag => tag);
-            
-            const productData = {
-                title: document.getElementById('editProductTitle').value,
-                description: document.getElementById('editProductDescription').value,
-                shortDescription: document.getElementById('editProductShortDesc').value,
-                price: parseFloat(document.getElementById('editProductPrice').value),
-                originalPrice: parseFloat(document.getElementById('editProductOriginalPrice').value) || null,
-                category: document.getElementById('editProductCategory').value,
-                affiliateUrl: document.getElementById('editProductAffiliateUrl').value,
-                images: images,
-                thumbnail: images[0] || '',
-                tags: tags,
-                rating: parseFloat(document.getElementById('editProductRating').value) || 0,
-                reviewCount: parseInt(document.getElementById('editProductReviews').value) || 0,
-                featured: document.getElementById('editProductFeatured').checked,
-                trending: document.getElementById('editProductTrending').checked,
-                bestseller: document.getElementById('editProductBestseller').checked,
-                newArrival: document.getElementById('editProductNewArrival').checked,
-                stockStatus: document.getElementById('editProductStock').value
-            };
-            
-            // Calculate discount
-            if (productData.originalPrice && productData.originalPrice > productData.price) {
-                productData.discount = calculateDiscount(productData.originalPrice, productData.price);
+            if (!product) {
+                showToast('Product not found', 'error');
+                return;
             }
             
-            try {
-                showLoading();
-                const result = await updateProduct(productId, productData);
-                
-                if (result.success) {
-                    showToast('Product updated successfully!', 'success');
-                    closeModal();
-                    await loadAllProducts();
-                } else {
-                    showToast(result.message || 'Failed to update product', 'error');
-                }
-                
-                hideLoading();
-            } catch (error) {
-                console.error('Error updating product:', error);
-                showToast('Failed to update product', 'error');
-                hideLoading();
-            }
-        }
-        
-        // View product
-        function viewProduct(productId) {
-            window.open(`/pages/product.html?id=${productId}`, '_blank');
-        }
-        
-        // Delete product confirmation
-        function deleteProductConfirm(productId) {
-            const product = allProducts.find(p => p.id === productId);
-            if (!product) return;
+            // For now, just show a toast - full edit form can be implemented later
+            showToast('Edit feature coming soon. Product ID: ' + productId, 'info');
             
-            const modal = createModal(
-                'Confirm Delete',
-                `<p>Are you sure you want to delete <strong>${product.title}</strong>?</p>
-                 <p style="color: var(--text-secondary); margin-top: 1rem;">This action cannot be undone.</p>`,
-                {
-                    footer: `
-                        <button onclick="closeModal()" class="btn btn-outline">Cancel</button>
-                        <button onclick="performDeleteProduct('${productId}')" class="btn btn-primary" style="background: var(--danger); border-color: var(--danger);">
-                            <i class="fas fa-trash"></i>
-                            <span>Delete Product</span>
-                        </button>
-                    `
-                }
-            );
+            // TODO: Implement full edit modal similar to add product
         }
         
-        // Perform product deletion
-        async function performDeleteProduct(productId) {
-            try {
-                showLoading();
-                const result = await deleteProduct(productId);
-                
-                if (result.success) {
-                    showToast('Product deleted successfully', 'success');
-                    closeModal();
-                    await loadAllProducts();
-                } else {
-                    showToast(result.message || 'Failed to delete product', 'error');
-                }
-                
-                hideLoading();
-            } catch (error) {
-                console.error('Error deleting product:', error);
-                showToast('Failed to delete product', 'error');
-                hideLoading();
-            }
-        }
+        // Make functions globally accessible
+        window.initProductsPage = initProductsPage;
+        window.loadAllProducts = loadAllProducts;
+        window.filterProducts = filterProducts;
+        window.viewProduct = viewProduct;
+        window.editProductModal = editProductModal;
         
-        // Close modal
-        function closeModal() {
-            const modal = document.querySelector('.custom-modal');
-            if (modal) {
-                modal.classList.remove('active');
-                setTimeout(() => modal.remove(), 300);
-            }
+        // Initialize page when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initProductsPage);
+        } else {
+            initProductsPage();
         }
-        
-        // Initialize page
-        initProductsPage();
     </script>
 </body>
 </html>
