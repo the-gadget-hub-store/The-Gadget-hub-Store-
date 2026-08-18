@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Admin - The Gadget Hub Store</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+    
+    <style>
+        /* Admin Layout Styles */
+        .admin-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        .admin-sidebar {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            width: 250px;
+            overflow-y: auto;
+        }
+        
+        .admin-logo {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        
+        .admin-logo h2 {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .admin-logo i {
+            color: var(--accent-primary);
+        }
+        
+        .admin-nav {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .admin-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .admin-nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .admin-nav-item.active {
+            background: var(--accent-gradient);
+            color: white;
+        }
+        
+        .admin-nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .admin-main {
+            margin-left: 250px;
+            padding: 2rem;
+            background: var(--bg-primary);
+            min-height: 100vh;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .admin-header-title h1 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .admin-header-title p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        
+        .admin-content-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .admin-content-card h2 {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            font-size: 1.25rem;
+        }
+        
+        .settings-form {
+            display: grid;
+            gap: 2rem;
+        }
+        
+        .form-section {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .form-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .form-section-header i {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent-gradient);
+            color: white;
+            border-radius: var(--radius-md);
+            font-size: 1.125rem;
+        }
+        
+        .form-section-header h3 {
+            margin: 0;
+            font-size: 1.125rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-group label i {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 0.875rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9375rem;
+            transition: all var(--transition-fast);
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--surface);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+        
+        .form-group small {
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .social-input-group {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-with-icon i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.125rem;
+        }
+        
+        .input-with-icon input {
+            padding-left: 3rem;
+        }
+        
+        .success-message {
+            display: none;
+            padding: 1rem;
+            background: rgba(0, 230, 118, 0.1);
+            border: 1px solid var(--success);
+            border-radius: var(--radius-md);
+            color: var(--success);
+            margin-bottom: 1.5rem;
+        }
+        
+        .success-message.active {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: fadeInDown 0.3s ease;
+        }
+        
+        .info-box {
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: var(--radius-md);
+            margin-top: 1rem;
+        }
+        
+        .info-box h4 {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-box p {
+            color: var(--text-secondary);
+            font-size: 0.9375rem;
+            margin: 0;
+        }
+        
+        .danger-zone {
+            padding: 2rem;
+            background: rgba(255, 61, 113, 0.05);
+            border: 1px solid rgba(255, 61, 113, 0.2);
+            border-radius: var(--radius-lg);
+        }
+        
+        .danger-zone h3 {
+            color: var(--danger);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .danger-zone p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .copy-button {
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .copy-button:hover {
+            background: var(--surface);
+            border-color: var(--accent-primary);
+        }
+        
+        .copy-button.copied {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+        
+        @media (max-width: 991px) {
+            .admin-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            
+            .admin-main {
+                margin-left: 0;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="admin-logo">
+                <h2>
+                    <i class="fas fa-shield-alt"></i>
+                    Admin Panel
+                </h2>
+            </div>
+            <nav class="admin-nav">
+                <a href="/admin/index.html" class="admin-nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/admin/products.html" class="admin-nav-item">
+                    <i class="fas fa-box"></i>
+                    <span>Products</span>
+                </a>
+                <a href="/admin/categories.html" class="admin-nav-item">
+                    <i class="fas fa-th"></i>
+                    <span>Categories</span>
+                </a>
+                <a href="/admin/settings.html" class="admin-nav-item active">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/" class="admin-nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>View Website</span>
+                </a>
+                <div class="admin-nav-item" onclick="signOut()" style="margin-top: auto; border-top: 1px solid var(--border);">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="admin-main">
+            <div class="admin-header">
+                <div class="admin-header-title">
+                    <h1>Website Settings</h1>
+                    <p>Configure your store settings and preferences</p>
+                </div>
+            </div>
+            
+            <!-- Success Message -->
+            <div class="success-message" id="successMessage">
+                <i class="fas fa-check-circle"></i>
+                <span>Settings saved successfully!</span>
+            </div>
+            
+            <!-- Settings Form -->
+            <form id="settingsForm" class="settings-form">
+                
+                <!-- General Settings -->
+                <div class="admin-content-card">
+                    <h2>General Information</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-store"></i>
+                            <h3>Store Details</h3>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeName">
+                                <span>Store Name</span>
+                                <i class="fas fa-info-circle" title="Your store's display name"></i>
+                            </label>
+                            <input type="text" id="storeName" placeholder="The Gadget Hub Store" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeEmail">Contact Email</label>
+                            <input type="email" id="storeEmail" placeholder="info@gadgethubstore.com" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeCurrency">Default Currency</label>
+                            <select id="storeCurrency" required>
+                                <option value="USD">USD - US Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                                <option value="JPY">JPY - Japanese Yen</option>
+                                <option value="CAD">CAD - Canadian Dollar</option>
+                                <option value="AUD">AUD - Australian Dollar</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeDescription">Store Description</label>
+                            <textarea id="storeDescription" rows="3" placeholder="A brief description of your store"></textarea>
+                            <small>This will appear in search engine results</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Affiliate Settings -->
+                <div class="admin-content-card">
+                    <h2>Affiliate Configuration</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-link"></i>
+                            <h3>AliExpress Affiliate</h3>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="masterAffiliateUrl">
+                                <span>Master Affiliate URL</span>
+                                <i class="fas fa-info-circle" title="Your main AliExpress affiliate link"></i>
+                            </label>
+                            <input type="url" id="masterAffiliateUrl" placeholder="https://s.click.aliexpress.com/e/_c3hTwqib" required>
+                            <small>This link will be used for the "Visit AliExpress Store" button</small>
+                        </div>
+                        
+                        <div class="info-box">
+                            <h4>
+                                <i class="fas fa-lightbulb"></i>
+                                Affiliate Link Guidelines
+                            </h4>
+                            <p>Make sure to use your unique AliExpress affiliate tracking URL. Each product should have its own affiliate link for accurate tracking.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Social Media Settings -->
+                <div class="admin-content-card">
+                    <h2>Social Media Links</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-share-alt"></i>
+                            <h3>Connect Your Social Profiles</h3>
+                        </div>
+                        
+                        <div class="social-input-group">
+                            <div class="form-group">
+                                <label for="facebookUrl">Facebook</label>
+                                <div class="input-with-icon">
+                                    <i class="fab fa-facebook"></i>
+                                    <input type="url" id="facebookUrl" placeholder="https://facebook.com/yourpage">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="instagramUrl">Instagram</label>
+                                <div class="input-with-icon">
+                                    <i class="fab fa-instagram"></i>
+                                    <input type="url" id="instagramUrl" placeholder="https://instagram.com/yourprofile">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="youtubeUrl">YouTube</label>
+                                <div class="input-with-icon">
+                                    <i class="fab fa-youtube"></i>
+                                    <input type="url" id="youtubeUrl" placeholder="https://youtube.com/@yourchannel">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="tiktokUrl">TikTok</label>
+                                <div class="input-with-icon">
+                                    <i class="fab fa-tiktok"></i>
+                                    <input type="url" id="tiktokUrl" placeholder="https://tiktok.com/@youraccount">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="twitterUrl">Twitter / X</label>
+                                <div class="input-with-icon">
+                                    <i class="fab fa-twitter"></i>
+                                    <input type="url" id="twitterUrl" placeholder="https://twitter.com/yourhandle">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SEO Settings -->
+                <div class="admin-content-card">
+                    <h2>SEO Configuration</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-search"></i>
+                            <h3>Search Engine Optimization</h3>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="metaTitle">Meta Title</label>
+                            <input type="text" id="metaTitle" placeholder="The Gadget Hub Store - Premium Tech Products" maxlength="60">
+                            <small>Recommended: 50-60 characters</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="metaDescription">Meta Description</label>
+                            <textarea id="metaDescription" rows="2" placeholder="Discover trending gadgets and innovative tech products..." maxlength="160"></textarea>
+                            <small>Recommended: 150-160 characters</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="metaKeywords">Meta Keywords</label>
+                            <input type="text" id="metaKeywords" placeholder="gadgets, tech products, electronics, smart devices">
+                            <small>Comma-separated keywords</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Email Settings -->
+                <div class="admin-content-card">
+                    <h2>Email Notifications</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-envelope"></i>
+                            <h3>Newsletter Configuration</h3>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newsletterEmail">Newsletter Reply-To Email</label>
+                            <input type="email" id="newsletterEmail" placeholder="newsletter@gadgethubstore.com">
+                            <small>Subscribers will see this email address</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="notificationEmail">Admin Notification Email</label>
+                            <input type="email" id="notificationEmail" placeholder="admin@gadgethubstore.com">
+                            <small>Receive notifications about new subscribers and orders</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Appearance Settings -->
+                <div class="admin-content-card">
+                    <h2>Appearance</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-palette"></i>
+                            <h3>Theme Customization</h3>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="primaryColor">Primary Accent Color</label>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <input type="color" id="primaryColor" value="#00d4ff" style="width: 60px; height: 60px; border-radius: var(--radius-md); cursor: pointer;">
+                                <input type="text" id="primaryColorHex" value="#00d4ff" placeholder="#00d4ff" style="flex: 1;">
+                            </div>
+                            <small>Main accent color used throughout the website</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="secondaryColor">Secondary Accent Color</label>
+                            <div style="display: flex; gap: 1rem; align-items: center;">
+                                <input type="color" id="secondaryColor" value="#b026ff" style="width: 60px; height: 60px; border-radius: var(--radius-md); cursor: pointer;">
+                                <input type="text" id="secondaryColorHex" value="#b026ff" placeholder="#b026ff" style="flex: 1;">
+                            </div>
+                            <small>Secondary accent color for gradients</small>
+                        </div>
+                        
+                        <div class="info-box">
+                            <h4>
+                                <i class="fas fa-paint-brush"></i>
+                                Custom Theme
+                            </h4>
+                            <p>Color changes will be applied after saving. You may need to refresh the page to see changes.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advanced Settings -->
+                <div class="admin-content-card">
+                    <h2>Advanced Settings</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-cogs"></i>
+                            <h3>Analytics & Tracking</h3>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="googleAnalyticsId">Google Analytics ID</label>
+                            <input type="text" id="googleAnalyticsId" placeholder="G-XXXXXXXXXX">
+                            <small>Format: G-XXXXXXXXXX or UA-XXXXXXXXX-X</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="facebookPixelId">Facebook Pixel ID</label>
+                            <input type="text" id="facebookPixelId" placeholder="1234567890123456">
+                            <small>Your Facebook Pixel ID for tracking</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Firebase Configuration Display -->
+                <div class="admin-content-card">
+                    <h2>Firebase Configuration</h2>
+                    
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <i class="fas fa-database"></i>
+                            <h3>Backend Status</h3>
+                        </div>
+                        
+                        <div class="info-box">
+                            <h4>
+                                <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                Firebase Status
+                            </h4>
+                            <p id="firebaseStatus">
+                                <strong>Status:</strong> <span id="firebaseStatusText">Checking...</span><br>
+                                <strong>Project ID:</strong> <span id="firebaseProjectId">-</span>
+                            </p>
+                            <button type="button" class="copy-button" onclick="copyFirebaseConfig()">
+                                <i class="fas fa-copy"></i>
+                                <span>Copy Firebase Config</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Danger Zone -->
+                <div class="admin-content-card">
+                    <div class="danger-zone">
+                        <h3>
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Danger Zone
+                        </h3>
+                        <p>These actions are irreversible. Please be careful.</p>
+                        
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-outline" onclick="clearCache()" style="border-color: var(--warning); color: var(--warning);">
+                                <i class="fas fa-broom"></i>
+                                <span>Clear Cache</span>
+                            </button>
+                            <button type="button" class="btn btn-outline" onclick="resetSettings()" style="border-color: var(--danger); color: var(--danger);">
+                                <i class="fas fa-undo"></i>
+                                <span>Reset to Defaults</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="loadSettings()">
+                        <i class="fas fa-redo"></i>
+                        <span>Reload Settings</span>
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        <span>Save All Settings</span>
+                    </button>
+                </div>
+            </form>
+        </main>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader">
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+            <div class="loader-cube"></div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="/js/firebase.js"></script>
+    <script src="/js/ui.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/admin.js"></script>
+    
+    <script>
+        // Initialize settings page
+        async function initSettingsPage() {
+            const hasAccess = await checkAdminAccess();
+            if (!hasAccess) return;
+            
+            await loadSettings();
+            checkFirebaseStatus();
+            initColorPickers();
+        }
+        
+        // Load settings from Firebase
+        async function loadSettings() {
+            try {
+                showLoading();
+                const settings = await getSettings();
+                
+                // General Information
+                document.getElementById('storeName').value = settings.storeName || '';
+                document.getElementById('storeEmail').value = settings.email || '';
+                document.getElementById('storeCurrency').value = settings.currency || 'USD';
+                document.getElementById('storeDescription').value = settings.storeDescription || '';
+                
+                // Affiliate
+                document.getElementById('masterAffiliateUrl').value = settings.masterAffiliateUrl || '';
+                
+                // Social Media
+                if (settings.socialLinks) {
+                    document.getElementById('facebookUrl').value = settings.socialLinks.facebook || '';
+                    document.getElementById('instagramUrl').value = settings.socialLinks.instagram || '';
+                    document.getElementById('youtubeUrl').value = settings.socialLinks.youtube || '';
+                    document.getElementById('tiktokUrl').value = settings.socialLinks.tiktok || '';
+                    document.getElementById('twitterUrl').value = settings.socialLinks.twitter || '';
+                }
+                
+                // SEO
+                document.getElementById('metaTitle').value = settings.metaTitle || '';
+                document.getElementById('metaDescription').value = settings.metaDescription || '';
+                document.getElementById('metaKeywords').value = settings.metaKeywords || '';
+                
+                // Email
+                document.getElementById('newsletterEmail').value = settings.newsletterEmail || '';
+                document.getElementById('notificationEmail').value = settings.notificationEmail || '';
+                
+                // Appearance
+                document.getElementById('primaryColor').value = settings.primaryColor || '#00d4ff';
+                document.getElementById('primaryColorHex').value = settings.primaryColor || '#00d4ff';
+                document.getElementById('secondaryColor').value = settings.secondaryColor || '#b026ff';
+                document.getElementById('secondaryColorHex').value = settings.secondaryColor || '#b026ff';
+                
+                // Analytics
+                document.getElementById('googleAnalyticsId').value = settings.googleAnalyticsId || '';
+                document.getElementById('facebookPixelId').value = settings.facebookPixelId || '';
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                showToast('Failed to load settings', 'error');
+                hideLoading();
+            }
+        }
+        
+        // Handle settings form submission
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const settingsData = {
+                // General
+                storeName: document.getElementById('storeName').value,
+                email: document.getElementById('storeEmail').value,
+                currency: document.getElementById('storeCurrency').value,
+                storeDescription: document.getElementById('storeDescription').value,
+                
+                // Affiliate
+                masterAffiliateUrl: document.getElementById('masterAffiliateUrl').value,
+                
+                // Social Media
+                socialLinks: {
+                    facebook: document.getElementById('facebookUrl').value,
+                    instagram: document.getElementById('instagramUrl').value,
+                    youtube: document.getElementById('youtubeUrl').value,
+                    tiktok: document.getElementById('tiktokUrl').value,
+                    twitter: document.getElementById('twitterUrl').value
+                },
+                
+                // SEO
+                metaTitle: document.getElementById('metaTitle').value,
+                metaDescription: document.getElementById('metaDescription').value,
+                metaKeywords: document.getElementById('metaKeywords').value,
+                
+                // Email
+                newsletterEmail: document.getElementById('newsletterEmail').value,
+                notificationEmail: document.getElementById('notificationEmail').value,
+                
+                // Appearance
+                primaryColor: document.getElementById('primaryColor').value,
+                secondaryColor: document.getElementById('secondaryColor').value,
+                
+                // Analytics
+                googleAnalyticsId: document.getElementById('googleAnalyticsId').value,
+                facebookPixelId: document.getElementById('facebookPixelId').value
+            };
+            
+            try {
+                showLoading();
+                const result = await saveSettings(settingsData);
+                
+                if (result.success) {
+                    const successMsg = document.getElementById('successMessage');
+                    successMsg.classList.add('active');
+                    
+                    setTimeout(() => {
+                        successMsg.classList.remove('active');
+                    }, 5000);
+                    
+                    showToast('Settings saved successfully!', 'success');
+                } else {
+                    showToast(result.message || 'Failed to save settings', 'error');
+                }
+                
+                hideLoading();
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showToast('Failed to save settings', 'error');
+                hideLoading();
+            }
+        });
+        
+        // Initialize color pickers
+        function initColorPickers() {
+            const primaryColor = document.getElementById('primaryColor');
+            const primaryColorHex = document.getElementById('primaryColorHex');
+            const secondaryColor = document.getElementById('secondaryColor');
+            const secondaryColorHex = document.getElementById('secondaryColorHex');
+            
+            // Sync color picker with text input
+            primaryColor.addEventListener('input', (e) => {
+                primaryColorHex.value = e.target.value;
+            });
+            
+            primaryColorHex.addEventListener('input', (e) => {
+                if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                    primaryColor.value = e.target.value;
+                }
+            });
+            
+            secondaryColor.addEventListener('input', (e) => {
+                secondaryColorHex.value = e.target.value;
+            });
+            
+            secondaryColorHex.addEventListener('input', (e) => {
+                if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                    secondaryColor.value = e.target.value;
+                }
+            });
+        }
+        
+        // Check Firebase status
+        function checkFirebaseStatus() {
+            const statusText = document.getElementById('firebaseStatusText');
+            const projectId = document.getElementById('firebaseProjectId');
+            
+            if (isFirebaseConfigured && app) {
+                statusText.innerHTML = '<span style="color: var(--success);">✓ Connected</span>';
+                projectId.textContent = firebaseConfig.projectId || 'N/A';
+            } else {
+                statusText.innerHTML = '<span style="color: var(--warning);">⚠ Not Configured</span>';
+                projectId.textContent = 'Not configured';
+            }
+        }
+        
+        // Copy Firebase configuration
+        function copyFirebaseConfig() {
+            const config = JSON.stringify(firebaseConfig, null, 2);
+            
+            navigator.clipboard.writeText(config).then(() => {
+                const btn = event.currentTarget;
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="fas fa-check"></i><span>Copied!</span>';
+                
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<i class="fas fa-copy"></i><span>Copy Firebase Config</span>';
+                }, 2000);
+                
+                showToast('Firebase configuration copied to clipboard', 'success');
+            }).catch(err => {
+                showToast('Failed to copy configuration', 'error');
+            });
+        }
+        
+        // Clear cache
+        function clearCache() {
+            if (confirm('Are you sure you want to clear the cache? This will reload all data from the server.')) {
+                try {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    
+                    if ('caches' in window) {
+                        caches.keys().then(names => {
+                            names.forEach(name => {
+                                caches.delete(name);
+                            });
+                        });
+                    }
+                    
+                    showToast('Cache cleared successfully', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } catch (error) {
+                    console.error('Error clearing cache:', error);
+                    showToast('Failed to clear cache', 'error');
+                }
+            }
+        }
+        
+        // Reset settings to defaults
+        function resetSettings() {
+            if (confirm('Are you sure you want to reset all settings to default values? This action cannot be undone.')) {
+                const defaultSettings = {
+                    storeName: 'The Gadget Hub Store',
+                    email: 'info@gadgethubstore.com',
+                    currency: 'USD',
+                    storeDescription: '',
+                    masterAffiliateUrl: 'https://s.click.aliexpress.com/e/_c3hTwqib',
+                    socialLinks: {
+                        facebook: '',
+                        instagram: '',
+                        youtube: '',
+                        tiktok: '',
+                        twitter: ''
+                    },
+                    metaTitle: '',
+                    metaDescription: '',
+                    metaKeywords: '',
+                    newsletterEmail: '',
+                    notificationEmail: '',
+                    primaryColor: '#00d4ff',
+                    secondaryColor: '#b026ff',
+                    googleAnalyticsId: '',
+                    facebookPixelId: ''
+                };
+                
+                saveSettings(defaultSettings).then(() => {
+                    showToast('Settings reset to defaults', 'success');
+                    loadSettings();
+                });
+            }
+        }
+        
+        // Initialize page
+        initSettingsPage();
+    </script>
+</body>
+</html>
