@@ -11,32 +11,114 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/animations.css">
-    <link rel="stylesheet" href="/css/responsive.css">
-    
-    <!-- Reuse styles from products.html -->
-    <link rel="stylesheet" href="/admin/products.html" media="none" onload="if(media!='all')media='all'">
+    <!-- Stylesheets - FIXED PATHS -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <link rel="stylesheet" href="../css/responsive.css">
     
     <style>
-        /* Include all styles from products.html */
-        .admin-container { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
-        .admin-sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 2rem 0; position: fixed; height: 100vh; width: 250px; overflow-y: auto; }
-        .admin-logo { padding: 0 2rem 2rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
-        .admin-logo h2 { font-size: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-        .admin-logo i { color: var(--accent-primary); }
-        .admin-nav { display: flex; flex-direction: column; }
-        .admin-nav-item { display: flex; align-items: center; gap: 1rem; padding: 1rem 2rem; color: var(--text-secondary); transition: all var(--transition-fast); cursor: pointer; text-decoration: none; }
-        .admin-nav-item:hover { background: var(--bg-secondary); color: var(--text-primary); }
-        .admin-nav-item.active { background: var(--accent-gradient); color: white; }
-        .admin-nav-item i { width: 20px; text-align: center; }
-        .admin-main { margin-left: 250px; padding: 2rem; background: var(--bg-primary); min-height: 100vh; }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-        .admin-header-title h1 { margin-bottom: 0.5rem; }
-        .admin-header-title p { color: var(--text-secondary); margin: 0; }
-        .admin-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-        .admin-content-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2rem; }
+        .admin-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+        
+        .admin-sidebar {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            width: 250px;
+            overflow-y: auto;
+        }
+        
+        .admin-logo {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        
+        .admin-logo h2 {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .admin-logo i {
+            color: var(--accent-primary);
+        }
+        
+        .admin-nav {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .admin-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 2rem;
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        .admin-nav-item:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .admin-nav-item.active {
+            background: var(--accent-gradient);
+            color: white;
+        }
+        
+        .admin-nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .admin-main {
+            margin-left: 250px;
+            padding: 2rem;
+            background: var(--bg-primary);
+            min-height: 100vh;
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .admin-header-title h1 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .admin-header-title p {
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        
+        .admin-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .admin-content-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
         
         .categories-grid-admin {
             display: grid;
@@ -83,9 +165,31 @@
             gap: 0.5rem;
         }
         
-        .btn-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
-        .btn-icon:hover { background: var(--surface-hover); color: var(--text-primary); border-color: var(--accent-primary); }
-        .btn-icon.btn-danger:hover { background: var(--danger); border-color: var(--danger); color: white; }
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .btn-icon:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            border-color: var(--accent-primary);
+        }
+        
+        .btn-icon.btn-danger:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
         
         .category-card-body h3 {
             margin-bottom: 0.5rem;
@@ -135,24 +239,163 @@
             border-radius: var(--radius-full);
         }
         
-        .custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; z-index: var(--z-modal); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity var(--transition-base); }
-        .custom-modal.active { opacity: 1; pointer-events: all; }
-        .custom-modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
-        .custom-modal-content { position: relative; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); transform: scale(0.9); transition: transform var(--transition-base); }
-        .custom-modal.active .custom-modal-content { transform: scale(1); }
-        .custom-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 2rem; border-bottom: 1px solid var(--border); }
-        .custom-modal-header h3 { margin: 0; font-size: 1.5rem; }
-        .custom-modal-close { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: none; border-radius: var(--radius-md); color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); }
-        .custom-modal-close:hover { background: var(--surface-hover); color: var(--text-primary); transform: rotate(90deg); }
-        .custom-modal-body { padding: 2rem; }
-        .custom-modal-footer { padding: 1.5rem 2rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
+        .empty-state-admin {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
         
-        .admin-form { display: grid; gap: 1.5rem; }
-        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-        .form-group label { font-weight: 600; font-size: 0.9375rem; }
-        .form-group input, .form-group textarea, .form-group select { padding: 0.75rem 1rem; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-family: inherit; font-size: 0.9375rem; transition: all var(--transition-fast); }
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: var(--accent-primary); background: var(--surface); }
-        .form-actions { display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border); }
+        .empty-state-admin i {
+            font-size: 4rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+        
+        .empty-state-admin h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state-admin p {
+            color: var(--text-secondary);
+            max-width: 400px;
+            margin: 0 auto 2rem;
+        }
+        
+        /* MODAL STYLES */
+        .custom-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: var(--z-modal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-base);
+        }
+        
+        .custom-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .custom-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+        
+        .custom-modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            transform: scale(0.9);
+            transition: transform var(--transition-base);
+        }
+        
+        .custom-modal.active .custom-modal-content {
+            transform: scale(1);
+        }
+        
+        .custom-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .custom-modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .custom-modal-close {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .custom-modal-close:hover {
+            background: var(--surface-hover);
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+        
+        .custom-modal-body {
+            padding: 2rem;
+        }
+        
+        /* FORM STYLES */
+        .admin-form {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.9375rem;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            padding: 0.75rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9375rem;
+            transition: all var(--transition-fast);
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: var(--surface);
+        }
+        
+        .form-group small {
+            color: var(--text-muted);
+            font-size: 0.8125rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
         
         .icon-picker {
             display: grid;
@@ -191,16 +434,26 @@
             color: white;
         }
         
-        .empty-state-admin { text-align: center; padding: 4rem 2rem; }
-        .empty-state-admin i { font-size: 4rem; color: var(--text-muted); margin-bottom: 1.5rem; }
-        .empty-state-admin h3 { margin-bottom: 1rem; }
-        .empty-state-admin p { color: var(--text-secondary); max-width: 400px; margin: 0 auto 2rem; }
-        
         @media (max-width: 991px) {
-            .admin-container { grid-template-columns: 1fr; }
-            .admin-sidebar { position: static; width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-            .admin-main { margin-left: 0; }
-            .categories-grid-admin { grid-template-columns: 1fr; }
+            .admin-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-sidebar {
+                position: static;
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+            
+            .admin-main {
+                margin-left: 0;
+            }
+            
+            .categories-grid-admin {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -215,23 +468,23 @@
                 </h2>
             </div>
             <nav class="admin-nav">
-                <a href="/admin/index.html" class="admin-nav-item">
+                <a href="index.html" class="admin-nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="/admin/products.html" class="admin-nav-item">
+                <a href="products.html" class="admin-nav-item">
                     <i class="fas fa-box"></i>
                     <span>Products</span>
                 </a>
-                <a href="/admin/categories.html" class="admin-nav-item active">
+                <a href="categories.html" class="admin-nav-item active">
                     <i class="fas fa-th"></i>
                     <span>Categories</span>
                 </a>
-                <a href="/admin/settings.html" class="admin-nav-item">
+                <a href="settings.html" class="admin-nav-item">
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
                 </a>
-                <a href="/" class="admin-nav-item">
+                <a href="../index.html" class="admin-nav-item">
                     <i class="fas fa-home"></i>
                     <span>View Website</span>
                 </a>
@@ -262,26 +515,70 @@
                 <div class="categories-grid-admin" id="categoriesGrid">
                     <!-- Categories loaded here -->
                     <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
-                        <div class="loading-spinner"></div>
-                        <p style="margin-top: 1rem; color: var(--text-secondary);">Loading categories...</p>
+                        <p style="color: var(--text-secondary);">Loading categories...</p>
                     </div>
                 </div>
             </div>
         </main>
     </div>
     
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-    
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loader">
-            <div class="loader-cube"></div>
-            <div class="loader-cube"></div>
-            <div class="loader-cube"></div>
-            <div class="loader-cube"></div>
+    <!-- ADD CATEGORY MODAL -->
+    <div class="custom-modal" id="categoryModal">
+        <div class="custom-modal-overlay" onclick="closeCategoryModal()"></div>
+        <div class="custom-modal-content">
+            <div class="custom-modal-header">
+                <h3 id="modalTitle">Add New Category</h3>
+                <button class="custom-modal-close" onclick="closeCategoryModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="custom-modal-body">
+                <form id="categoryForm" class="admin-form">
+                    <div class="form-group">
+                        <label for="categoryName">Category Name *</label>
+                        <input type="text" id="categoryName" required placeholder="Enter category name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoryDescription">Description</label>
+                        <textarea id="categoryDescription" rows="3" placeholder="Enter category description"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categorySlug">Slug *</label>
+                        <input type="text" id="categorySlug" required placeholder="category-slug">
+                        <small>URL-friendly name (lowercase, no spaces)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Icon *</label>
+                        <input type="hidden" id="selectedIcon" required>
+                        <div class="icon-picker" id="iconPicker">
+                            <!-- Icons will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="categoryFeatured" style="width: auto; margin-right: 0.5rem;">
+                            <span>Featured Category</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" onclick="closeCategoryModal()" class="btn btn-outline">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="submitCategoryBtn">
+                            <i class="fas fa-plus"></i>
+                            <span>Add Category</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -289,12 +586,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
-    <!-- Application Scripts -->
-    <script src="/js/firebase.js"></script>
-    <script src="/js/ui.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/categories.js"></script>
-    <script src="/js/admin.js"></script>
+    <!-- Application Scripts - FIXED PATHS -->
+    <script src="../js/firebase.js"></script>
+    <script src="../js/ui.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/categories.js"></script>
+    <script src="../js/admin.js"></script>
     
     <script>
         let allCategories = [];
@@ -309,31 +606,178 @@
             'fa-desktop', 'fa-shopping-cart', 'fa-tools', 'fa-wrench', 'fa-dumbbell'
         ];
         
-        // Initialize page
-        async function initCategoriesPage() {
-            const hasAccess = await checkAdminAccess();
-            if (!hasAccess) return;
+        // ========================================
+        // MODAL FUNCTIONS
+        // ========================================
+        
+        // Show add category modal
+        function showAddCategoryModal() {
+            console.log('Opening add category modal...');
+            const modal = document.getElementById('categoryModal');
+            const form = document.getElementById('categoryForm');
             
-            await loadAllCategories();
+            if (!modal || !form) {
+                console.error('Modal or form not found!');
+                return;
+            }
+            
+            // Reset form
+            form.reset();
+            document.getElementById('selectedIcon').value = '';
+            
+            // Set modal title
+            document.getElementById('modalTitle').textContent = 'Add New Category';
+            
+            // Update submit button
+            const submitBtn = document.getElementById('submitCategoryBtn');
+            submitBtn.innerHTML = '<i class="fas fa-plus"></i><span>Add Category</span>';
+            
+            // Populate icon picker
+            populateIconPicker();
+            
+            // Show modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Close category modal
+        function closeCategoryModal() {
+            console.log('Closing modal...');
+            const modal = document.getElementById('categoryModal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Populate icon picker
+        function populateIconPicker() {
+            const iconPicker = document.getElementById('iconPicker');
+            if (!iconPicker) return;
+            
+            iconPicker.innerHTML = popularIcons.map(icon => `
+                <div class="icon-option" data-icon="${icon}" onclick="selectIcon('${icon}')">
+                    <i class="fas ${icon}"></i>
+                </div>
+            `).join('');
+        }
+        
+        // Select icon
+        function selectIcon(icon) {
+            // Remove selected class from all icons
+            document.querySelectorAll('.icon-option').forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selected class to clicked icon
+            event.currentTarget.classList.add('selected');
+            
+            // Set hidden input value
+            document.getElementById('selectedIcon').value = icon;
+        }
+        
+        // Handle form submission
+        document.getElementById('categoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            console.log('Category form submitted...');
+            
+            const icon = document.getElementById('selectedIcon').value;
+            if (!icon) {
+                showToast('Please select an icon', 'error');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitCategoryBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Adding...</span>';
+            
+            const categoryData = {
+                name: document.getElementById('categoryName').value,
+                description: document.getElementById('categoryDescription').value,
+                slug: document.getElementById('categorySlug').value,
+                icon: icon,
+                featured: document.getElementById('categoryFeatured').checked,
+                productCount: 0
+            };
+            
+            try {
+                if (isFirebaseConfigured) {
+                    await db.collection('categories').add({
+                        ...categoryData,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    showToast('Category added successfully!', 'success');
+                    closeCategoryModal();
+                    await loadAllCategories();
+                } else {
+                    showToast('Firebase not configured', 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            } catch (error) {
+                console.error('Error adding category:', error);
+                showToast('Failed to add category', 'error');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+        
+        // Auto-generate slug from name
+        document.getElementById('categoryName').addEventListener('input', (e) => {
+            const slug = e.target.value.toLowerCase()
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-');
+            document.getElementById('categorySlug').value = slug;
+        });
+        
+        // ========================================
+        // PAGE INITIALIZATION
+        // ========================================
+        
+        // Initialize categories page
+        async function initCategoriesPage() {
+            try {
+                console.log('Initializing categories page...');
+                await loadAllCategories();
+                console.log('Categories page initialized successfully');
+            } catch (error) {
+                console.error('Error initializing categories page:', error);
+                showToast('Error loading categories page', 'error');
+            }
         }
         
         // Load all categories
         async function loadAllCategories() {
             try {
-                showLoading();
                 allCategories = await getCategories();
                 displayCategories();
-                hideLoading();
             } catch (error) {
                 console.error('Error loading categories:', error);
                 showToast('Failed to load categories', 'error');
-                hideLoading();
+                
+                const container = document.getElementById('categoriesGrid');
+                if (container) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                            <p style="color: var(--text-secondary);">Error loading categories. Please refresh the page.</p>
+                        </div>
+                    `;
+                }
             }
         }
         
         // Display categories
         function displayCategories() {
             const container = document.getElementById('categoriesGrid');
+            
+            if (!container) {
+                console.error('Categories grid container not found');
+                return;
+            }
             
             if (allCategories.length === 0) {
                 container.innerHTML = `
@@ -361,9 +805,6 @@
                             <i class="fas ${category.icon}"></i>
                         </div>
                         <div class="category-card-actions">
-                            <button class="btn-icon" onclick="editCategoryModal('${category.id}')" title="Edit">
-                                <i class="fas fa-edit"></i>
-                            </button>
                             <button class="btn-icon btn-danger" onclick="deleteCategoryConfirm('${category.id}')" title="Delete">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -385,277 +826,55 @@
             `).join('');
         }
         
-        // Show add category modal
-        function showAddCategoryModal() {
-            const formHTML = `
-                <form id="addCategoryForm" class="admin-form">
-                    <div class="form-group">
-                        <label for="categoryName">Category Name *</label>
-                        <input type="text" id="categoryName" required placeholder="Enter category name">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="categoryDescription">Description</label>
-                        <textarea id="categoryDescription" rows="3" placeholder="Enter category description"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="categorySlug">Slug *</label>
-                        <input type="text" id="categorySlug" required placeholder="category-slug">
-                        <small style="color: var(--text-muted);">URL-friendly name (lowercase, no spaces)</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Icon *</label>
-                        <input type="hidden" id="selectedIcon" required>
-                        <div class="icon-picker" id="iconPicker">
-                            ${popularIcons.map(icon => `
-                                <div class="icon-option" data-icon="${icon}" onclick="selectIcon('${icon}')">
-                                    <i class="fas ${icon}"></i>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="categoryFeatured" style="width: auto; margin-right: 0.5rem;">
-                            <span>Featured Category</span>
-                        </label>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" onclick="closeModal()" class="btn btn-outline">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add Category</button>
-                    </div>
-                </form>
-            `;
-            
-            createModal('Add New Category', formHTML);
-            
-            // Auto-generate slug from name
-            document.getElementById('categoryName').addEventListener('input', (e) => {
-                const slug = e.target.value.toLowerCase()
-                    .replace(/[^\w\s-]/g, '')
-                    .replace(/\s+/g, '-');
-                document.getElementById('categorySlug').value = slug;
-            });
-            
-            // Handle form submission
-            document.getElementById('addCategoryForm').addEventListener('submit', handleAddCategory);
-        }
-        
-        // Select icon
-        function selectIcon(icon) {
-            document.querySelectorAll('.icon-option').forEach(opt => opt.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            document.getElementById('selectedIcon').value = icon;
-        }
-        
-        // Handle add category
-        async function handleAddCategory(e) {
-            e.preventDefault();
-            
-            const icon = document.getElementById('selectedIcon').value;
-            if (!icon) {
-                showToast('Please select an icon', 'error');
-                return;
-            }
-            
-            const categoryData = {
-                name: document.getElementById('categoryName').value,
-                description: document.getElementById('categoryDescription').value,
-                slug: document.getElementById('categorySlug').value,
-                icon: icon,
-                featured: document.getElementById('categoryFeatured').checked,
-                productCount: 0
-            };
-            
-            try {
-                showLoading();
-                
-                if (isFirebaseConfigured) {
-                    await db.collection('categories').add({
-                        ...categoryData,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    showToast('Category added successfully!', 'success');
-                    closeModal();
-                    await loadAllCategories();
-                } else {
-                    showToast('Firebase not configured', 'error');
-                }
-                
-                hideLoading();
-            } catch (error) {
-                console.error('Error adding category:', error);
-                showToast('Failed to add category', 'error');
-                hideLoading();
-            }
-        }
-        
-        // Edit category modal
-        function editCategoryModal(categoryId) {
-            const category = allCategories.find(c => c.id === categoryId);
-            if (!category) return;
-            
-            const formHTML = `
-                <form id="editCategoryForm" class="admin-form">
-                    <input type="hidden" id="editCategoryId" value="${categoryId}">
-                    
-                    <div class="form-group">
-                        <label for="editCategoryName">Category Name *</label>
-                        <input type="text" id="editCategoryName" required value="${category.name}">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="editCategoryDescription">Description</label>
-                        <textarea id="editCategoryDescription" rows="3">${category.description || ''}</textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="editCategorySlug">Slug *</label>
-                        <input type="text" id="editCategorySlug" required value="${category.slug}">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Icon *</label>
-                        <input type="hidden" id="editSelectedIcon" value="${category.icon}" required>
-                        <div class="icon-picker" id="editIconPicker">
-                            ${popularIcons.map(icon => `
-                                <div class="icon-option ${icon === category.icon ? 'selected' : ''}" 
-                                     data-icon="${icon}" 
-                                     onclick="selectEditIcon('${icon}')">
-                                    <i class="fas ${icon}"></i>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="editCategoryFeatured" ${category.featured ? 'checked' : ''} style="width: auto; margin-right: 0.5rem;">
-                            <span>Featured Category</span>
-                        </label>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" onclick="closeModal()" class="btn btn-outline">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Category</button>
-                    </div>
-                </form>
-            `;
-            
-            createModal('Edit Category', formHTML);
-            
-            // Handle form submission
-            document.getElementById('editCategoryForm').addEventListener('submit', handleEditCategory);
-        }
-        
-        // Select edit icon
-        function selectEditIcon(icon) {
-            document.querySelectorAll('#editIconPicker .icon-option').forEach(opt => opt.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            document.getElementById('editSelectedIcon').value = icon;
-        }
-        
-        // Handle edit category
-        async function handleEditCategory(e) {
-            e.preventDefault();
-            
-            const categoryId = document.getElementById('editCategoryId').value;
-            
-            const categoryData = {
-                name: document.getElementById('editCategoryName').value,
-                description: document.getElementById('editCategoryDescription').value,
-                slug: document.getElementById('editCategorySlug').value,
-                icon: document.getElementById('editSelectedIcon').value,
-                featured: document.getElementById('editCategoryFeatured').checked
-            };
-            
-            try {
-                showLoading();
-                
-                if (isFirebaseConfigured) {
-                    await db.collection('categories').doc(categoryId).update({
-                        ...categoryData,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    showToast('Category updated successfully!', 'success');
-                    closeModal();
-                    await loadAllCategories();
-                } else {
-                    showToast('Firebase not configured', 'error');
-                }
-                
-                hideLoading();
-            } catch (error) {
-                console.error('Error updating category:', error);
-                showToast('Failed to update category', 'error');
-                hideLoading();
-            }
-        }
-        
         // Delete category confirmation
         function deleteCategoryConfirm(categoryId) {
             const category = allCategories.find(c => c.id === categoryId);
             if (!category) return;
             
-            createModal(
-                'Confirm Delete',
-                `<p>Are you sure you want to delete <strong>${category.name}</strong>?</p>
-                 <p style="color: var(--warning); margin-top: 1rem;">
-                     <i class="fas fa-exclamation-triangle"></i>
-                     Products in this category will become uncategorized.
-                 </p>`,
-                {
-                    footer: `
-                        <button onclick="closeModal()" class="btn btn-outline">Cancel</button>
-                        <button onclick="performDeleteCategory('${categoryId}')" class="btn btn-primary" style="background: var(--danger); border-color: var(--danger);">
-                            <i class="fas fa-trash"></i>
-                            <span>Delete Category</span>
-                        </button>
-                    `
-                }
-            );
+            if (confirm(`Are you sure you want to delete "${category.name}"?\n\nProducts in this category will become uncategorized.`)) {
+                performDeleteCategory(categoryId);
+            }
         }
         
         // Perform delete category
         async function performDeleteCategory(categoryId) {
             try {
-                showLoading();
-                
                 if (isFirebaseConfigured) {
                     await db.collection('categories').doc(categoryId).delete();
                     showToast('Category deleted successfully', 'success');
-                    closeModal();
                     await loadAllCategories();
                 } else {
                     showToast('Firebase not configured', 'error');
                 }
-                
-                hideLoading();
             } catch (error) {
                 console.error('Error deleting category:', error);
                 showToast('Failed to delete category', 'error');
-                hideLoading();
             }
         }
         
-        // Close modal
-        function closeModal() {
-            const modal = document.querySelector('.custom-modal');
-            if (modal) {
-                modal.classList.remove('active');
-                setTimeout(() => modal.remove(), 300);
-            }
+        // Make functions globally accessible
+        window.showAddCategoryModal = showAddCategoryModal;
+        window.closeCategoryModal = closeCategoryModal;
+        window.selectIcon = selectIcon;
+        window.deleteCategoryConfirm = deleteCategoryConfirm;
+        window.performDeleteCategory = performDeleteCategory;
+        window.loadAllCategories = loadAllCategories;
+        
+        // Initialize page when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCategoriesPage);
+        } else {
+            initCategoriesPage();
         }
         
-        // Initialize page
-        initCategoriesPage();
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeCategoryModal();
+            }
+        });
+        
+        console.log('Categories page script loaded');
     </script>
 </body>
 </html>
