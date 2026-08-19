@@ -109,14 +109,19 @@ function createCategoryCard(category) {
 }
 
 // ============================================================================
-// CATEGORY RENDERING
+// CATEGORY RENDERING (Support both renderCategories and displayCategories)
 // ============================================================================
 
 function renderCategories(categories, containerId = 'categories-grid') {
-    const container = document.getElementById(containerId);
+    let container = document.getElementById(containerId);
+    
+    // Fallback support if containerId is categoriesGrid
+    if (!container) {
+        container = document.getElementById('categoriesGrid');
+    }
 
     if (!container) {
-        console.error(`Container with ID "${containerId}" not found`);
+        console.error(`Container not found`);
         return;
     }
 
@@ -146,8 +151,13 @@ function renderCategories(categories, containerId = 'categories-grid') {
     });
 }
 
+// Alias function to support HTML templates looking for displayCategories
+function displayCategories() {
+    renderCategories(allCategories, 'categoriesGrid');
+}
+
 // ============================================================================
-// LOAD CATEGORIES FROM FIRESTORE
+// LOAD CATEGORIES FROM FIRESTORE (Support both loadCategories and loadAllCategories)
 // ============================================================================
 
 async function loadCategories() {
@@ -170,13 +180,15 @@ async function loadCategories() {
         });
 
         renderCategories(allCategories);
+        // Also update the alternative grid if present
+        renderCategories(allCategories, 'categoriesGrid');
 
         return allCategories;
 
     } catch (error) {
         console.error('Error loading categories:', error);
 
-        const container = document.getElementById('categories-grid');
+        const container = document.getElementById('categories-grid') || document.getElementById('categoriesGrid');
         if (container) {
             container.innerHTML = `
                 <div class="empty-state error-state">
@@ -198,6 +210,11 @@ async function loadCategories() {
             hideLoading();
         }
     }
+}
+
+// Alias function to support HTML templates looking for loadAllCategories
+async function loadAllCategories() {
+    return await loadCategories();
 }
 
 // ============================================================================
@@ -257,6 +274,10 @@ function initCategoryForm() {
         return;
     }
 
+    // Prevent duplicate event listeners
+    if (form.getAttribute('data-listener-attached') === 'true') return;
+    form.setAttribute('data-listener-attached', 'true');
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -266,18 +287,25 @@ function initCategoryForm() {
         }
 
         // Store original button state
-        const originalButtonText = submitButton.textContent;
+        const originalButtonText = submitButton.innerHTML;
         const originalButtonDisabled = submitButton.disabled;
 
         try {
             // Set submitting flag
             isSubmittingCategory = true;
 
-            // Get form data
-            const formData = new FormData(form);
-            const categoryName = formData.get('name')?.trim();
-            const categoryIcon = formData.get('icon')?.trim();
-            const categoryDescription = formData.get('description')?.trim();
+            // Get form data safely supporting multiple naming conventions
+            const categoryNameEl = document.getElementById('categoryName') || form.querySelector('[name="name"]');
+            const categoryDescEl = document.getElementById('categoryDescription') || form.querySelector('[name="description"]');
+            const categorySlugEl = document.getElementById('categorySlug') || form.querySelector('[name="slug"]');
+            const categoryIconEl = document.getElementById('selectedIcon') || form.querySelector('[name="icon"]');
+            const categoryFeaturedEl = document.getElementById('categoryFeatured') || form.querySelector('[name="featured"]');
+
+            const categoryName = categoryNameEl ? categoryNameEl.value.trim() : '';
+            const categoryDescription = categoryDescEl ? categoryDescEl.value.trim() : '';
+            const categorySlugInput = categorySlugEl ? categorySlugEl.value.trim() : '';
+            const categoryIcon = categoryIconEl ? categoryIconEl.value.trim() : '';
+            const isFeatured = categoryFeaturedEl ? categoryFeaturedEl.checked : false;
 
             // VALIDATION
             if (!categoryName) {
@@ -292,8 +320,12 @@ function initCategoryForm() {
                 throw new Error('Category name must not exceed 50 characters');
             }
 
+            if (!categoryIcon) {
+                throw new Error('Please select an icon for the category');
+            }
+
             // Generate slug
-            const categorySlug = generateSlug(categoryName);
+            const categorySlug = categorySlugInput || generateSlug(categoryName);
 
             if (!categorySlug) {
                 throw new Error('Unable to generate valid category slug');
@@ -306,7 +338,7 @@ function initCategoryForm() {
             }
 
             // Update UI to loading state
-            submitButton.textContent = 'Adding...';
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
             submitButton.disabled = true;
 
             if (typeof showLoading === 'function') {
@@ -319,6 +351,7 @@ function initCategoryForm() {
                 slug: categorySlug,
                 icon: categoryIcon || 'fas fa-th-large',
                 description: categoryDescription || '',
+                featured: isFeatured,
                 productCount: 0,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -339,6 +372,11 @@ function initCategoryForm() {
                 showToast('Category added successfully!', 'success');
             }
 
+            // Close modal if function exists
+            if (typeof closeCategoryModal === 'function') {
+                closeCategoryModal();
+            }
+
             // Reset form
             form.reset();
 
@@ -353,11 +391,7 @@ function initCategoryForm() {
 
             let errorMessage = 'Unable to add category. Please try again.';
 
-            // Handle specific error types
-            if (error.message.includes('required') || 
-                error.message.includes('characters') || 
-                error.message.includes('already exists') ||
-                error.message.includes('valid category slug')) {
+            if (error.message) {
                 errorMessage = error.message;
             } else if (error.code === 'permission-denied') {
                 errorMessage = 'Permission denied. Please check your authentication.';
@@ -380,9 +414,9 @@ function initCategoryForm() {
             }
 
         } finally {
-            // GUARANTEED CLEANUP - This ALWAYS runs and fixes the hanging issue
+            // GUARANTEED CLEANUP - Fixes the hanging issue permanently
             isSubmittingCategory = false;
-            submitButton.textContent = originalButtonText;
+            submitButton.innerHTML = originalButtonText;
             submitButton.disabled = originalButtonDisabled;
 
             if (typeof hideLoading === 'function') {
@@ -418,7 +452,6 @@ async function handleEditCategory(categoryId) {
         const editForm = document.getElementById('edit-category-form');
 
         if (editModal && editForm) {
-            // Populate form fields
             const nameInput = editForm.querySelector('[name="name"]');
             const iconInput = editForm.querySelector('[name="icon"]');
             const descriptionInput = editForm.querySelector('[name="description"]');
@@ -427,10 +460,7 @@ async function handleEditCategory(categoryId) {
             if (iconInput) iconInput.value = category.icon || '';
             if (descriptionInput) descriptionInput.value = category.description || '';
 
-            // Store category ID for update
             editForm.setAttribute('data-category-id', categoryId);
-
-            // Show modal
             editModal.classList.add('active');
         } else {
             console.warn('Edit modal or form not found in DOM');
@@ -446,26 +476,13 @@ async function handleEditCategory(categoryId) {
 }
 
 async function updateCategory(categoryId, updateData) {
-    if (!categoryId) {
-        console.error('Category ID is required for update');
-        return false;
-    }
-
-    if (!updateData || typeof updateData !== 'object') {
-        console.error('Valid update data is required');
-        return false;
-    }
+    if (!categoryId) return false;
 
     try {
-        if (typeof showLoading === 'function') {
-            showLoading();
-        }
+        if (typeof showLoading === 'function') showLoading();
 
         const categoriesRef = getCategoriesCollection();
-
-        if (!categoriesRef) {
-            throw new Error('Unable to access database');
-        }
+        if (!categoriesRef) throw new Error('Unable to access database');
 
         const finalUpdateData = {
             ...updateData,
@@ -478,44 +495,26 @@ async function updateCategory(categoryId, updateData) {
             showToast('Category updated successfully!', 'success');
         }
 
-        // Reload categories
         await loadCategories();
-
         return true;
 
     } catch (error) {
         console.error('Error updating category:', error);
-
-        let errorMessage = 'Unable to update category. Please try again.';
-
-        if (error.code === 'permission-denied') {
-            errorMessage = 'Permission denied. Please check your authentication.';
-        } else if (error.code === 'not-found') {
-            errorMessage = 'Category not found.';
-        }
-
         if (typeof showToast === 'function') {
-            showToast(errorMessage, 'error');
+            showToast('Unable to update category. Please try again.', 'error');
         }
-
         return false;
-
     } finally {
-        if (typeof hideLoading === 'function') {
-            hideLoading();
-        }
+        if (typeof hideLoading === 'function') hideLoading();
     }
 }
 
 // ============================================================================
-// DELETE CATEGORY
+// DELETE CATEGORY (Support both handleDeleteCategory and performDeleteCategory)
 // ============================================================================
 
 async function handleDeleteCategory(categoryId) {
-    if (!categoryId) {
-        console.error('Category ID is required for deletion');
-        return false;
-    }
+    if (!categoryId) return false;
 
     const category = allCategories.find(cat => cat.id === categoryId);
     const categoryName = category ? category.name : 'this category';
@@ -525,15 +524,10 @@ async function handleDeleteCategory(categoryId) {
     }
 
     try {
-        if (typeof showLoading === 'function') {
-            showLoading();
-        }
+        if (typeof showLoading === 'function') showLoading();
 
         const categoriesRef = getCategoriesCollection();
-
-        if (!categoriesRef) {
-            throw new Error('Unable to access database');
-        }
+        if (!categoriesRef) throw new Error('Unable to access database');
 
         await categoriesRef.doc(categoryId).delete();
 
@@ -541,33 +535,27 @@ async function handleDeleteCategory(categoryId) {
             showToast('Category deleted successfully!', 'success');
         }
 
-        // Reload categories
         await loadCategories();
-
         return true;
 
     } catch (error) {
         console.error('Error deleting category:', error);
-
-        let errorMessage = 'Unable to delete category. Please try again.';
-
-        if (error.code === 'permission-denied') {
-            errorMessage = 'Permission denied. Please check your authentication.';
-        } else if (error.code === 'not-found') {
-            errorMessage = 'Category not found.';
-        }
-
         if (typeof showToast === 'function') {
-            showToast(errorMessage, 'error');
+            showToast('Unable to delete category. Please try again.', 'error');
         }
-
         return false;
-
     } finally {
-        if (typeof hideLoading === 'function') {
-            hideLoading();
-        }
+        if (typeof hideLoading === 'function') hideLoading();
     }
+}
+
+// Alias functions for compatibility
+function deleteCategoryConfirm(categoryId) {
+    handleDeleteCategory(categoryId);
+}
+
+async function performDeleteCategory(categoryId) {
+    return await handleDeleteCategory(categoryId);
 }
 
 // ============================================================================
@@ -617,9 +605,7 @@ async function updateCategoryProductCounts() {
         const categoriesRef = getCategoriesCollection();
         const productsRef = db.collection('products');
 
-        if (!categoriesRef || !productsRef) {
-            return;
-        }
+        if (!categoriesRef || !productsRef) return;
 
         const categoriesSnapshot = await categoriesRef.get();
         const productsSnapshot = await productsRef.get();
@@ -645,7 +631,6 @@ async function updateCategoryProductCounts() {
         });
 
         await batch.commit();
-
         console.log('Category product counts updated successfully');
 
     } catch (error) {
@@ -658,17 +643,9 @@ async function updateCategoryProductCounts() {
 // ============================================================================
 
 function initCategories() {
-    // Load categories from Firestore
     loadCategories().catch(err => console.error('Error during category initialization:', err));
-
-    // Initialize category form
     initCategoryForm();
-
-    // Initialize search functionality
     initCategorySearch();
-
-    // Update product counts (optional, can be called periodically)
-    // updateCategoryProductCounts().catch(err => console.error('Error updating product counts:', err));
 }
 
 // ============================================================================
@@ -687,12 +664,16 @@ if (document.readyState === 'loading') {
 
 if (typeof window !== 'undefined') {
     window.loadCategories = loadCategories;
+    window.loadAllCategories = loadAllCategories;
     window.renderCategories = renderCategories;
+    window.displayCategories = displayCategories;
     window.createCategoryCard = createCategoryCard;
     window.generateSlug = generateSlug;
     window.handleEditCategory = handleEditCategory;
     window.updateCategory = updateCategory;
     window.handleDeleteCategory = handleDeleteCategory;
+    window.deleteCategoryConfirm = deleteCategoryConfirm;
+    window.performDeleteCategory = performDeleteCategory;
     window.searchCategories = searchCategories;
     window.updateCategoryProductCounts = updateCategoryProductCounts;
     window.initCategories = initCategories;
