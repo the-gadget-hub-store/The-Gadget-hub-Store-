@@ -380,7 +380,7 @@ function initCategoryForm() {
             }
 
         } finally {
-            // GUARANTEED CLEANUP - This ALWAYS runs
+            // GUARANTEED CLEANUP - This ALWAYS runs and fixes the hanging issue
             isSubmittingCategory = false;
             submitButton.textContent = originalButtonText;
             submitButton.disabled = originalButtonDisabled;
