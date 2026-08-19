@@ -533,26 +533,27 @@
                 </button>
             </div>
             <div class="custom-modal-body">
-                <form id="categoryForm" class="admin-form">
+                <!-- ID matched to categories.js -->
+                <form id="category-form" class="admin-form">
                     <div class="form-group">
                         <label for="categoryName">Category Name *</label>
-                        <input type="text" id="categoryName" required placeholder="Enter category name">
+                        <input type="text" id="categoryName" name="name" required placeholder="Enter category name">
                     </div>
                     
                     <div class="form-group">
                         <label for="categoryDescription">Description</label>
-                        <textarea id="categoryDescription" rows="3" placeholder="Enter category description"></textarea>
+                        <textarea id="categoryDescription" name="description" rows="3" placeholder="Enter category description"></textarea>
                     </div>
                     
                     <div class="form-group">
                         <label for="categorySlug">Slug *</label>
-                        <input type="text" id="categorySlug" required placeholder="category-slug">
+                        <input type="text" id="categorySlug" name="slug" required placeholder="category-slug">
                         <small>URL-friendly name (lowercase, no spaces)</small>
                     </div>
                     
                     <div class="form-group">
                         <label>Icon *</label>
-                        <input type="hidden" id="selectedIcon" required>
+                        <input type="hidden" id="selectedIcon" name="icon" required>
                         <div class="icon-picker" id="iconPicker">
                             <!-- Icons will be populated here -->
                         </div>
@@ -560,14 +561,15 @@
                     
                     <div class="form-group">
                         <label>
-                            <input type="checkbox" id="categoryFeatured" style="width: auto; margin-right: 0.5rem;">
+                            <input type="checkbox" id="categoryFeatured" name="featured" style="width: auto; margin-right: 0.5rem;">
                             <span>Featured Category</span>
                         </label>
                     </div>
                     
                     <div class="form-actions">
                         <button type="button" onclick="closeCategoryModal()" class="btn btn-outline">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="submitCategoryBtn">
+                        <!-- ID matched to categories.js -->
+                        <button type="submit" class="btn btn-primary" id="submit-category-btn">
                             <i class="fas fa-plus"></i>
                             <span>Add Category</span>
                         </button>
@@ -614,7 +616,7 @@
         function showAddCategoryModal() {
             console.log('Opening add category modal...');
             const modal = document.getElementById('categoryModal');
-            const form = document.getElementById('categoryForm');
+            const form = document.getElementById('category-form');
             
             if (!modal || !form) {
                 console.error('Modal or form not found!');
@@ -629,7 +631,7 @@
             document.getElementById('modalTitle').textContent = 'Add New Category';
             
             // Update submit button
-            const submitBtn = document.getElementById('submitCategoryBtn');
+            const submitBtn = document.getElementById('submit-category-btn');
             submitBtn.innerHTML = '<i class="fas fa-plus"></i><span>Add Category</span>';
             
             // Populate icon picker
@@ -673,58 +675,6 @@
             // Set hidden input value
             document.getElementById('selectedIcon').value = icon;
         }
-        
-        // Handle form submission
-        document.getElementById('categoryForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            console.log('Category form submitted...');
-            
-            const icon = document.getElementById('selectedIcon').value;
-            if (!icon) {
-                showToast('Please select an icon', 'error');
-                return;
-            }
-            
-            const submitBtn = document.getElementById('submitCategoryBtn');
-            const originalText = submitBtn.innerHTML;
-            
-            // Show loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Adding...</span>';
-            
-            const categoryData = {
-                name: document.getElementById('categoryName').value,
-                description: document.getElementById('categoryDescription').value,
-                slug: document.getElementById('categorySlug').value,
-                icon: icon,
-                featured: document.getElementById('categoryFeatured').checked,
-                productCount: 0
-            };
-            
-            try {
-                if (isFirebaseConfigured) {
-                    await db.collection('categories').add({
-                        ...categoryData,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    
-                    showToast('Category added successfully!', 'success');
-                    closeCategoryModal();
-                    await loadAllCategories();
-                } else {
-                    showToast('Firebase not configured', 'error');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                }
-            } catch (error) {
-                console.error('Error adding category:', error);
-                showToast('Failed to add category', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        });
         
         // Auto-generate slug from name
         document.getElementById('categoryName').addEventListener('input', (e) => {
@@ -874,7 +824,7 @@
             }
         });
         
-        console.log('Categories page script loaded');
+        console.log('Categories page script loaded completely with all functions.');
     </script>
 </body>
 </html>
