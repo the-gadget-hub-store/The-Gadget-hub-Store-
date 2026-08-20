@@ -591,7 +591,7 @@
         </main>
     </div>
     
-    <!-- ADD PRODUCT MODAL - THIS WAS MISSING! -->
+    <!-- ADD PRODUCT MODAL -->
     <div class="custom-modal" id="productModal">
         <div class="custom-modal-overlay" onclick="closeProductModal()"></div>
         <div class="custom-modal-content">
@@ -712,14 +712,14 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK & Config - LOADED FIRST -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    
-    <!-- Application Scripts - FIXED PATHS -->
     <script src="../js/firebase.js"></script>
+    
+    <!-- Application Scripts - LOADED AFTER FIREBASE -->
     <script src="../js/ui.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/products.js"></script>
@@ -731,7 +731,7 @@
         let allCategories = [];
         
         // ========================================
-        // MODAL FUNCTIONS - THIS WAS MISSING!
+        // MODAL FUNCTIONS
         // ========================================
         
         // Show add product form
