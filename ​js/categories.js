@@ -343,8 +343,8 @@ function initCategoryForm() {
                 description: categoryDescription || '',
                 featured: isFeatured,
                 productCount: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: new Date(),
+                updatedAt: new Date()
             };
 
             // Get Firestore reference
@@ -482,7 +482,7 @@ async function updateCategory(categoryId, updateData) {
 
         const finalUpdateData = {
             ...updateData,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            updatedAt: new Date()
         };
 
         await categoriesRef.doc(categoryId).update(finalUpdateData);
