@@ -9,14 +9,18 @@ let allCategories = [];
 let isSubmittingCategory = false;
 
 // ============================================================================
-// FIREBASE/FIRESTORE REFERENCES
+// FIREBASE/FIRESTORE REFERENCES (Fixed for robust loading)
 // ============================================================================
 
 const getCategoriesCollection = () => {
     try {
-        if (typeof db !== 'undefined' && db) {
-            return db.collection('categories');
+        // Safe check for global db or firebase.firestore instance
+        const database = window.db || (typeof db !== 'undefined' && db ? db : null) || (typeof firebase !== 'undefined' ? firebase.firestore() : null);
+        
+        if (database) {
+            return database.collection('categories');
         }
+        
         console.error('Firestore database not initialized');
         return null;
     } catch (error) {
@@ -347,11 +351,15 @@ function initCategoryForm() {
                 updatedAt: new Date()
             };
 
-            // Get Firestore reference
-            const categoriesRef = getCategoriesCollection();
+            // Get Firestore reference with fallback check
+            let categoriesRef = getCategoriesCollection();
+            if (!categoriesRef && typeof firebase !== 'undefined') {
+                window.db = firebase.firestore();
+                categoriesRef = getCategoriesCollection();
+            }
 
             if (!categoriesRef) {
-                throw new Error('Unable to access database. Please check your connection.');
+                throw new Error('Database connection not ready. Please refresh the page and try again.');
             }
 
             // Add category to Firestore
@@ -617,7 +625,8 @@ async function updateCategoryProductCounts() {
             }
         });
 
-        const batch = db.batch();
+        const database = window.db || db;
+        const batch = database.batch();
 
         categoriesSnapshot.forEach(doc => {
             const categorySlug = doc.data().slug;
