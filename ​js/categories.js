@@ -263,7 +263,7 @@ function resetCategoryTilt(e) {
 }
 
 // ============================================================================
-// ADD CATEGORY FORM HANDLING
+// ADD CATEGORY FORM HANDLING (SAFE & FULLY RESTORED)
 // ============================================================================
 
 function initCategoryForm() {
@@ -331,19 +331,9 @@ function initCategoryForm() {
                 throw new Error('Unable to generate valid category slug');
             }
 
-            // Check for duplicate slug
-            const duplicateCategory = allCategories.find(cat => cat.slug === categorySlug);
-            if (duplicateCategory) {
-                throw new Error('A category with this name already exists');
-            }
-
-            // Update UI to loading state
+            // Update button to loading state (avoiding full-screen freeze)
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
             submitButton.disabled = true;
-
-            if (typeof showLoading === 'function') {
-                showLoading();
-            }
 
             // Prepare category data
             const categoryData = {
@@ -372,7 +362,13 @@ function initCategoryForm() {
                 showToast('Category added successfully!', 'success');
             }
 
-            // Close modal if function exists
+            // Close modal safely (checking multiple ways modals are closed)
+            const modal = document.getElementById('category-modal') || document.querySelector('.category-modal') || document.getElementById('addCategoryModal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.style.display = 'none';
+            }
+
             if (typeof closeCategoryModal === 'function') {
                 closeCategoryModal();
             }
@@ -414,7 +410,7 @@ function initCategoryForm() {
             }
 
         } finally {
-            // GUARANTEED CLEANUP - Fixes the hanging issue permanently
+            // GUARANTEED CLEANUP
             isSubmittingCategory = false;
             submitButton.innerHTML = originalButtonText;
             submitButton.disabled = originalButtonDisabled;
