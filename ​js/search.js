@@ -1,256 +1,157 @@
-// ===================================
-// SEARCH FUNCTIONALITY
-// ===================================
+import { getState } from './state.js';
+import { searchProducts } from './products.js';
+import { debounce } from './ui.js';
 
-let searchResults = [];
-let recentSearches = storage.get('recentSearches') || [];
+let searchOverlay = null;
+let searchInput = null;
+let searchResults = null;
 
-// Initialize search
-function initializeSearch() {
-    const searchBtn = document.getElementById('searchBtn');
-    const searchOverlay = document.getElementById('searchOverlay');
-    const searchClose = document.getElementById('searchClose');
-    const searchInput = document.getElementById('searchInput');
-    const searchClear = document.getElementById('searchClear');
-    
-    if (searchBtn) {
-        searchBtn.addEventListener('click', openSearch);
-    }
-    
-    if (searchClose) {
-        searchClose.addEventListener('click', closeSearch);
-    }
-    
-    if (searchOverlay) {
-        searchOverlay.addEventListener('click', (e) => {
-            if (e.target === searchOverlay) {
-                closeSearch();
-            }
-        });
-    }
-    
-    if (searchInput) {
-        searchInput.addEventListener('input', debounce(handleSearch, 300));
-        searchInput.addEventListener('focus', showSearchSuggestions);
-    }
-    
-    if (searchClear) {
-        searchClear.addEventListener('click', clearSearch);
-    }
-    
-    // Load recent searches
-    displayRecentSearches();
+/**
+ * Initialize search
+ */
+export function initSearch() {
+  createSearchOverlay();
+  setupSearchTriggers();
 }
 
-// Open search overlay
-function openSearch() {
-    const searchOverlay = document.getElementById('searchOverlay');
-    const searchInput = document.getElementById('searchInput');
-    
-    if (searchOverlay) {
-        searchOverlay.classList.add('active');
-        setTimeout(() => searchInput && searchInput.focus(), 300);
+/**
+ * Create search overlay
+ */
+function createSearchOverlay() {
+  searchOverlay = document.createElement('div');
+  searchOverlay.className = 'search-overlay';
+  searchOverlay.innerHTML = `
+    <div class="search-container">
+      <div class="search-header">
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Search for gadgets, accessories..." 
+          autocomplete="off"
+        />
+        <button class="search-close">✕</button>
+      </div>
+      <div class="search-body">
+        <div class="search-results"></div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(searchOverlay);
+  
+  searchInput = searchOverlay.querySelector('.search-input');
+  searchResults = searchOverlay.querySelector('.search-results');
+  const closeBtn = searchOverlay.querySelector('.search-close');
+  
+  // Event listeners
+  searchInput.addEventListener('input', debounce(handleSearch, 300));
+  closeBtn.addEventListener('click', closeSearch);
+  searchOverlay.addEventListener('click', (e) => {
+    if (e.target === searchOverlay) {
+      closeSearch();
     }
+  });
+  
+  // Keyboard shortcut
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      openSearch();
+    }
+    if (e.key === 'Escape' && searchOverlay.classList.contains('active')) {
+      closeSearch();
+    }
+  });
 }
 
-// Close search overlay
-function closeSearch() {
-    const searchOverlay = document.getElementById('searchOverlay');
-    const searchInput = document.getElementById('searchInput');
-    
-    if (searchOverlay) {
-        searchOverlay.classList.remove('active');
-        if (searchInput) {
-            searchInput.value = '';
-        }
-        hideSearchResults();
-    }
+/**
+ * Setup search triggers
+ */
+function setupSearchTriggers() {
+  const searchButtons = document.querySelectorAll('.search-btn, .search-trigger');
+  searchButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openSearch();
+    });
+  });
 }
 
-// Handle search input
-async function handleSearch(e) {
-    const query = e.target.value.trim();
-    const searchClear = document.getElementById('searchClear');
-    
-    // Show/hide clear button
-    if (searchClear) {
-        if (query.length > 0) {
-            searchClear.classList.add('visible');
-        } else {
-            searchClear.classList.remove('visible');
-        }
-    }
-    
-    if (query.length < 2) {
-        hideSearchResults();
-        showSearchSuggestions();
-        return;
-    }
-    
-    try {
-        const results = await searchProducts(query);
-        searchResults = results;
-        displaySearchResults(results, query);
-        
-        // Add to recent searches
-        addRecentSearch(query);
-    } catch (error) {
-        console.error('Search error:', error);
-        showToast('Search failed', 'error');
-    }
+/**
+ * Open search
+ */
+export function openSearch() {
+  searchOverlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => searchInput.focus(), 100);
 }
 
-// Display search results
-function displaySearchResults(results, query) {
-    const resultsContainer = document.getElementById('searchResults');
-    const suggestionsContainer = document.getElementById('searchSuggestions');
-    
-    if (!resultsContainer) return;
-    
-    // Hide suggestions
-    if (suggestionsContainer) {
-        suggestionsContainer.style.display = 'none';
-    }
-    
-    if (results.length === 0) {
-        resultsContainer.innerHTML = `
-            <div class="search-empty">
-                <i class="fas fa-search"></i>
-                <h4>No results found for "${query}"</h4>
-                <p>Try searching with different keywords</p>
-            </div>
-        `;
-        resultsContainer.classList.add('active');
-        return;
-    }
-    
-    const resultsHTML = `
-        <div class="search-results-header">
-            <h4>Search Results</h4>
-            <span class="results-count">${results.length} products found</span>
-        </div>
-        <div class="search-results-grid">
-            ${results.slice(0, 6).map(product => createSearchResultCard(product)).join('')}
-        </div>
-        ${results.length > 6 ? `
-            <div class="search-results-footer">
-                <a href="/pages/shop.html?search=${encodeURIComponent(query)}" class="btn btn-outline">
-                    <span>View All Results</span>
-                    <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-        ` : ''}
+/**
+ * Close search
+ */
+export function closeSearch() {
+  searchOverlay.classList.remove('active');
+  document.body.style.overflow = '';
+  searchInput.value = '';
+  searchResults.innerHTML = '';
+}
+
+/**
+ * Handle search
+ */
+function handleSearch(e) {
+  const searchTerm = e.target.value.trim();
+  
+  if (!searchTerm) {
+    searchResults.innerHTML = `
+      <div class="search-empty">
+        <p>Start typing to search for products...</p>
+      </div>
     `;
-    
-    resultsContainer.innerHTML = resultsHTML;
-    resultsContainer.classList.add('active');
+    return;
+  }
+  
+  const results = searchProducts(searchTerm);
+  
+  if (results.length === 0) {
+    searchResults.innerHTML = `
+      <div class="search-empty">
+        <p>No products found for "${searchTerm}"</p>
+      </div>
+    `;
+    return;
+  }
+  
+  displaySearchResults(results);
 }
 
-// Create search result card
-function createSearchResultCard(product) {
-    return `
-        <a href="/pages/product.html?id=${product.id}" class="search-result-item">
-            <div class="search-result-image">
-                <img src="${product.thumbnail || product.images[0]}" 
-                     alt="${product.title}"
-                     onerror="handleImageError(this)">
-            </div>
-            <div class="search-result-info">
-                <h5 class="search-result-title">${product.title}</h5>
-                <div class="search-result-price">
-                    <span class="price">${formatPrice(product.price)}</span>
-                    ${product.originalPrice ? `<span class="original">${formatPrice(product.originalPrice)}</span>` : ''}
-                </div>
-                <div class="search-result-rating">
-                    <div class="stars">${generateStarRating(product.rating)}</div>
-                    <span>${product.rating}</span>
-                </div>
-            </div>
+/**
+ * Display search results
+ */
+function displaySearchResults(results) {
+  const limitedResults = results.slice(0, 8);
+  
+  searchResults.innerHTML = `
+    <div class="search-results-header">
+      <span>Found ${results.length} product${results.length !== 1 ? 's' : ''}</span>
+    </div>
+    <div class="search-results-list">
+      ${limitedResults.map(product => `
+        <a href="/product.html?id=${product.id}" class="search-result-item" onclick="closeSearch()">
+          <img src="${product.thumbnail || product.images?.[0] || '/assets/images/placeholder.jpg'}" alt="${product.title}" />
+          <div class="search-result-info">
+            <h4>${product.title}</h4>
+            <p class="search-result-price">$${product.price}</p>
+          </div>
         </a>
-    `;
-}
-
-// Hide search results
-function hideSearchResults() {
-    const resultsContainer = document.getElementById('searchResults');
-    if (resultsContainer) {
-        resultsContainer.classList.remove('active');
-        resultsContainer.innerHTML = '';
-    }
-}
-
-// Show search suggestions
-function showSearchSuggestions() {
-    const suggestionsContainer = document.getElementById('searchSuggestions');
-    const searchInput = document.getElementById('searchInput');
-    
-    if (!suggestionsContainer || !searchInput) return;
-    
-    if (searchInput.value.trim().length === 0) {
-        suggestionsContainer.style.display = 'block';
-        displayRecentSearches();
-    }
-}
-
-// Display recent searches
-function displayRecentSearches() {
-    const container = document.querySelector('.popular-searches');
-    if (!container) return;
-    
-    if (recentSearches.length > 0) {
-        container.innerHTML = `
-            <h4>Recent Searches</h4>
-            <div class="suggestion-tags">
-                ${recentSearches.map(search => `
-                    <button class="suggestion-tag" onclick="performSearch('${search}')">
-                        ${search}
-                    </button>
-                `).join('')}
-            </div>
-        `;
-    }
-}
-
-// Add recent search
-function addRecentSearch(query) {
-    if (!recentSearches.includes(query)) {
-        recentSearches.unshift(query);
-        recentSearches = recentSearches.slice(0, 5); // Keep only 5 recent searches
-        storage.set('recentSearches', recentSearches);
-    }
-}
-
-// Perform search
-function performSearch(query) {
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.value = query;
-        searchInput.dispatchEvent(new Event('input'));
-    }
-}
-
-// Clear search
-function clearSearch() {
-    const searchInput = document.getElementById('searchInput');
-    const searchClear = document.getElementById('searchClear');
-    
-    if (searchInput) {
-        searchInput.value = '';
-        searchInput.focus();
-    }
-    
-    if (searchClear) {
-        searchClear.classList.remove('visible');
-    }
-    
-    hideSearchResults();
-    showSearchSuggestions();
-}
-
-// Clear recent searches
-function clearRecentSearches() {
-    recentSearches = [];
-    storage.remove('recentSearches');
-    displayRecentSearches();
-    showToast('Recent searches cleared', 'success');
+      `).join('')}
+    </div>
+    ${results.length > 8 ? `
+      <div class="search-results-footer">
+        <a href="/shop.html?search=${encodeURIComponent(searchInput.value)}" class="btn btn-primary btn-sm">
+          View all ${results.length} results
+        </a>
+      </div>
+    ` : ''}
+  `;
 }
