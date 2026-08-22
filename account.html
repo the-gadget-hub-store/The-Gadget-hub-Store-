@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="My Account - The Gadget Hub Store">
+  <title>My Account - The Gadget Hub Store</title>
+  
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  
+  <style>
+    .auth-container {
+      max-width: 450px;
+      margin: 0 auto;
+      padding-top: calc(var(--header-height) + 3rem);
+      padding-bottom: 3rem;
+    }
+    
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 2.5rem;
+    }
+    
+    .auth-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .auth-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      background: var(--bg-secondary);
+      padding: 0.5rem;
+      border-radius: var(--radius-lg);
+    }
+    
+    .auth-tab {
+      flex: 1;
+      padding: 0.75rem;
+      text-align: center;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all var(--transition-fast);
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+    }
+    
+    .auth-tab.active {
+      background: var(--accent-gradient);
+      color: white;
+    }
+    
+    .auth-form {
+      display: none;
+    }
+    
+    .auth-form.active {
+      display: block;
+    }
+    
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 1.5rem 0;
+      color: var(--text-muted);
+    }
+    
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .divider span {
+      padding: 0 1rem;
+    }
+    
+    .google-btn {
+      width: 100%;
+      padding: 1rem;
+      background: white;
+      color: #333;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all var(--transition-fast);
+    }
+    
+    .google-btn:hover {
+      background: #f8f9fa;
+      transform: translateY(-2px);
+    }
+    
+    .account-info {
+      display: none;
+    }
+    
+    .account-info.active {
+      display: block;
+    }
+    
+    .account-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .account-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 1rem;
+    }
+    
+    .account-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <nav class="nav container">
+      <a href="/index.html" class="logo">The Gadget Hub Store</a>
+      
+      <ul class="nav-links">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/shop.html">Shop</a></li>
+        <li><a href="/categories.html">Categories</a></li>
+        <li><a href="/trending.html">Trending</a></li>
+        <li><a href="/deals.html">Deals</a></li>
+      </ul>
+      
+      <div class="nav-actions">
+        <button class="icon-btn search-btn" aria-label="Search">
+          <span>🔍</span>
+        </button>
+        
+        <a href="/favorites.html" class="icon-btn" aria-label="Favorites">
+          <span>♡</span>
+        </a>
+        
+        <a href="/account.html" class="icon-btn account-btn" style="display: none;" aria-label="Account">
+          <span>👤</span>
+        </a>
+        
+        <button class="icon-btn sign-in-btn" onclick="window.location.href='/account.html'" aria-label="Sign In">
+          <span>👤</span>
+        </button>
+        
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <div class="theme-toggle-slider">🌙</div>
+        </button>
+        
+        <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
+           class="btn-primary-cta master-affiliate-link" 
+           target="_blank" 
+           rel="noopener noreferrer">
+          Visit AliExpress Store
+        </a>
+        
+        <button class="mobile-menu-btn" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </nav>
+  </header>
+  
+  <!-- Mobile Menu -->
+  <div class="mobile-overlay"></div>
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="logo">The Gadget Hub Store</div>
+      <div class="mobile-menu-close">✕</div>
+    </div>
+    
+    <ul class="mobile-nav-links">
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/shop.html">Shop</a></li>
+      <li><a href="/categories.html">Categories</a></li>
+      <li><a href="/trending.html">Trending</a></li>
+      <li><a href="/deals.html">Deals</a></li>
+      <li><a href="/favorites.html">Favorites</a></li>
+      <li><a href="/account.html">Account</a></li>
+    </ul>
+    
+    <div style="padding: 1rem;">
+      <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
+         class="btn btn-primary master-affiliate-link" 
+         target="_blank"
+         rel="noopener noreferrer"
+         style="width: 100%; justify-content: center;">
+        Visit AliExpress Store
+      </a>
+    </div>
+  </div>
+  
+  <!-- Account Content -->
+  <main class="container">
+    <!-- Authentication Forms (shown when logged out) -->
+    <div class="auth-container" id="auth-container">
+      <div class="auth-card fade-in">
+        <div class="auth-header">
+          <h1>Welcome Back</h1>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+            Sign in to access your favorites and more
+          </p>
+        </div>
+        
+        <div class="auth-tabs">
+          <button class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
+          <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+        </div>
+        
+        <!-- Sign In Form -->
+        <form class="auth-form active" id="signin-form">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" name="email" required placeholder="your@email.com" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" name="password" required placeholder="••••••••" />
+          </div>
+          
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Sign In
+          </button>
+          
+          <div class="divider">
+            <span>or</span>
+          </div>
+          
+          <button type="button" class="google-btn" id="google-signin-btn">
+            <span>🔍</span>
+            Continue with Google
+          </button>
+        </form>
+        
+        <!-- Sign Up Form -->
+        <form class="auth-form" id="signup-form">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-input" name="name" required placeholder="Your name" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" name="email" required placeholder="your@email.com" />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" name="password" required placeholder="••••••••" minlength="6" />
+          </div>
+          
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            Create Account
+          </button>
+          
+          <div class="divider">
+            <span>or</span>
+          </div>
+          
+          <button type="button" class="google-btn" id="google-signup-btn">
+            <span>🔍</span>
+            Sign up with Google
+          </button>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Account Info (shown when logged in) -->
+    <div class="auth-container account-info" id="account-info">
+      <div class="auth-card fade-in">
+        <div class="account-header">
+          <div class="account-avatar" id="account-avatar">👤</div>
+          <h2 id="account-name">User</h2>
+          <p style="color: var(--text-secondary);" id="account-email">user@email.com</p>
+        </div>
+        
+        <div class="account-actions">
+          <a href="/favorites.html" class="btn btn-outline" style="width: 100%;">
+            ♡ My Favorites
+          </a>
+          
+          <button id="admin-btn" class="btn btn-secondary" style="width: 100%; display: none;">
+            ⚙️ Admin Dashboard
+          </button>
+          
+          <button id="signout-btn" class="btn btn-outline" style="width: 100%;">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <div class="logo">The Gadget Hub Store</div>
+          <p>Your destination for discovering the world's most innovative gadgets and tech products.</p>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Explore</h4>
+          <ul class="footer-links">
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/shop.html">Shop</a></li>
+            <li><a href="/trending.html">Trending</a></li>
+            <li><a href="/deals.html">Deals</a></li>
+            <li><a href="/categories.html">Categories</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Customer</h4>
+          <ul class="footer-links">
+            <li><a href="/account.html">My Account</a></li>
+            <li><a href="/favorites.html">Favorites</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#privacy">Privacy Policy</a></li>
+            <li><a href="#terms">Terms of Service</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Follow Us</h4>
+          <ul class="footer-links">
+            <li><a href="#" data-platform="facebook">Facebook</a></li>
+            <li><a href="#" data-platform="instagram">Instagram</a></li>
+            <li><a href="#" data-platform="youtube">YouTube</a></li>
+            <li><a href="#" data-platform="tiktok">TikTok</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2024 The Gadget Hub Store. All rights reserved.</p>
+        <p class="affiliate-disclosure">
+          As an affiliate, we may earn from qualifying purchases through our product links.
+        </p>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Scripts -->
+  <script type="module" src="/js/app.js"></script>
+  <script type="module">
+    import { signIn, signUp, signInWithGoogle, signOut, getCurrentUser, isAdmin } from '/js/auth.js';
+    import { setLoading, showErrorToast, handleFirebaseError } from '/js/ui.js';
+    
+    const authContainer = document.getElementById('auth-container');
+    const accountInfo = document.getElementById('account-info');
+    const signinForm = document.getElementById('signin-form');
+    const signupForm = document.getElementById('signup-form');
+    const signoutBtn = document.getElementById('signout-btn');
+    const adminBtn = document.getElementById('admin-btn');
+    
+    // Switch auth tabs
+    window.switchAuthTab = (tab) => {
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+      
+      event.target.classList.add('active');
+      
+      if (tab === 'signin') {
+        signinForm.classList.add('active');
+      } else {
+        signupForm.classList.add('active');
+      }
+    };
+    
+    // Sign In
+    signinForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      
+      try {
+        setLoading(submitBtn, true, 'Signing in...');
+        
+        const email = e.target.email.value;
+        const password = e.target.password.value;
+        
+        await signIn(email, password);
+      } catch (error) {
+        showErrorToast(handleFirebaseError(error));
+      } finally {
+        setLoading(submitBtn, false);
+      }
+    });
+    
+    // Sign Up
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      
+      try {
+        setLoading(submitBtn, true, 'Creating account...');
+        
+        const name = e.target.name.value;
+        const email = e.target.email.value;
+        const password = e.target.password.value;
+        
+        await signUp(email, password, name);
+      } catch (error) {
+        showErrorToast(handleFirebaseError(error));
+      } finally {
+        setLoading(submitBtn, false);
+      }
+    });
+    
+    // Google Sign In
+    document.getElementById('google-signin-btn').addEventListener('click', async (e) => {
+      try {
+        setLoading(e.target, true, 'Connecting...');
+        await signInWithGoogle();
+      } catch (error) {
+        showErrorToast(handleFirebaseError(error));
+      } finally {
+        setLoading(e.target, false);
+      }
+    });
+    
+    document.getElementById('google-signup-btn').addEventListener('click', async (e) => {
+      try {
+        setLoading(e.target, true, 'Connecting...');
+        await signInWithGoogle();
+      } catch (error) {
+        showErrorToast(handleFirebaseError(error));
+      } finally {
+        setLoading(e.target, false);
+      }
+    });
+    
+    // Sign Out
+    signoutBtn.addEventListener('click', async () => {
+      try {
+        setLoading(signoutBtn, true, 'Signing out...');
+        await signOut();
+      } catch (error) {
+        showErrorToast(handleFirebaseError(error));
+      } finally {
+        setLoading(signoutBtn, false);
+      }
+    });
+    
+    // Admin Dashboard
+    adminBtn.addEventListener('click', () => {
+      window.location.href = '/admin/index.html';
+    });
+    
+    // Update UI based on auth state
+    async function updateAuthUI() {
+      const user = getCurrentUser();
+      
+      if (user) {
+        authContainer.style.display = 'none';
+        accountInfo.classList.add('active');
+        
+        document.getElementById('account-name').textContent = user.displayName || 'User';
+        document.getElementById('account-email').textContent = user.email;
+        
+        const firstLetter = (user.displayName || user.email).charAt(0).toUpperCase();
+        document.getElementById('account-avatar').textContent = firstLetter;
+        
+        // Check admin status
+        const adminStatus = await isAdmin();
+        if (adminStatus) {
+          adminBtn.style.display = 'block';
+        }
+      } else {
+        authContainer.style.display = 'block';
+        accountInfo.classList.remove('active');
+      }
+    }
+    
+    // Check auth state periodically
+    setInterval(updateAuthUI, 500);
+    updateAuthUI();
+  </script>
+</body>
+</html>
