@@ -1,576 +1,549 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Discover trending gadgets, smart accessories and innovative tech products from around the world. Premium curated tech products at the best prices.">
-    <meta name="keywords" content="gadgets, tech products, smart accessories, electronics, innovative gadgets">
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="The Gadget Hub Store - Discover What's Next in Tech">
-    <meta property="og:description" content="Explore trending gadgets, smart accessories and innovative tech products from around the world.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gadgethubstore.com">
-    <meta property="og:image" content="assets/images/og-image.jpg">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="The Gadget Hub Store - Discover What's Next in Tech">
-    <meta name="twitter:description" content="Explore trending gadgets, smart accessories and innovative tech products from around the world.">
-    <meta name="twitter:image" content="assets/images/twitter-card.jpg">
-    
-    <title>The Gadget Hub Store - Discover What's Next in Tech</title>
-    
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://gadgethubstore.com">
-    
-    <!-- Preconnect to improve performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Stylesheets -->
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/animations.css">
-    <link rel="stylesheet" href="css/responsive.css">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Discover the latest trending gadgets, smart accessories, and innovative tech products from around the world at The Gadget Hub Store.">
+  <meta name="keywords" content="gadgets, electronics, smart accessories, tech products, trending gadgets">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="The Gadget Hub Store - Discover What's Next in Tech">
+  <meta property="og:description" content="Explore trending gadgets, smart accessories and innovative tech products from around the world.">
+  <meta property="og:type" content="website">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Gadget Hub Store">
+  <meta name="twitter:description" content="Discover the latest trending gadgets and tech products">
+  
+  <title>The Gadget Hub Store - Discover What's Next in Tech</title>
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar" id="navbar">
-        <div class="nav-container">
-            <!-- Logo -->
-            <div class="nav-logo">
-                <a href="index.html" class="logo-link">
-                    <i class="fas fa-cube logo-icon"></i>
-                    <span class="logo-text">The Gadget Hub Store</span>
-                </a>
-            </div>
-            
-            <!-- Desktop Navigation -->
-            <div class="nav-menu" id="navMenu">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="pages/shop.html" class="nav-link">Shop</a>
-                <a href="pages/categories.html" class="nav-link">Categories</a>
-                <a href="pages/trending.html" class="nav-link">Trending</a>
-                <a href="pages/deals.html" class="nav-link">Deals</a>
-                <a href="#about" class="nav-link">About</a>
-            </div>
-            
-            <!-- Right Actions -->
-            <div class="nav-actions">
-                <button class="nav-icon-btn" id="searchBtn" aria-label="Search">
-                    <i class="fas fa-search"></i>
-                </button>
-                <button class="nav-icon-btn" id="favoritesBtn" aria-label="Favorites">
-                    <i class="far fa-heart"></i>
-                    <span class="badge" id="favoritesCount">0</span>
-                </button>
-                <button class="nav-icon-btn" id="accountBtn" aria-label="Account">
-                    <i class="far fa-user"></i>
-                </button>
-                <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   class="nav-cta-btn">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span>Visit AliExpress Store</span>
-                </a>
-                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-            </div>
-        </div>
+  <!-- Header -->
+  <header class="header">
+    <nav class="nav container">
+      <!-- Logo -->
+      <a href="/index.html" class="logo">The Gadget Hub Store</a>
+      
+      <!-- Desktop Navigation -->
+      <ul class="nav-links">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/shop.html">Shop</a></li>
+        <li><a href="/categories.html">Categories</a></li>
+        <li><a href="/trending.html">Trending</a></li>
+        <li><a href="/deals.html">Deals</a></li>
+      </ul>
+      
+      <!-- Navigation Actions -->
+      <div class="nav-actions">
+        <!-- Search Button -->
+        <button class="icon-btn search-btn" aria-label="Search">
+          <span>🔍</span>
+        </button>
+        
+        <!-- Favorites -->
+        <a href="/favorites.html" class="icon-btn" aria-label="Favorites">
+          <span>♡</span>
+          <span class="badge" id="favorites-count" style="display: none;">0</span>
+        </a>
+        
+        <!-- Account -->
+        <a href="/account.html" class="icon-btn account-btn" style="display: none;" aria-label="Account">
+          <span>👤</span>
+        </a>
+        
+        <!-- Sign In (shown when logged out) -->
+        <button class="icon-btn sign-in-btn" onclick="window.location.href='/account.html'" aria-label="Sign In">
+          <span>👤</span>
+        </button>
+        
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <div class="theme-toggle-slider">🌙</div>
+        </button>
+        
+        <!-- Master Affiliate CTA -->
+        <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
+           class="btn-primary-cta master-affiliate-link" 
+           target="_blank" 
+           rel="noopener noreferrer">
+          Visit AliExpress Store
+        </a>
+        
+        <!-- Mobile Menu Button -->
+        <button class="mobile-menu-btn" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
     </nav>
-    
-    <!-- Mobile Navigation Drawer -->
-    <div class="mobile-drawer" id="mobileDrawer">
-        <div class="mobile-drawer-overlay" id="mobileDrawerOverlay"></div>
-        <div class="mobile-drawer-content">
-            <div class="mobile-drawer-header">
-                <div class="logo">
-                    <i class="fas fa-cube"></i>
-                    <span>The Gadget Hub Store</span>
-                </div>
-                <button class="close-drawer" id="closeDrawer" aria-label="Close menu">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="mobile-drawer-menu">
-                <a href="index.html" class="mobile-nav-link">
-                    <i class="fas fa-home"></i>
-                    <span>Home</span>
-                </a>
-                <a href="pages/shop.html" class="mobile-nav-link">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span>Shop</span>
-                </a>
-                <a href="pages/categories.html" class="mobile-nav-link">
-                    <i class="fas fa-th"></i>
-                    <span>Categories</span>
-                </a>
-                <a href="pages/trending.html" class="mobile-nav-link">
-                    <i class="fas fa-fire"></i>
-                    <span>Trending</span>
-                </a>
-                <a href="pages/deals.html" class="mobile-nav-link">
-                    <i class="fas fa-tag"></i>
-                    <span>Deals</span>
-                </a>
-                <a href="pages/favorites.html" class="mobile-nav-link">
-                    <i class="far fa-heart"></i>
-                    <span>Favorites</span>
-                </a>
-                <a href="pages/account.html" class="mobile-nav-link">
-                    <i class="far fa-user"></i>
-                    <span>Account</span>
-                </a>
-                <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   class="mobile-nav-link mobile-nav-cta">
-                    <i class="fas fa-external-link-alt"></i>
-                    <span>Visit AliExpress Store</span>
-                </a>
-            </div>
-        </div>
+  </header>
+  
+  <!-- Mobile Menu -->
+  <div class="mobile-overlay"></div>
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="logo">The Gadget Hub Store</div>
+      <div class="mobile-menu-close">✕</div>
     </div>
     
-    <!-- Search Overlay -->
-    <div class="search-overlay" id="searchOverlay">
-        <div class="search-overlay-content">
-            <button class="search-close" id="searchClose" aria-label="Close search">
-                <i class="fas fa-times"></i>
+    <ul class="mobile-nav-links">
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/shop.html">Shop</a></li>
+      <li><a href="/categories.html">Categories</a></li>
+      <li><a href="/trending.html">Trending</a></li>
+      <li><a href="/deals.html">Deals</a></li>
+      <li><a href="/favorites.html">Favorites</a></li>
+      <li><a href="/account.html">Account</a></li>
+    </ul>
+    
+    <div style="padding: 1rem;">
+      <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
+         class="btn btn-primary master-affiliate-link" 
+         target="_blank"
+         rel="noopener noreferrer"
+         style="width: 100%; justify-content: center;">
+        Visit AliExpress Store
+      </a>
+    </div>
+  </div>
+  
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-background"></div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-text fade-in-up">
+          <h1 class="hero-title">Discover What's Next in Tech</h1>
+          <p class="hero-subtitle">
+            Explore trending gadgets, smart accessories and innovative tech products from around the world.
+          </p>
+          
+          <div class="hero-ctas">
+            <a href="/shop.html" class="btn btn-primary">
+              Explore Gadgets
+            </a>
+            <a href="/trending.html" class="btn btn-secondary">
+              View Trending
+            </a>
+          </div>
+          
+          <!-- Master Affiliate Hero CTA -->
+          <div style="margin-top: 2rem;">
+            <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
+               class="btn btn-master-affiliate master-affiliate-link" 
+               target="_blank"
+               rel="noopener noreferrer">
+              🎁 Explore More Exclusive Tech Deals on AliExpress
+            </a>
+          </div>
+        </div>
+        
+        <div class="hero-visual fade-in">
+          <div class="floating-gadget floating-gadget-main">
+            <div class="gadget-badge">Trending</div>
+            <div style="font-size: 4rem; text-align: center;">📱</div>
+          </div>
+          <div class="floating-gadget floating-gadget-sm" style="top: 10%; left: 10%;">
+            <div style="font-size: 2rem; text-align: center;">🎧</div>
+          </div>
+          <div class="floating-gadget floating-gadget-sm" style="top: 70%; right: 10%;">
+            <div style="font-size: 2rem; text-align: center;">⌚</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Featured Categories -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2 class="section-title">Explore Categories</h2>
+        <p class="section-subtitle">
+          Browse our curated collection of the latest tech products
+        </p>
+      </div>
+      
+      <div class="categories-grid" id="home-categories">
+        <!-- Categories will be loaded dynamically -->
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Trending Products -->
+  <section class="section" style="background: var(--bg-secondary);">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2 class="section-title">Trending Now</h2>
+        <p class="section-subtitle">
+          The hottest gadgets everyone's talking about
+        </p>
+      </div>
+      
+      <div class="products-grid" id="trending-products">
+        <!-- Products will be loaded dynamically -->
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+      
+      <div style="text-align: center; margin-top: 3rem;">
+        <a href="/trending.html" class="btn btn-primary">View All Trending</a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Manual Ad Slot 1 -->
+  <section class="section">
+    <div class="container">
+      <div class="ad-container" style="max-width: 970px; margin: 0 auto; min-height: 250px; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius-lg);">
+        <p style="color: var(--text-muted); text-align: center;">
+          <!-- Manual Google Ad Slot 1 - Insert AdSense code here -->
+          Advertisement Space
+        </p>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Featured Products -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2 class="section-title">Featured Products</h2>
+        <p class="section-subtitle">
+          Hand-picked selections just for you
+        </p>
+      </div>
+      
+      <div class="products-grid" id="featured-products">
+        <!-- Products will be loaded dynamically -->
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Why Shop With Us -->
+  <section class="section" style="background: var(--bg-secondary);">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2 class="section-title">Why Shop With Us</h2>
+      </div>
+      
+      <div class="trust-grid">
+        <div class="trust-card reveal">
+          <div class="trust-icon">✨</div>
+          <h3 class="trust-title">Curated Tech Products</h3>
+          <p class="trust-description">
+            Every product is carefully selected for quality and innovation
+          </p>
+        </div>
+        
+        <div class="trust-card reveal">
+          <div class="trust-icon">🌍</div>
+          <h3 class="trust-title">Worldwide Discovery</h3>
+          <p class="trust-description">
+            Access to unique gadgets from around the globe
+          </p>
+        </div>
+        
+        <div class="trust-card reveal">
+          <div class="trust-icon">💰</div>
+          <h3 class="trust-title">Best Gadget Deals</h3>
+          <p class="trust-description">
+            Amazing prices on the latest tech innovations
+          </p>
+        </div>
+        
+        <div class="trust-card reveal">
+          <div class="trust-icon">🔒</div>
+          <h3 class="trust-title">Secure Shopping</h3>
+          <p class="trust-description">
+            Safe and trusted affiliate partnerships
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Newsletter -->
+  <section class="section">
+    <div class="container container-narrow">
+      <div class="newsletter reveal">
+        <h2>Stay Ahead of the Gadget Curve</h2>
+        <p style="margin-top: 1rem; color: var(--text-secondary);">
+          Get the latest gadget discoveries, deals and tech trends directly in your inbox.
+        </p>
+        
+        <form class="newsletter-form" id="newsletter-form">
+          <input 
+            type="email" 
+            class="newsletter-input" 
+            placeholder="Enter your email" 
+            required
+          />
+          <button type="submit" class="btn btn-primary">
+            Subscribe
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Social Section -->
+  <section class="section social-section" style="background: var(--bg-secondary);">
+    <div class="container">
+      <h2 class="reveal">Follow Us</h2>
+      <p class="reveal" style="color: var(--text-secondary); margin-top: 1rem;">
+        Stay connected for the latest updates and tech news
+      </p>
+      
+      <div class="social-links" id="social-links">
+        <a href="#" class="social-link" data-platform="facebook" target="_blank" rel="noopener noreferrer" title="Facebook">
+          📘
+        </a>
+        <a href="#" class="social-link" data-platform="instagram" target="_blank" rel="noopener noreferrer" title="Instagram">
+          📷
+        </a>
+        <a href="#" class="social-link" data-platform="youtube" target="_blank" rel="noopener noreferrer" title="YouTube">
+          📹
+        </a>
+        <a href="#" class="social-link" data-platform="tiktok" target="_blank" rel="noopener noreferrer" title="TikTok">
+          🎵
+        </a>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <div class="logo">The Gadget Hub Store</div>
+          <p>
+            Your destination for discovering the world's most innovative gadgets and tech products.
+          </p>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Explore</h4>
+          <ul class="footer-links">
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/shop.html">Shop</a></li>
+            <li><a href="/trending.html">Trending</a></li>
+            <li><a href="/deals.html">Deals</a></li>
+            <li><a href="/categories.html">Categories</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Customer</h4>
+          <ul class="footer-links">
+            <li><a href="/account.html">My Account</a></li>
+            <li><a href="/favorites.html">Favorites</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#privacy">Privacy Policy</a></li>
+            <li><a href="#terms">Terms of Service</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Follow Us</h4>
+          <ul class="footer-links">
+            <li><a href="#" data-platform="facebook">Facebook</a></li>
+            <li><a href="#" data-platform="instagram">Instagram</a></li>
+            <li><a href="#" data-platform="youtube">YouTube</a></li>
+            <li><a href="#" data-platform="tiktok">TikTok</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2024 The Gadget Hub Store. All rights reserved.</p>
+        <p class="affiliate-disclosure">
+          As an affiliate, we may earn from qualifying purchases through our product links.
+        </p>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Scripts -->
+  <script type="module" src="/js/app.js"></script>
+  <script type="module">
+    import { getState, subscribe } from '/js/state.js';
+    import { getProductCountByCategory } from '/js/categories.js';
+    import { getTrendingProducts, getFeaturedProducts } from '/js/products.js';
+    import { formatCurrency, generateStars } from '/js/ui.js';
+    import { toggleFavorite, isFavorite } from '/js/favorites.js';
+    import { refresh3DEffects } from '/js/3d-effects.js';
+    
+    // Render categories
+    subscribe('categories', (categories) => {
+      const container = document.getElementById('home-categories');
+      if (!container) return;
+      
+      const displayCategories = categories.slice(0, 8);
+      
+      container.innerHTML = displayCategories.map(category => `
+        <a href="/shop.html?category=${category.id}" class="category-card stagger-item">
+          <div class="category-icon">${category.icon || '📦'}</div>
+          <h3 class="category-name">${category.name}</h3>
+          <p class="category-count">${getProductCountByCategory(category.id)} products</p>
+        </a>
+      `).join('');
+    });
+    
+    // Render trending products
+    subscribe('products', () => {
+      const trending = getTrendingProducts().slice(0, 4);
+      renderProducts('trending-products', trending);
+      
+      const featured = getFeaturedProducts().slice(0, 4);
+      renderProducts('featured-products', featured);
+      
+      refresh3DEffects();
+    });
+    
+    // Render products helper
+    function renderProducts(containerId, products) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      
+      if (products.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No products available</p>';
+        return;
+      }
+      
+      container.innerHTML = products.map(product => `
+        <div class="product-card stagger-item">
+          <div class="product-image-container">
+            <img src="${product.thumbnail || product.images?.[0] || '/assets/images/placeholder.jpg'}" 
+                 alt="${product.title}" 
+                 class="product-image" 
+                 loading="lazy" />
+            ${product.trending ? '<span class="product-badge">Trending</span>' : ''}
+            ${product.featured ? '<span class="product-badge">Featured</span>' : ''}
+            <button class="favorite-btn ${isFavorite(product.id) ? 'active' : ''}" 
+                    data-product-id="${product.id}"
+                    onclick="handleFavoriteClick('${product.id}')">
+              ${isFavorite(product.id) ? '❤' : '♡'}
             </button>
-            <div class="search-container">
-                <div class="search-input-wrapper">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" 
-                           class="search-input" 
-                           id="searchInput" 
-                           placeholder="Search for gadgets, accessories, and more..."
-                           autocomplete="off">
-                    <button class="search-clear" id="searchClear" aria-label="Clear search">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div class="search-suggestions" id="searchSuggestions">
-                    <div class="popular-searches">
-                        <h4>Popular Searches</h4>
-                        <div class="suggestion-tags">
-                            <button class="suggestion-tag">Wireless Earbuds</button>
-                            <button class="suggestion-tag">Smart Watch</button>
-                            <button class="suggestion-tag">Phone Accessories</button>
-                            <button class="suggestion-tag">Gaming Gadgets</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="search-results" id="searchResults"></div>
+          </div>
+          <div class="product-info">
+            <h3 class="product-title">${product.title}</h3>
+            ${product.shortDescription ? `<p class="product-description">${product.shortDescription}</p>` : ''}
+            <div class="product-rating">
+              <span class="stars">${generateStars(product.rating || 4.5)}</span>
+              <span class="review-count">(${product.reviewCount || 0})</span>
             </div>
+            <div class="product-price">
+              <span class="current-price">${formatCurrency(product.price)}</span>
+              ${product.originalPrice ? `
+                <span class="original-price">${formatCurrency(product.originalPrice)}</span>
+                <span class="discount-badge">-${product.discount}%</span>
+              ` : ''}
+            </div>
+            <div class="product-actions">
+              <a href="/product.html?id=${product.id}" class="btn btn-sm btn-outline">
+                View Details
+              </a>
+              <a href="${product.affiliateUrl}" 
+                 class="btn btn-sm btn-primary" 
+                 target="_blank" 
+                 rel="noopener noreferrer">
+                Shop Now
+              </a>
+            </div>
+          </div>
         </div>
-    </div>
+      `).join('');
+    }
     
-    <!-- Hero Section -->
-    <section class="hero" id="hero">
-        <div class="hero-background">
-            <div class="gradient-orb orb-1"></div>
-            <div class="gradient-orb orb-2"></div>
-            <div class="gradient-orb orb-3"></div>
-        </div>
+    // Handle favorite click
+    window.handleFavoriteClick = async (productId) => {
+      await toggleFavorite(productId);
+    };
+    
+    // Newsletter form
+    const newsletterForm = document.getElementById('newsletter-form');
+    if (newsletterForm) {
+      newsletterForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = e.target.elements[0].value;
         
-        <div class="hero-container">
-            <div class="hero-content">
-                <div class="hero-badge">
-                    <span class="badge-dot"></span>
-                    <span>Discover Innovation</span>
-                </div>
-                <h1 class="hero-title">
-                    Discover What's Next <br>in <span class="gradient-text">Tech</span>
-                </h1>
-                <p class="hero-subtitle">
-                    Explore trending gadgets, smart accessories and innovative tech products from around the world.
-                </p>
-                <div class="hero-actions">
-                    <a href="pages/shop.html" class="btn btn-primary btn-large">
-                        <span>Explore Gadgets</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </a>
-                    <a href="pages/trending.html" class="btn btn-secondary btn-large">
-                        <span>View Trending</span>
-                        <i class="fas fa-fire"></i>
-                    </a>
-                    <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
-                       target="_blank" 
-                       rel="noopener noreferrer" 
-                       class="btn btn-primary btn-large">
-                        <span>Browse More</span>
-                        <i class="fas fa-external-link-alt"></i>
-                    </a>
-                </div>
-                <div class="hero-stats">
-                    <div class="stat-item">
-                        <div class="stat-value" data-target="1000">0</div>
-                        <div class="stat-label">Products</div>
-                    </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item">
-                        <div class="stat-value" data-target="50">0</div>
-                        <div class="stat-label">Categories</div>
-                    </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat-item">
-                        <div class="stat-value" data-target="10000">0</div>
-                        <div class="stat-label">Happy Customers</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="hero-visual">
-                <div class="floating-product main-product" data-speed="2">
-                    <div class="product-glow"></div>
-                    <div class="product-image-wrapper">
-                        <img src="assets/images/hero-gadget.png" alt="Featured Gadget" loading="eager">
-                    </div>
-                    <div class="floating-badge trending-badge">
-                        <i class="fas fa-fire"></i>
-                        <span>Trending</span>
-                    </div>
-                </div>
-                
-                <div class="floating-product small-product-1" data-speed="3">
-                    <img src="assets/images/hero-earbud.png" alt="Wireless Earbuds">
-                    <div class="floating-badge new-badge">
-                        <span>New</span>
-                    </div>
-                </div>
-                
-                <div class="floating-product small-product-2" data-speed="1.5">
-                    <img src="assets/images/hero-watch.png" alt="Smart Watch">
-                    <div class="floating-badge sale-badge">
-                        <span>Sale</span>
-                    </div>
-                </div>
-                
-                <div class="floating-element circle-1"></div>
-                <div class="floating-element circle-2"></div>
-                <div class="floating-element circle-3"></div>
-            </div>
-        </div>
+        try {
+          const { getFirebaseInstances } = await import('/js/firebase-init.js');
+          const { db } = getFirebaseInstances();
+          const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+          const { showSuccessToast } = await import('/js/ui.js');
+          
+          await addDoc(collection(db, 'newsletterSubscribers'), {
+            email: email,
+            subscribedAt: serverTimestamp()
+          });
+          
+          showSuccessToast('Thanks for subscribing!');
+          e.target.reset();
+        } catch (error) {
+          console.error('Newsletter error:', error);
+        }
+      });
+    }
+    
+    // Load social links
+    async function loadSocialLinks() {
+      try {
+        const { getFirebaseInstances } = await import('/js/firebase-init.js');
+        const { db } = getFirebaseInstances();
+        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
         
-        <div class="hero-scroll-indicator">
-            <div class="scroll-icon">
-                <div class="scroll-wheel"></div>
-            </div>
-            <span>Scroll to explore</span>
-        </div>
-    </section>
+        const socialRef = doc(db, 'settings', 'social');
+        const snapshot = await getDoc(socialRef);
+        
+        if (snapshot.exists()) {
+          const social = snapshot.data();
+          
+          document.querySelectorAll('[data-platform="facebook"]').forEach(el => {
+            if (social.facebookUrl) el.href = social.facebookUrl;
+          });
+          
+          document.querySelectorAll('[data-platform="instagram"]').forEach(el => {
+            if (social.instagramUrl) el.href = social.instagramUrl;
+          });
+          
+          document.querySelectorAll('[data-platform="youtube"]').forEach(el => {
+            if (social.youtubeUrl) el.href = social.youtubeUrl;
+          });
+          
+          document.querySelectorAll('[data-platform="tiktok"]').forEach(el => {
+            if (social.tiktokUrl) el.href = social.tiktokUrl;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading social links:', error);
+      }
+    }
     
-    <!-- Featured Categories -->
-    <section class="section featured-categories" id="categories">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-badge">
-                    <span>Explore</span>
-                </div>
-                <h2 class="section-title">Featured Categories</h2>
-                <p class="section-subtitle">Browse through our curated collection of tech categories</p>
-            </div>
-            
-            <div class="categories-grid" id="categoriesGrid">
-                <!-- Categories will be loaded dynamically -->
-                <div class="category-skeleton"></div>
-                <div class="category-skeleton"></div>
-                <div class="category-skeleton"></div>
-                <div class="category-skeleton"></div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Trending Products -->
-    <section class="section trending-products" id="trending">
-        <div class="container">
-            <div class="section-header">
-                <div class="section-badge">
-                    <i class="fas fa-fire"></i>
-                    <span>Hot Right Now</span>
-                </div>
-                <h2 class="section-title">Trending Products</h2>
-                <p class="section-subtitle">Most popular gadgets loved by tech enthusiasts</p>
-            </div>
-            
-            <div class="products-grid" id="trendingProductsGrid">
-                <!-- Products will be loaded dynamically -->
-                <div class="product-skeleton"></div>
-                <div class="product-skeleton"></div>
-                <div class="product-skeleton"></div>
-                <div class="product-skeleton"></div>
-            </div>
-            
-            <div class="section-footer">
-                <a href="pages/trending.html" class="btn btn-outline">
-                    <span>View All Trending</span>
-                    <i class="fas fa-arrow-right"></i>
-                </a>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Manual Ad Slot 1 -->
-    <div class="ad-container ad-slot-1">
-        <div class="ad-label">Advertisement</div>
-        <div class="ad-placeholder" id="adSlot1">
-            <!-- Manual Google Ads code can be inserted here -->
-            <div class="ad-placeholder-content">
-                <i class="fas fa-ad"></i>
-                <p>Ad Slot 1 - 728x90 / Responsive</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Why Shop With Us -->
-    <section class="section why-shop" id="whyShop">
-        <div class="container">
-            <div class="section-header">
-                <h2 class="section-title">Why Shop With Us</h2>
-                <p class="section-subtitle">Experience the future of gadget shopping</p>
-            </div>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-gem"></i>
-                    </div>
-                    <h3 class="feature-title">Curated Tech Products</h3>
-                    <p class="feature-description">
-                        Hand-picked selection of the latest and most innovative gadgets from trusted brands worldwide.
-                    </p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-globe"></i>
-                    </div>
-                    <h3 class="feature-title">Worldwide Product Discovery</h3>
-                    <p class="feature-description">
-                        Access to unique tech products and gadgets from global markets delivered to your doorstep.
-                    </p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-tags"></i>
-                    </div>
-                    <h3 class="feature-title">Best Gadget Deals</h3>
-                    <p class="feature-description">
-                        Exclusive discounts and competitive prices on premium tech products and accessories.
-                    </p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h3 class="feature-title">Secure & Easy Shopping</h3>
-                    <p class="feature-description">
-                        Safe and seamless shopping experience with buyer protection and secure payment options.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Manual Ad Slot 2 -->
-    <div class="ad-container ad-slot-2">
-        <div class="ad-label">Advertisement</div>
-        <div class="ad-placeholder" id="adSlot2">
-            <!-- Manual Google Ads code can be inserted here -->
-            <div class="ad-placeholder-content">
-                <i class="fas fa-ad"></i>
-                <p>Ad Slot 2 - 300x250 / Responsive</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Trending Collection -->
-    <section class="section collection-showcase" id="collection">
-        <div class="container-fluid">
-            <div class="section-header">
-                <div class="section-badge">
-                    <span>Latest Collection</span>
-                </div>
-                <h2 class="section-title">New Arrivals</h2>
-                <p class="section-subtitle">Discover the newest additions to our tech collection</p>
-            </div>
-            
-            <div class="collection-slider" id="collectionSlider">
-                <button class="slider-arrow slider-prev" aria-label="Previous">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <div class="collection-track" id="collectionTrack">
-                    <!-- Products will be loaded dynamically -->
-                </div>
-                <button class="slider-arrow slider-next" aria-label="Next">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Newsletter -->
-    <section class="section newsletter" id="newsletter">
-        <div class="container">
-            <div class="newsletter-card">
-                <div class="newsletter-content">
-                    <div class="newsletter-icon">
-                        <i class="fas fa-envelope"></i>
-                    </div>
-                    <h2 class="newsletter-title">Stay Ahead of the Gadget Curve</h2>
-                    <p class="newsletter-subtitle">
-                        Get the latest gadget discoveries, deals and tech trends directly in your inbox.
-                    </p>
-                    <form class="newsletter-form" id="newsletterForm">
-                        <div class="newsletter-input-wrapper">
-                            <i class="fas fa-envelope input-icon"></i>
-                            <input type="email" 
-                                   class="newsletter-input" 
-                                   id="newsletterEmail" 
-                                   placeholder="Enter your email address"
-                                   required>
-                            <button type="submit" class="btn btn-primary newsletter-btn">
-                                <span>Subscribe</span>
-                                <i class="fas fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </form>
-                    <p class="newsletter-privacy">
-                        <i class="fas fa-lock"></i>
-                        We respect your privacy. Unsubscribe at any time.
-                    </p>
-                </div>
-                <div class="newsletter-visual">
-                    <div class="newsletter-decoration">
-                        <div class="decoration-circle"></div>
-                        <div class="decoration-circle"></div>
-                        <div class="decoration-circle"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Footer -->
-    <footer class="footer" id="footer">
-        <div class="container">
-            <div class="footer-top">
-                <div class="footer-column footer-brand">
-                    <div class="footer-logo">
-                        <i class="fas fa-cube"></i>
-                        <span>The Gadget Hub Store</span>
-                    </div>
-                    <p class="footer-description">
-                        Your trusted destination for discovering the latest and most innovative tech gadgets from around the world. 
-                        We curate premium products to enhance your digital lifestyle.
-                    </p>
-                    <div class="social-links" id="socialLinks">
-                        <a href="#" class="social-link" data-social="facebook" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="social-link" data-social="instagram" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" class="social-link" data-social="youtube" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
-                            <i class="fab fa-youtube"></i>
-                        </a>
-                        <a href="#" class="social-link" data-social="tiktok" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-                            <i class="fab fa-tiktok"></i>
-                        </a>
-                    </div>
-                </div>
-                
-                <div class="footer-column">
-                    <h4 class="footer-heading">Explore</h4>
-                    <ul class="footer-links">
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="pages/shop.html">Shop</a></li>
-                        <li><a href="pages/trending.html">Trending</a></li>
-                        <li><a href="pages/deals.html">Deals</a></li>
-                        <li><a href="pages/categories.html">Categories</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h4 class="footer-heading">Customer</h4>
-                    <ul class="footer-links">
-                        <li><a href="pages/account.html">My Account</a></li>
-                        <li><a href="pages/favorites.html">Favorites</a></li>
-                        <li><a href="#contact">Contact</a></li>
-                        <li><a href="#privacy">Privacy Policy</a></li>
-                        <li><a href="#terms">Terms of Service</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h4 class="footer-heading">Follow Us</h4>
-                    <p class="footer-text">
-                        Stay connected with us on social media for the latest updates, exclusive deals, and tech news.
-                    </p>
-                    <div class="footer-badges">
-                        <div class="badge-item">
-                            <i class="fas fa-shield-check"></i>
-                            <span>Secure Shopping</span>
-                        </div>
-                        <div class="badge-item">
-                            <i class="fas fa-truck"></i>
-                            <span>Fast Delivery</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <div class="footer-copyright">
-                    <p>&copy; 2026 The Gadget Hub Store. All rights reserved.</p>
-                    <p class="affiliate-disclosure">
-                        <i class="fas fa-info-circle"></i>
-                        Some product links are affiliate links. We may earn a commission at no extra cost to you.
-                    </p>
-                </div>
-                <div class="footer-payment">
-                    <i class="fab fa-cc-visa"></i>
-                    <i class="fab fa-cc-mastercard"></i>
-                    <i class="fab fa-cc-paypal"></i>
-                    <i class="fab fa-cc-amex"></i>
-                </div>
-            </div>
-        </div>
-    </footer>
-    
-    <!-- Toast Notification Container -->
-    <div class="toast-container" id="toastContainer"></div>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    
-    <!-- Application Scripts -->
-    <script src="js/firebase.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/products.js"></script>
-    <script src="js/favorites.js"></script>
-    <script src="js/search.js"></script>
-    <script src="js/categories.js"></script>
-    <script src="js/app.js"></script>
+    loadSocialLinks();
+  </script>
 </body>
 </html>
