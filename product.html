@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Product details - The Gadget Hub Store">
+  <title>Product Details - The Gadget Hub Store</title>
+  
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  
+  <style>
+    .product-detail-container {
+      padding-top: calc(var(--header-height) + 2rem);
+      padding-bottom: 3rem;
+    }
+    
+    .product-detail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+    
+    .product-gallery {
+      position: sticky;
+      top: calc(var(--header-height) + 1rem);
+      height: fit-content;
+    }
+    
+    .product-main-image {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    
+    .product-thumbnails {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+    
+    .product-thumbnail {
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all var(--transition-fast);
+    }
+    
+    .product-thumbnail:hover,
+    .product-thumbnail.active {
+      border-color: var(--accent-primary);
+    }
+    
+    .product-detail-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .product-detail-title {
+      font-size: 2rem;
+      margin: 0;
+    }
+    
+    .product-detail-rating {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .product-detail-price {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+    }
+    
+    .product-detail-price .current-price {
+      font-size: 2.5rem;
+    }
+    
+    .product-detail-price .original-price {
+      font-size: 1.5rem;
+    }
+    
+    .product-detail-price .discount-badge {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
+    
+    .product-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .product-badge-lg {
+      padding: 0.5rem 1rem;
+      background: var(--accent-gradient);
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+    }
+    
+    .product-detail-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .product-detail-actions .btn {
+      flex: 1;
+    }
+    
+    .product-tabs {
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+      display: flex;
+      gap: 2rem;
+    }
+    
+    .product-tab {
+      padding: 1rem 0;
+      color: var(--text-secondary);
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all var(--transition-fast);
+    }
+    
+    .product-tab.active {
+      color: var(--accent-primary);
+      border-bottom-color: var(--accent-primary);
+    }
+    
+    .product-tab-content {
+      display: none;
+    }
+    
+    .product-tab-content.active {
+      display: block;
+    }
+    
+    .product-description {
+      line-height: 1.8;
+      color: var(--text-secondary);
+    }
+    
+    .product-features {
+      list-style: none;
+    }
+    
+    .product-features li {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .product-features li:last-child {
+      border-bottom: none;
+    }
+    
+    .related-products {
+      margin-top: 4rem;
+    }
+    
+    @media (max-width: 768px) {
+      .product-detail {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      
+      .product-gallery {
+        position: static;
+      }
+      
+      .product-detail-title {
+        font-size: 1.5rem;
+      }
+      
+      .product-detail-price .current-price {
+        font-size: 2rem;
+      }
+      
+      .product-detail-actions {
+        flex-direction: column;
+      }
+      
+      .product-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <nav class="nav container">
+      <a href="/index.html" class="logo">The Gadget Hub Store</a>
+      
+      <ul class="nav-links">
+        <li><a href="/index.html">Home</a></li>
+        <li><a href="/shop.html">Shop</a></li>
+        <li><a href="/categories.html">Categories</a></li>
+        <li><a href="/trending.html">Trending</a></li>
+        <li><a href="/deals.html">Deals</a></li>
+      </ul>
+      
+      <div class="nav-actions">
+        <button class="icon-btn search-btn" aria-label="Search">
+          <span>🔍</span>
+        </button>
+        
+        <a href="/favorites.html" class="icon-btn" aria-label="Favorites">
+          <span>♡</span>
+        </a>
+        
+        <a href="/account.html" class="icon-btn account-btn" style="display: none;" aria-label="Account">
+          <span>👤</span>
+        </a>
+        
+        <button class="icon-btn sign-in-btn" onclick="window.location.href='/account.html'" aria-label="Sign In">
+          <span>👤</span>
+        </button>
+        
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <div class="theme-toggle-slider">🌙</div>
+        </button>
+        
+        <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
+           class="btn-primary-cta master-affiliate-link" 
+           target="_blank" 
+           rel="noopener noreferrer">
+          Visit AliExpress Store
+        </a>
+        
+        <button class="mobile-menu-btn" aria-label="Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </nav>
+  </header>
+  
+  <!-- Mobile Menu -->
+  <div class="mobile-overlay"></div>
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <div class="logo">The Gadget Hub Store</div>
+      <div class="mobile-menu-close">✕</div>
+    </div>
+    
+    <ul class="mobile-nav-links">
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/shop.html">Shop</a></li>
+      <li><a href="/categories.html">Categories</a></li>
+      <li><a href="/trending.html">Trending</a></li>
+      <li><a href="/deals.html">Deals</a></li>
+      <li><a href="/favorites.html">Favorites</a></li>
+      <li><a href="/account.html">Account</a></li>
+    </ul>
+    
+    <div style="padding: 1rem;">
+      <a href="https://s.click.aliexpress.com/e/_c3hTwqib" 
+         class="btn btn-primary master-affiliate-link" 
+         target="_blank"
+         rel="noopener noreferrer"
+         style="width: 100%; justify-content: center;">
+        Visit AliExpress Store
+      </a>
+    </div>
+  </div>
+  
+  <!-- Product Detail Content -->
+  <main class="container product-detail-container">
+    <div id="product-content">
+      <!-- Loading state -->
+      <div style="text-align: center; padding: 3rem;">
+        <div class="spinner" style="margin: 0 auto;"></div>
+        <p style="margin-top: 1rem; color: var(--text-secondary);">Loading product...</p>
+      </div>
+    </div>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <div class="logo">The Gadget Hub Store</div>
+          <p>Your destination for discovering the world's most innovative gadgets and tech products.</p>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Explore</h4>
+          <ul class="footer-links">
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/shop.html">Shop</a></li>
+            <li><a href="/trending.html">Trending</a></li>
+            <li><a href="/deals.html">Deals</a></li>
+            <li><a href="/categories.html">Categories</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Customer</h4>
+          <ul class="footer-links">
+            <li><a href="/account.html">My Account</a></li>
+            <li><a href="/favorites.html">Favorites</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#privacy">Privacy Policy</a></li>
+            <li><a href="#terms">Terms of Service</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-column">
+          <h4>Follow Us</h4>
+          <ul class="footer-links">
+            <li><a href="#" data-platform="facebook">Facebook</a></li>
+            <li><a href="#" data-platform="instagram">Instagram</a></li>
+            <li><a href="#" data-platform="youtube">YouTube</a></li>
+            <li><a href="#" data-platform="tiktok">TikTok</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2024 The Gadget Hub Store. All rights reserved.</p>
+        <p class="affiliate-disclosure">
+          As an affiliate, we may earn from qualifying purchases through our product links.
+        </p>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- Scripts -->
+  <script type="module" src="/js/app.js"></script>
+  <script type="module">
+    import { getProductById } from '/js/products.js';
+    import { formatCurrency, generateStars, createErrorState } from '/js/ui.js';
+    import { toggleFavorite, isFavorite } from '/js/favorites.js';
+    import { getState } from '/js/state.js';
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    
+    if (!productId) {
+      window.location.href = '/shop.html';
+    }
+    
+    async function loadProduct() {
+      try {
+        const product = await getProductById(productId);
+        renderProduct(product);
+        updateMetaTags(product);
+        loadRelatedProducts(product.category);
+      } catch (error) {
+        console.error('Error loading product:', error);
+        const container = document.getElementById('product-content');
+        container.innerHTML = '';
+        container.appendChild(createErrorState(
+          'Product not found',
+          () => window.location.href = '/shop.html'
+        ));
+      }
+    }
+    
+    function renderProduct(product) {
+      const container = document.getElementById('product-content');
+      
+      const images = product.images || [product.thumbnail];
+      const mainImage = images[0] || '/assets/images/placeholder.jpg';
+      
+      container.innerHTML = `
+        <div class="product-detail fade-in">
+          <div class="product-gallery">
+            <img src="${mainImage}" alt="${product.title}" class="product-main-image" id="main-product-image" />
+            ${images.length > 1 ? `
+              <div class="product-thumbnails">
+                ${images.map((img, index) => `
+                  <img src="${img}" 
+                       alt="${product.title}" 
+                       class="product-thumbnail ${index === 0 ? 'active' : ''}" 
+                       onclick="changeMainImage('${img}', this)" />
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+          
+          <div class="product-detail-info">
+            <h1 class="product-detail-title">${product.title}</h1>
+            
+            <div class="product-detail-rating">
+              <span class="stars" style="font-size: 1.2rem;">${generateStars(product.rating || 4.5)}</span>
+              <span style="color: var(--text-secondary);">(${product.reviewCount || 0} reviews)</span>
+            </div>
+            
+            <div class="product-badges">
+              ${product.featured ? '<span class="product-badge-lg">Featured</span>' : ''}
+              ${product.trending ? '<span class="product-badge-lg">Trending</span>' : ''}
+              ${product.bestseller ? '<span class="product-badge-lg" style="background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%);">Best Seller</span>' : ''}
+              ${product.stockStatus === 'in-stock' ? '<span class="product-badge-lg" style="background: var(--success);">In Stock</span>' : ''}
+            </div>
+            
+            <div class="product-detail-price">
+              <span class="current-price">${formatCurrency(product.price)}</span>
+              ${product.originalPrice ? `
+                <span class="original-price">${formatCurrency(product.originalPrice)}</span>
+                <span class="discount-badge">Save ${product.discount}%</span>
+              ` : ''}
+            </div>
+            
+            ${product.shortDescription ? `
+              <p style="font-size: 1.1rem; color: var(--text-secondary); line-height: 1.6;">
+                ${product.shortDescription}
+              </p>
+            ` : ''}
+            
+            <div class="product-detail-actions">
+              <button class="btn btn-secondary favorite-btn-detail ${isFavorite(productId) ? 'active' : ''}" 
+                      onclick="handleFavoriteClick('${productId}')">
+                ${isFavorite(productId) ? '❤ Saved' : '♡ Save'}
+              </button>
+              <a href="${product.affiliateUrl}" 
+                 class="btn btn-primary" 
+                 target="_blank" 
+                 rel="noopener noreferrer">
+                🛒 Shop on AliExpress
+              </a>
+            </div>
+            
+            <div style="padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);">
+              <h4 style="margin-bottom: 0.5rem;">✓ Secure Shopping</h4>
+              <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                This product is available through our trusted affiliate partner AliExpress.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="product-tabs">
+            <div class="product-tab active" onclick="switchTab('description')">Description</div>
+            <div class="product-tab" onclick="switchTab('features')">Features</div>
+            <div class="product-tab" onclick="switchTab('specs')">Specifications</div>
+          </div>
+          
+          <div class="product-tab-content active" id="tab-description">
+            <div class="product-description">
+              ${product.description || product.shortDescription || 'No description available.'}
+            </div>
+          </div>
+          
+          <div class="product-tab-content" id="tab-features">
+            <ul class="product-features">
+              <li>✓ Premium Quality Materials</li>
+              <li>✓ Innovative Design</li>
+              <li>✓ Easy to Use</li>
+              <li>✓ Durable Construction</li>
+              <li>✓ Great Value for Money</li>
+            </ul>
+          </div>
+          
+          <div class="product-tab-content" id="tab-specs">
+            <div class="product-description">
+              ${product.specifications || 'Specifications available on the product page.'}
+            </div>
+          </div>
+        </div>
+        
+        <div class="related-products" id="related-products">
+          <h2 style="margin-bottom: 2rem;">Related Products</h2>
+          <div class="products-grid" id="related-products-grid">
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+            <div class="skeleton skeleton-card"></div>
+          </div>
+        </div>
+      `;
+    }
+    
+    function updateMetaTags(product) {
+      document.title = `${product.title} - The Gadget Hub Store`;
+      
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) {
+        metaDescription.content = product.shortDescription || product.description || product.title;
+      }
+      
+      // Open Graph
+      let ogTitle = document.querySelector('meta[property="og:title"]');
+      if (!ogTitle) {
+        ogTitle = document.createElement('meta');
+        ogTitle.setAttribute('property', 'og:title');
+        document.head.appendChild(ogTitle);
+      }
+      ogTitle.content = product.title;
+      
+      let ogDescription = document.querySelector('meta[property="og:description"]');
+      if (!ogDescription) {
+        ogDescription = document.createElement('meta');
+        ogDescription.setAttribute('property', 'og:description');
+        document.head.appendChild(ogDescription);
+      }
+      ogDescription.content = product.shortDescription || product.description || product.title;
+      
+      let ogImage = document.querySelector('meta[property="og:image"]');
+      if (!ogImage) {
+        ogImage = document.createElement('meta');
+        ogImage.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImage);
+      }
+      ogImage.content = product.thumbnail || product.images?.[0];
+    }
+    
+    function loadRelatedProducts(categoryId) {
+      import('/js/products.js').then(({ getProductsByCategory }) => {
+        const related = getProductsByCategory(categoryId)
+          .filter(p => p.id !== productId)
+          .slice(0, 4);
+        
+        const grid = document.getElementById('related-products-grid');
+        
+        if (related.length === 0) {
+          grid.innerHTML = '<p style="color: var(--text-muted); text-align: center; grid-column: 1/-1;">No related products found.</p>';
+          return;
+        }
+        
+        import('/js/ui.js').then(({ formatCurrency, generateStars }) => {
+          grid.innerHTML = related.map(product => `
+            <div class="product-card">
+              <div class="product-image-container">
+                <img src="${product.thumbnail || product.images?.[0] || '/assets/images/placeholder.jpg'}" 
+                     alt="${product.title}" 
+                     class="product-image" 
+                     loading="lazy" />
+                ${product.trending ? '<span class="product-badge">Trending</span>' : ''}
+              </div>
+              <div class="product-info">
+                <h3 class="product-title">${product.title}</h3>
+                <div class="product-rating">
+                  <span class="stars">${generateStars(product.rating || 4.5)}</span>
+                  <span class="review-count">(${product.reviewCount || 0})</span>
+                </div>
+                <div class="product-price">
+                  <span class="current-price">${formatCurrency(product.price)}</span>
+                  ${product.originalPrice ? `
+                    <span class="original-price">${formatCurrency(product.originalPrice)}</span>
+                  ` : ''}
+                </div>
+                <div class="product-actions">
+                  <a href="/product.html?id=${product.id}" class="btn btn-sm btn-outline">
+                    View Details
+                  </a>
+                  <a href="${product.affiliateUrl}" 
+                     class="btn btn-sm btn-primary" 
+                     target="_blank" 
+                     rel="noopener noreferrer">
+                    Shop Now
+                  </a>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        });
+      });
+    }
+    
+    window.changeMainImage = (src, thumbnail) => {
+      const mainImage = document.getElementById('main-product-image');
+      if (mainImage) {
+        mainImage.src = src;
+      }
+      
+      document.querySelectorAll('.product-thumbnail').forEach(thumb => {
+        thumb.classList.remove('active');
+      });
+      
+      thumbnail.classList.add('active');
+    };
+    
+    window.switchTab = (tabName) => {
+      document.querySelectorAll('.product-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      document.querySelectorAll('.product-tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      event.target.classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+    };
+    
+    window.handleFavoriteClick = async (productId) => {
+      await toggleFavorite(productId);
+      const btn = document.querySelector('.favorite-btn-detail');
+      if (btn) {
+        if (isFavorite(productId)) {
+          btn.innerHTML = '❤ Saved';
+          btn.classList.add('active');
+        } else {
+          btn.innerHTML = '♡ Save';
+          btn.classList.remove('active');
+        }
+      }
+    };
+    
+    loadProduct();
+  </script>
+</body>
+</html>
