@@ -1,255 +1,164 @@
-// ===================================
-// FAVORITES / WISHLIST MANAGEMENT
-// ===================================
+import { getFirebaseInstances, safeFirebaseOperation } from './firebase-init.js';
+import { COLLECTIONS } from './config.js';
+import { getCurrentUser } from './auth.js';
+import { setState, getState } from './state.js';
+import { showSuccessToast, showErrorToast } from './ui.js';
 
-let userFavorites = [];
+let favoritesListener = null;
 
-// Initialize favorites from localStorage or Firebase
-function initializeFavorites() {
-    if (isUserSignedIn()) {
-        loadUserFavorites();
-    } else {
-        loadLocalFavorites();
-    }
-}
-
-// Load favorites from localStorage
-function loadLocalFavorites() {
-    userFavorites = storage.get('favorites') || [];
-    updateFavoritesCount();
-}
-
-// Load user favorites from Firebase
-async function loadUserFavorites() {
-    if (!isFirebaseConfigured || !currentUser) return;
+/**
+ * Initialize favorites listener
+ */
+export async function initFavoritesListener(userId) {
+  if (!userId) return;
+  
+  return safeFirebaseOperation(async () => {
+    const { db } = getFirebaseInstances();
+    const { collection, query, where, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
     
-    try {
-        const snapshot = await db.collection('favorites')
-            .where('userId', '==', currentUser.uid)
-            .get();
+    if (favoritesListener) {
+      favoritesListener();
+    }
+    
+    const favoritesRef = collection(db, COLLECTIONS.FAVORITES);
+    const q = query(favoritesRef, where('userId', '==', userId));
+    
+    favoritesListener = onSnapshot(
+      q,
+      (snapshot) => {
+        const favorites = [];
+        snapshot.forEach((doc) => {
+          favorites.push({ id: doc.id, ...doc.data() });
+        });
         
-        userFavorites = snapshot.docs.map(doc => doc.data().productId);
-        updateFavoritesCount();
-    } catch (error) {
-        console.error('Error loading favorites:', error);
-        loadLocalFavorites();
-    }
-}
-
-// Clear user favorites (on sign out)
-function clearUserFavorites() {
-    userFavorites = [];
-    updateFavoritesCount();
-}
-
-// Toggle favorite
-async function toggleFavorite(productId) {
-    if (!isUserSignedIn()) {
-        showToast('Please sign in to save favorites', 'info');
-        setTimeout(() => showLoginModal(), 500);
-        return;
-    }
+        setState('favorites', favorites);
+        updateFavoriteButtons();
+      },
+      (error) => {
+        console.error('Favorites listener error:', error);
+      }
+    );
     
-    const index = userFavorites.indexOf(productId);
-    
-    if (index > -1) {
-        // Remove from favorites
-        await removeFavorite(productId);
-    } else {
-        // Add to favorites
-        await addFavorite(productId);
-    }
+    return favoritesListener;
+  }, 'Failed to initialize favorites listener');
 }
 
-// Add to favorites
-async function addFavorite(productId) {
-    if (isFirebaseConfigured && currentUser) {
-        try {
-            await db.collection('favorites').add({
-                userId: currentUser.uid,
-                productId: productId,
-                addedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            userFavorites.push(productId);
-            updateFavoritesUI(productId, true);
-            showToast('Added to favorites', 'success');
-        } catch (error) {
-            console.error('Error adding favorite:', error);
-            showToast('Failed to add favorite', 'error');
-        }
-    } else {
-        // Use localStorage
-        userFavorites.push(productId);
-        storage.set('favorites', userFavorites);
-        updateFavoritesUI(productId, true);
-        showToast('Added to favorites', 'success');
-    }
+/**
+ * Add to favorites
+ */
+export async function addToFavorites(productId) {
+  const user = getCurrentUser();
+  
+  if (!user) {
+    showErrorToast('Please sign in to save favorites');
+    return false;
+  }
+  
+  return safeFirebaseOperation(async () => {
+    const { db } = getFirebaseInstances();
+    const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
     
-    updateFavoritesCount();
-}
-
-// Remove from favorites
-async function removeFavorite(productId) {
-    if (isFirebaseConfigured && currentUser) {
-        try {
-            const snapshot = await db.collection('favorites')
-                .where('userId', '==', currentUser.uid)
-                .where('productId', '==', productId)
-                .get();
-            
-            snapshot.forEach(doc => doc.ref.delete());
-            
-            userFavorites = userFavorites.filter(id => id !== productId);
-            updateFavoritesUI(productId, false);
-            showToast('Removed from favorites', 'success');
-        } catch (error) {
-            console.error('Error removing favorite:', error);
-            showToast('Failed to remove favorite', 'error');
-        }
-    } else {
-        // Use localStorage
-        userFavorites = userFavorites.filter(id => id !== productId);
-        storage.set('favorites', userFavorites);
-        updateFavoritesUI(productId, false);
-        showToast('Removed from favorites', 'success');
-    }
+    const favoritesRef = collection(db, COLLECTIONS.FAVORITES);
     
-    updateFavoritesCount();
-}
-
-// Check if product is favorite
-function isProductFavorite(productId) {
-    return userFavorites.includes(productId);
-}
-
-// Update favorites UI
-function updateFavoritesUI(productId, isFavorite) {
-    const buttons = document.querySelectorAll(`[onclick="toggleFavorite('${productId}')"]`);
-    
-    buttons.forEach(button => {
-        const icon = button.querySelector('i');
-        if (isFavorite) {
-            button.classList.add('active');
-            icon.classList.remove('far');
-            icon.classList.add('fas');
-        } else {
-            button.classList.remove('active');
-            icon.classList.remove('fas');
-            icon.classList.add('far');
-        }
+    await addDoc(favoritesRef, {
+      userId: user.uid,
+      productId: productId,
+      createdAt: serverTimestamp()
     });
+    
+    showSuccessToast('Added to favorites!');
+    return true;
+  }, 'Failed to add to favorites');
 }
 
-// Update favorites count
-function updateFavoritesCount() {
-    const countElement = document.getElementById('favoritesCount');
-    if (countElement) {
-        const count = userFavorites.length;
-        countElement.textContent = count;
-        countElement.style.display = count > 0 ? 'flex' : 'none';
-    }
+/**
+ * Remove from favorites
+ */
+export async function removeFromFavorites(productId) {
+  const user = getCurrentUser();
+  
+  if (!user) {
+    return false;
+  }
+  
+  return safeFirebaseOperation(async () => {
+    const { db } = getFirebaseInstances();
+    const { collection, query, where, getDocs, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    
+    const favoritesRef = collection(db, COLLECTIONS.FAVORITES);
+    const q = query(
+      favoritesRef,
+      where('userId', '==', user.uid),
+      where('productId', '==', productId)
+    );
+    
+    const snapshot = await getDocs(q);
+    
+    const deletePromises = [];
+    snapshot.forEach((doc) => {
+      deletePromises.push(deleteDoc(doc.ref));
+    });
+    
+    await Promise.all(deletePromises);
+    showSuccessToast('Removed from favorites');
+    return true;
+  }, 'Failed to remove from favorites');
 }
 
-// Get all favorite products
-async function getFavoriteProducts() {
-    if (userFavorites.length === 0) {
-        return [];
-    }
-    
-    try {
-        const products = await getProducts();
-        return products.filter(p => userFavorites.includes(p.id));
-    } catch (error) {
-        console.error('Error getting favorite products:', error);
-        return [];
-    }
+/**
+ * Toggle favorite
+ */
+export async function toggleFavorite(productId) {
+  if (isFavorite(productId)) {
+    return await removeFromFavorites(productId);
+  } else {
+    return await addToFavorites(productId);
+  }
 }
 
-// Load and display favorites page
-async function loadFavoritesPage() {
-    const container = document.getElementById('favoritesGrid');
-    if (!container) return;
-    
-    if (!isUserSignedIn()) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="far fa-heart"></i>
-                <h3>Sign In to View Favorites</h3>
-                <p>Save your favorite products and access them anytime.</p>
-                <button onclick="showLoginModal()" class="btn btn-primary">
-                    <span>Sign In</span>
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-        `;
-        return;
-    }
-    
-    try {
-        showLoading();
-        const products = await getFavoriteProducts();
-        
-        if (products.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="far fa-heart"></i>
-                    <h3>Your Wishlist is Empty</h3>
-                    <p>Start adding products you love to your favorites.</p>
-                    <a href="/pages/shop.html" class="btn btn-primary">
-                        <span>Explore Products</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </a>
-                </div>
-            `;
-        } else {
-            renderProducts(container, products);
-        }
-        
-        hideLoading();
-    } catch (error) {
-        console.error('Error loading favorites:', error);
-        showToast('Failed to load favorites', 'error');
-        hideLoading();
-    }
+/**
+ * Check if product is favorite
+ */
+export function isFavorite(productId) {
+  const favorites = getState('favorites');
+  return favorites.some(f => f.productId === productId);
 }
 
-// Clear all favorites
-async function clearAllFavorites() {
-    if (!confirm('Are you sure you want to remove all favorites?')) {
-        return;
-    }
-    
-    if (isFirebaseConfigured && currentUser) {
-        try {
-            const snapshot = await db.collection('favorites')
-                .where('userId', '==', currentUser.uid)
-                .get();
-            
-            const batch = db.batch();
-            snapshot.forEach(doc => batch.delete(doc.ref));
-            await batch.commit();
-            
-            userFavorites = [];
-            updateFavoritesCount();
-            showToast('All favorites cleared', 'success');
-            
-            // Reload page if on favorites page
-            if (window.location.pathname.includes('favorites.html')) {
-                loadFavoritesPage();
-            }
-        } catch (error) {
-            console.error('Error clearing favorites:', error);
-            showToast('Failed to clear favorites', 'error');
-        }
+/**
+ * Get favorite products
+ */
+export function getFavoriteProducts() {
+  const favorites = getState('favorites');
+  const products = getState('products');
+  
+  const favoriteProductIds = favorites.map(f => f.productId);
+  return products.filter(p => favoriteProductIds.includes(p.id));
+}
+
+/**
+ * Update favorite buttons UI
+ */
+function updateFavoriteButtons() {
+  const favoriteButtons = document.querySelectorAll('.favorite-btn');
+  
+  favoriteButtons.forEach(btn => {
+    const productId = btn.dataset.productId;
+    if (isFavorite(productId)) {
+      btn.classList.add('active');
+      btn.innerHTML = '❤';
     } else {
-        userFavorites = [];
-        storage.remove('favorites');
-        updateFavoritesCount();
-        showToast('All favorites cleared', 'success');
-        
-        if (window.location.pathname.includes('favorites.html')) {
-            loadFavoritesPage();
-        }
+      btn.classList.remove('active');
+      btn.innerHTML = '♡';
     }
+  });
+}
+
+/**
+ * Clean up listeners
+ */
+export function cleanupFavoritesListener() {
+  if (favoritesListener) {
+    favoritesListener();
+    favoritesListener = null;
+  }
 }
