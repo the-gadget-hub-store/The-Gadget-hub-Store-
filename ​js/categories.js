@@ -1,5 +1,7 @@
 // categories.js - The Gadget Hub Store Category Management System
-// Production-ready implementation with robust Firebase/Firestore error handling
+// Production-ready implementation
+// Compatible with the existing categories.html, ui.js and firebase.js
+// ============================================================================
 
 // ============================================================================
 // STATE MANAGEMENT
@@ -7,27 +9,57 @@
 
 let allCategories = [];
 let isSubmittingCategory = false;
+let categoriesInitialized = false;
+let categoryFormInitialized = false;
+let categorySearchInitialized = false;
 
 // ============================================================================
-// FIREBASE/FIRESTORE REFERENCES (Fixed for robust loading)
+// FIREBASE / FIRESTORE REFERENCE
 // ============================================================================
 
-const getCategoriesCollection = () => {
+function getCategoriesCollection() {
     try {
-        // Safe check for global db or firebase.firestore instance
-        const database = window.db || (typeof db !== 'undefined' && db ? db : null) || (typeof firebase !== 'undefined' ? firebase.firestore() : null);
-        
-        if (database) {
-            return database.collection('categories');
+        // Prefer the application's existing Firestore instance.
+        if (window.db && typeof window.db.collection === 'function') {
+            return window.db.collection('categories');
         }
-        
-        console.error('Firestore database not initialized');
+
+        // Fallback for environments where db exists globally.
+        if (
+            typeof db !== 'undefined' &&
+            db &&
+            typeof db.collection === 'function'
+        ) {
+            return db.collection('categories');
+        }
+
+        // Final Firebase fallback.
+        if (
+            typeof firebase !== 'undefined' &&
+            firebase &&
+            typeof firebase.firestore === 'function'
+        ) {
+            const firestore = firebase.firestore();
+
+            // Keep the same instance globally for the rest of the admin panel.
+            if (!window.db) {
+                window.db = firestore;
+            }
+
+            return firestore.collection('categories');
+        }
+
+        console.error('Firestore database is not initialized.');
         return null;
+
     } catch (error) {
-        console.error('Error accessing Firestore categories collection:', error);
+        console.error(
+            'Error accessing Firestore categories collection:',
+            error
+        );
         return null;
     }
-};
+}
 
 // ============================================================================
 // SLUG GENERATION
@@ -41,9 +73,23 @@ function generateSlug(text) {
     return text
         .toLowerCase()
         .trim()
-        .replace(/[^\w\s-]/g, '') // Remove special characters
-        .replace(/[\s_-]+/g, '-') // Replace spaces, underscores with hyphens
-        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+// ============================================================================
+// ESCAPE HTML
+// ============================================================================
+
+function escapeHTML(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+
+    const div = document.createElement('div');
+    div.textContent = String(value);
+    return div.innerHTML;
 }
 
 // ============================================================================
@@ -52,116 +98,235 @@ function generateSlug(text) {
 
 function createCategoryCard(category) {
     const card = document.createElement('div');
-    card.className = 'category-card';
+
+    card.className = 'category-card-admin';
     card.setAttribute('data-category-id', category.id || '');
     card.setAttribute('data-category-slug', category.slug || '');
 
-    // Generate category icon class or use default
-    const iconClass = category.icon || 'fas fa-th-large';
-    
-    // Category name and slug
+    const iconClass = category.icon || 'fa-th-large';
     const categoryName = category.name || 'Unnamed Category';
-    const categorySlug = category.slug || generateSlug(categoryName);
-    
-    // Product count (if available)
-    const productCount = category.productCount || 0;
+    const categorySlug =
+        category.slug || generateSlug(categoryName);
 
-    // Construct card HTML
+    const productCount = Number(category.productCount) || 0;
+
     card.innerHTML = `
-        <div class="category-card-inner">
-            <div class="category-icon">
-                <i class="${iconClass}"></i>
+        ${
+            category.featured
+                ? '<div class="category-featured-badge">Featured</div>'
+                : ''
+        }
+
+        <div class="category-card-header">
+
+            <div class="category-icon-display">
+                <i class="fas ${escapeHTML(iconClass)}"></i>
             </div>
-            <div class="category-info">
-                <h3 class="category-name">${categoryName}</h3>
-                <p class="category-slug">${categorySlug}</p>
-                <span class="category-product-count">${productCount} products</span>
-            </div>
-            <div class="category-actions">
-                <button class="btn-edit-category" data-category-id="${category.id}" title="Edit Category">
+
+            <div class="category-card-actions">
+
+                <button
+                    type="button"
+                    class="btn-icon"
+                    data-action="edit"
+                    data-category-id="${escapeHTML(category.id || '')}"
+                    title="Edit Category"
+                    aria-label="Edit ${escapeHTML(categoryName)}"
+                >
                     <i class="fas fa-edit"></i>
                 </button>
-                <button class="btn-delete-category" data-category-id="${category.id}" title="Delete Category">
+
+                <button
+                    type="button"
+                    class="btn-icon btn-danger"
+                    data-action="delete"
+                    data-category-id="${escapeHTML(category.id || '')}"
+                    title="Delete Category"
+                    aria-label="Delete ${escapeHTML(categoryName)}"
+                >
                     <i class="fas fa-trash"></i>
                 </button>
+
             </div>
+        </div>
+
+        <div class="category-card-body">
+
+            <h3>${escapeHTML(categoryName)}</h3>
+
+            <p class="category-description">
+                ${
+                    category.description
+                        ? escapeHTML(category.description)
+                        : 'No description'
+                }
+            </p>
+
+            <div class="category-stats">
+
+                <div class="category-stat">
+
+                    <div class="category-stat-value">
+                        ${
+                            typeof formatNumber === 'function'
+                                ? formatNumber(productCount)
+                                : productCount.toLocaleString()
+                        }
+                    </div>
+
+                    <div class="category-stat-label">
+                        Products
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
     `;
 
-    // Initialize 3D tilt effect
-    init3DTiltCategory(card);
+    // ------------------------------------------------------------
+    // Edit button
+    // ------------------------------------------------------------
 
-    // Attach action handlers
-    const editBtn = card.querySelector('.btn-edit-category');
-    const deleteBtn = card.querySelector('.btn-delete-category');
+    const editButton = card.querySelector(
+        '[data-action="edit"]'
+    );
 
-    if (editBtn) {
-        editBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+    if (editButton) {
+        editButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
             handleEditCategory(category.id);
         });
     }
 
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+    // ------------------------------------------------------------
+    // Delete button
+    // ------------------------------------------------------------
+
+    const deleteButton = card.querySelector(
+        '[data-action="delete"]'
+    );
+
+    if (deleteButton) {
+        deleteButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
             handleDeleteCategory(category.id);
         });
     }
+
+    // Optional 3D effect.
+    init3DTiltCategory(card);
 
     return card;
 }
 
 // ============================================================================
-// CATEGORY RENDERING (Support both renderCategories and displayCategories)
+// CATEGORY RENDERING
 // ============================================================================
 
-function renderCategories(categories, containerId = 'categories-grid') {
+function renderCategories(
+    categories = allCategories,
+    containerId = 'categoriesGrid'
+) {
     let container = document.getElementById(containerId);
-    
-    // Fallback support if containerId is categoriesGrid
+
+    // Existing categories.html uses categoriesGrid.
     if (!container) {
-        container = document.getElementById('categoriesGrid');
+        container = document.getElementById('categories-grid');
     }
 
     if (!container) {
-        console.error(`Container not found`);
+        console.error(
+            'Categories container not found.'
+        );
         return;
     }
 
-    // Clear existing content
     container.innerHTML = '';
 
-    // Handle empty state
-    if (!categories || categories.length === 0) {
+    if (!Array.isArray(categories) || categories.length === 0) {
         container.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-folder-open"></i>
-                <p>No categories found.</p>
-                <p class="empty-state-hint">Add your first category to get started.</p>
+            <div style="
+                grid-column: 1 / -1;
+                width: 100%;
+            ">
+                <div class="empty-state-admin">
+
+                    <i class="fas fa-th"></i>
+
+                    <h3>No Categories Found</h3>
+
+                    <p>
+                        Start by creating your first product category.
+                    </p>
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="empty-add-category-btn"
+                    >
+                        <i class="fas fa-plus"></i>
+                        <span>Add Category</span>
+                    </button>
+
+                </div>
             </div>
         `;
+
+        const addButton = document.getElementById(
+            'empty-add-category-btn'
+        );
+
+        if (addButton) {
+            addButton.addEventListener(
+                'click',
+                function () {
+                    if (
+                        typeof window.showAddCategoryModal ===
+                        'function'
+                    ) {
+                        window.showAddCategoryModal();
+                    }
+                }
+            );
+        }
+
         return;
     }
 
-    // Render each category card
+    const fragment = document.createDocumentFragment();
+
     categories.forEach(category => {
         try {
             const card = createCategoryCard(category);
-            container.appendChild(card);
+            fragment.appendChild(card);
         } catch (error) {
-            console.error('Error rendering category card:', error, category);
+            console.error(
+                'Error rendering category:',
+                category,
+                error
+            );
         }
     });
+
+    container.appendChild(fragment);
 }
 
-// Alias function to support HTML templates looking for displayCategories
+// Compatibility alias.
 function displayCategories() {
-    renderCategories(allCategories, 'categoriesGrid');
+    renderCategories(
+        allCategories,
+        'categoriesGrid'
+    );
 }
 
 // ============================================================================
-// LOAD CATEGORIES FROM FIRESTORE (Support both loadCategories and loadAllCategories)
+// LOAD CATEGORIES FROM FIRESTORE
 // ============================================================================
 
 async function loadCategories() {
@@ -170,41 +335,122 @@ async function loadCategories() {
             showLoading();
         }
 
-        const categoriesRef = getCategoriesCollection();
+        const categoriesRef =
+            getCategoriesCollection();
 
         if (!categoriesRef) {
-            throw new Error('Unable to access categories collection');
+            throw new Error(
+                'Firestore database is not available.'
+            );
         }
 
-        const snapshot = await categoriesRef.orderBy('name', 'asc').get();
+        let snapshot;
 
-        allCategories = [];
+        try {
+            // Preferred query.
+            snapshot = await categoriesRef
+                .orderBy('name', 'asc')
+                .get();
+
+        } catch (orderError) {
+            /*
+             * If the query fails because of an index/query issue,
+             * fall back to a simple collection read.
+             */
+            console.warn(
+                'Ordered category query failed. Falling back to simple query.',
+                orderError
+            );
+
+            snapshot = await categoriesRef.get();
+        }
+
+        const loadedCategories = [];
+
         snapshot.forEach(doc => {
-            allCategories.push({ id: doc.id, ...doc.data() });
+            const data = doc.data() || {};
+
+            loadedCategories.push({
+                id: doc.id,
+                ...data
+            });
         });
 
-        renderCategories(allCategories);
-        // Also update the alternative grid if present
-        renderCategories(allCategories, 'categoriesGrid');
+        // If fallback query was used, sort locally.
+        loadedCategories.sort((a, b) => {
+            const nameA = String(a.name || '').toLowerCase();
+            const nameB = String(b.name || '').toLowerCase();
+
+            return nameA.localeCompare(nameB);
+        });
+
+        allCategories = loadedCategories;
+
+        displayCategories();
 
         return allCategories;
 
     } catch (error) {
-        console.error('Error loading categories:', error);
+        console.error(
+            'Error loading categories:',
+            error
+        );
 
-        const container = document.getElementById('categories-grid') || document.getElementById('categoriesGrid');
+        const container =
+            document.getElementById('categoriesGrid') ||
+            document.getElementById('categories-grid');
+
         if (container) {
             container.innerHTML = `
-                <div class="empty-state error-state">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>Unable to load categories.</p>
-                    <button onclick="loadCategories()" class="btn-retry">Retry</button>
+                <div style="
+                    grid-column: 1 / -1;
+                    text-align: center;
+                    padding: 3rem;
+                ">
+
+                    <i
+                        class="fas fa-exclamation-triangle"
+                        style="
+                            font-size: 3rem;
+                            margin-bottom: 1rem;
+                            color: var(--danger, #ff4d4d);
+                        "
+                    ></i>
+
+                    <h3>Unable to Load Categories</h3>
+
+                    <p style="
+                        color: var(--text-secondary);
+                        margin-bottom: 1.5rem;
+                    ">
+                        ${
+                            error.code === 'permission-denied'
+                                ? 'You do not have permission to access categories.'
+                                : 'There was a problem connecting to the database.'
+                        }
+                    </p>
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        onclick="loadCategories()"
+                    >
+                        <i class="fas fa-redo"></i>
+                        Retry
+                    </button>
+
                 </div>
             `;
         }
 
-        if (typeof showToast === 'function' && error.code !== 'permission-denied') {
-            showToast('Unable to load categories. Please try again.', 'error');
+        if (
+            typeof showToast === 'function' &&
+            error.code !== 'permission-denied'
+        ) {
+            showToast(
+                'Unable to load categories. Please try again.',
+                'error'
+            );
         }
 
         return [];
@@ -216,222 +462,361 @@ async function loadCategories() {
     }
 }
 
-// Alias function to support HTML templates looking for loadAllCategories
+// Compatibility alias.
 async function loadAllCategories() {
-    return await loadCategories();
+    return loadCategories();
 }
 
 // ============================================================================
-// 3D TILT EFFECT FOR CATEGORY CARDS
-// ============================================================================
-
-function init3DTiltCategory(card) {
-    if (!card) return;
-
-    // Respect user's motion preferences
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
-
-    card.addEventListener('mousemove', handleCategoryTilt);
-    card.addEventListener('mouseleave', resetCategoryTilt);
-    card.addEventListener('mouseenter', function() {
-        this.style.transition = 'none';
-    });
-}
-
-function handleCategoryTilt(e) {
-    const card = e.currentTarget;
-    const rect = card.getBoundingClientRect();
-
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = (y - centerY) / 15;
-    const rotateY = (centerX - x) / 15;
-
-    requestAnimationFrame(() => {
-        card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.03, 1.03, 1.03)`;
-    });
-}
-
-function resetCategoryTilt(e) {
-    const card = e.currentTarget;
-
-    requestAnimationFrame(() => {
-        card.style.transition = 'transform 0.5s ease';
-        card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
-    });
-}
-
-// ============================================================================
-// ADD CATEGORY FORM HANDLING (SAFE & FULLY RESTORED)
+// ADD CATEGORY FORM
 // ============================================================================
 
 function initCategoryForm() {
-    const form = document.getElementById('category-form');
-    const submitButton = document.getElementById('submit-category-btn');
+    const form =
+        document.getElementById('category-form');
+
+    const submitButton =
+        document.getElementById(
+            'submit-category-btn'
+        );
 
     if (!form || !submitButton) {
+        console.warn(
+            'Category form or submit button not found.'
+        );
         return;
     }
 
-    // Prevent duplicate event listeners
-    if (form.getAttribute('data-listener-attached') === 'true') return;
-    form.setAttribute('data-listener-attached', 'true');
+    // Prevent duplicate listeners.
+    if (categoryFormInitialized) {
+        return;
+    }
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    categoryFormInitialized = true;
 
-        // Prevent duplicate submissions
-        if (isSubmittingCategory) {
-            return;
-        }
+    form.addEventListener(
+        'submit',
+        async function (event) {
+            event.preventDefault();
 
-        // Store original button state
-        const originalButtonText = submitButton.innerHTML;
-        const originalButtonDisabled = submitButton.disabled;
-
-        try {
-            // Set submitting flag
-            isSubmittingCategory = true;
-
-            // Get form data safely supporting multiple naming conventions
-            const categoryNameEl = document.getElementById('categoryName') || form.querySelector('[name="name"]');
-            const categoryDescEl = document.getElementById('categoryDescription') || form.querySelector('[name="description"]');
-            const categorySlugEl = document.getElementById('categorySlug') || form.querySelector('[name="slug"]');
-            const categoryIconEl = document.getElementById('selectedIcon') || form.querySelector('[name="icon"]');
-            const categoryFeaturedEl = document.getElementById('categoryFeatured') || form.querySelector('[name="featured"]');
-
-            const categoryName = categoryNameEl ? categoryNameEl.value.trim() : '';
-            const categoryDescription = categoryDescEl ? categoryDescEl.value.trim() : '';
-            const categorySlugInput = categorySlugEl ? categorySlugEl.value.trim() : '';
-            const categoryIcon = categoryIconEl ? categoryIconEl.value.trim() : '';
-            const isFeatured = categoryFeaturedEl ? categoryFeaturedEl.checked : false;
-
-            // VALIDATION
-            if (!categoryName) {
-                throw new Error('Category name is required');
+            if (isSubmittingCategory) {
+                return;
             }
 
-            if (categoryName.length < 2) {
-                throw new Error('Category name must be at least 2 characters');
-            }
+            const originalButtonHTML =
+                submitButton.innerHTML;
 
-            if (categoryName.length > 50) {
-                throw new Error('Category name must not exceed 50 characters');
-            }
+            const originalDisabled =
+                submitButton.disabled;
 
-            if (!categoryIcon) {
-                throw new Error('Please select an icon for the category');
-            }
+            try {
+                isSubmittingCategory = true;
 
-            // Generate slug
-            const categorySlug = categorySlugInput || generateSlug(categoryName);
+                const nameElement =
+                    document.getElementById(
+                        'categoryName'
+                    );
 
-            if (!categorySlug) {
-                throw new Error('Unable to generate valid category slug');
-            }
+                const descriptionElement =
+                    document.getElementById(
+                        'categoryDescription'
+                    );
 
-            // Update button to loading state (avoiding full-screen freeze)
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
-            submitButton.disabled = true;
+                const slugElement =
+                    document.getElementById(
+                        'categorySlug'
+                    );
 
-            // Prepare category data
-            const categoryData = {
-                name: categoryName,
-                slug: categorySlug,
-                icon: categoryIcon || 'fas fa-th-large',
-                description: categoryDescription || '',
-                featured: isFeatured,
-                productCount: 0,
-                createdAt: new Date(),
-                updatedAt: new Date()
-            };
+                const iconElement =
+                    document.getElementById(
+                        'selectedIcon'
+                    );
 
-            // Get Firestore reference with fallback check
-            let categoriesRef = getCategoriesCollection();
-            if (!categoriesRef && typeof firebase !== 'undefined') {
-                window.db = firebase.firestore();
-                categoriesRef = getCategoriesCollection();
-            }
+                const featuredElement =
+                    document.getElementById(
+                        'categoryFeatured'
+                    );
 
-            if (!categoriesRef) {
-                throw new Error('Database connection not ready. Please refresh the page and try again.');
-            }
+                const categoryName =
+                    nameElement
+                        ? nameElement.value.trim()
+                        : '';
 
-            // Add category to Firestore
-            const docRef = await categoriesRef.add(categoryData);
+                const categoryDescription =
+                    descriptionElement
+                        ? descriptionElement.value.trim()
+                        : '';
 
-            // SUCCESS HANDLING
-            if (typeof showToast === 'function') {
-                showToast('Category added successfully!', 'success');
-            }
+                const enteredSlug =
+                    slugElement
+                        ? slugElement.value.trim()
+                        : '';
 
-            // Close modal safely (checking multiple ways modals are closed)
-            const modal = document.getElementById('category-modal') || document.querySelector('.category-modal') || document.getElementById('addCategoryModal');
-            if (modal) {
-                modal.classList.remove('active');
-                modal.style.display = 'none';
-            }
+                const categoryIcon =
+                    iconElement
+                        ? iconElement.value.trim()
+                        : '';
 
-            if (typeof closeCategoryModal === 'function') {
-                closeCategoryModal();
-            }
+                const isFeatured =
+                    featuredElement
+                        ? featuredElement.checked
+                        : false;
 
-            // Reset form
-            form.reset();
+                // --------------------------------------------------------
+                // Validation
+                // --------------------------------------------------------
 
-            // Reload categories to show the new addition
-            await loadCategories();
+                if (!categoryName) {
+                    throw new Error(
+                        'Category name is required.'
+                    );
+                }
 
-            console.log('Category added successfully with ID:', docRef.id);
+                if (categoryName.length < 2) {
+                    throw new Error(
+                        'Category name must be at least 2 characters.'
+                    );
+                }
 
-        } catch (error) {
-            // ERROR HANDLING
-            console.error('Error adding category:', error);
+                if (categoryName.length > 50) {
+                    throw new Error(
+                        'Category name must not exceed 50 characters.'
+                    );
+                }
 
-            let errorMessage = 'Unable to add category. Please try again.';
+                if (!categoryIcon) {
+                    throw new Error(
+                        'Please select an icon for the category.'
+                    );
+                }
 
-            if (error.message) {
-                errorMessage = error.message;
-            } else if (error.code === 'permission-denied') {
-                errorMessage = 'Permission denied. Please check your authentication.';
-            } else if (error.code === 'unavailable') {
-                errorMessage = 'Database connection failed. Please check your internet connection.';
-            } else if (error.code === 'unauthenticated') {
-                errorMessage = 'You must be logged in to add categories.';
-            }
+                const categorySlug =
+                    generateSlug(
+                        enteredSlug || categoryName
+                    );
 
-            // Display error toast
-            if (typeof showToast === 'function') {
-                try {
-                    showToast(errorMessage, 'error');
-                } catch (toastError) {
-                    console.error('Error showing toast:', toastError);
+                if (!categorySlug) {
+                    throw new Error(
+                        'Unable to generate a valid category slug.'
+                    );
+                }
+
+                // --------------------------------------------------------
+                // Check duplicate slug/name
+                // --------------------------------------------------------
+
+                const duplicateCategory =
+                    allCategories.find(category => {
+                        const existingName =
+                            String(
+                                category.name || ''
+                            )
+                                .trim()
+                                .toLowerCase();
+
+                        const existingSlug =
+                            String(
+                                category.slug || ''
+                            )
+                                .trim()
+                                .toLowerCase();
+
+                        return (
+                            existingName ===
+                                categoryName.toLowerCase() ||
+                            existingSlug ===
+                                categorySlug.toLowerCase()
+                        );
+                    });
+
+                if (duplicateCategory) {
+                    throw new Error(
+                        'A category with this name or slug already exists.'
+                    );
+                }
+
+                // --------------------------------------------------------
+                // Button loading state
+                // --------------------------------------------------------
+
+                submitButton.disabled = true;
+
+                submitButton.innerHTML = `
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Adding...</span>
+                `;
+
+                // --------------------------------------------------------
+                // Firestore data
+                // --------------------------------------------------------
+
+                const categoryData = {
+                    name: categoryName,
+                    slug: categorySlug,
+                    icon: categoryIcon,
+                    description: categoryDescription,
+                    featured: isFeatured,
+                    productCount: 0,
+                    createdAt:
+                        typeof firebase !== 'undefined' &&
+                        firebase.firestore &&
+                        firebase.firestore.Timestamp
+                            ? firebase.firestore.Timestamp.now()
+                            : new Date(),
+                    updatedAt:
+                        typeof firebase !== 'undefined' &&
+                        firebase.firestore &&
+                        firebase.firestore.Timestamp
+                            ? firebase.firestore.Timestamp.now()
+                            : new Date()
+                };
+
+                const categoriesRef =
+                    getCategoriesCollection();
+
+                if (!categoriesRef) {
+                    throw new Error(
+                        'Database connection is not ready. Please refresh the page and try again.'
+                    );
+                }
+
+                // --------------------------------------------------------
+                // Add document
+                // --------------------------------------------------------
+
+                const documentReference =
+                    await categoriesRef.add(
+                        categoryData
+                    );
+
+                console.log(
+                    'Category added successfully:',
+                    documentReference.id
+                );
+
+                if (typeof showToast === 'function') {
+                    showToast(
+                        'Category added successfully!',
+                        'success'
+                    );
+                }
+
+                // --------------------------------------------------------
+                // Close the ACTUAL modal used by categories.html
+                // --------------------------------------------------------
+
+                if (
+                    typeof window.closeCategoryModal ===
+                    'function'
+                ) {
+                    window.closeCategoryModal();
+                } else {
+                    const modal =
+                        document.getElementById(
+                            'categoryModal'
+                        );
+
+                    if (modal) {
+                        modal.classList.remove(
+                            'active'
+                        );
+
+                        document.body.style.overflow =
+                            '';
+                    }
+                }
+
+                // --------------------------------------------------------
+                // Reset form
+                // --------------------------------------------------------
+
+                form.reset();
+
+                const selectedIcon =
+                    document.getElementById(
+                        'selectedIcon'
+                    );
+
+                if (selectedIcon) {
+                    selectedIcon.value = '';
+                }
+
+                document
+                    .querySelectorAll(
+                        '#iconPicker .icon-option'
+                    )
+                    .forEach(option => {
+                        option.classList.remove(
+                            'selected'
+                        );
+                    });
+
+                // --------------------------------------------------------
+                // Reload categories
+                // --------------------------------------------------------
+
+                await loadCategories();
+
+            } catch (error) {
+                console.error(
+                    'Error adding category:',
+                    error
+                );
+
+                let errorMessage =
+                    'Unable to add category. Please try again.';
+
+                if (
+                    error.code ===
+                    'permission-denied'
+                ) {
+                    errorMessage =
+                        'Permission denied. Please check your authentication and Firestore rules.';
+
+                } else if (
+                    error.code ===
+                    'unauthenticated'
+                ) {
+                    errorMessage =
+                        'You must be logged in to add categories.';
+
+                } else if (
+                    error.code ===
+                    'unavailable'
+                ) {
+                    errorMessage =
+                        'Database connection failed. Please check your internet connection.';
+
+                } else if (
+                    error.message
+                ) {
+                    errorMessage =
+                        error.message;
+                }
+
+                if (
+                    typeof showToast ===
+                    'function'
+                ) {
+                    showToast(
+                        errorMessage,
+                        'error'
+                    );
+                } else {
                     alert(errorMessage);
                 }
-            } else {
-                alert(errorMessage);
-            }
 
-        } finally {
-            // GUARANTEED CLEANUP
-            isSubmittingCategory = false;
-            submitButton.innerHTML = originalButtonText;
-            submitButton.disabled = originalButtonDisabled;
+            } finally {
+                isSubmittingCategory = false;
 
-            if (typeof hideLoading === 'function') {
-                try {
-                    hideLoading();
-                } catch (hideError) {
-                    console.error('Error hiding loading state:', hideError);
-                }
+                submitButton.innerHTML =
+                    originalButtonHTML;
+
+                submitButton.disabled =
+                    originalDisabled;
             }
         }
-    });
+    );
 }
 
 // ============================================================================
@@ -440,164 +825,444 @@ function initCategoryForm() {
 
 async function handleEditCategory(categoryId) {
     if (!categoryId) {
-        console.error('Category ID is required for editing');
-        return;
+        console.error(
+            'Category ID is required.'
+        );
+        return false;
     }
 
     try {
-        const category = allCategories.find(cat => cat.id === categoryId);
+        const category =
+            allCategories.find(
+                item =>
+                    item.id === categoryId
+            );
 
         if (!category) {
-            throw new Error('Category not found');
+            throw new Error(
+                'Category not found.'
+            );
         }
 
-        // Populate edit form or modal
-        const editModal = document.getElementById('edit-category-modal');
-        const editForm = document.getElementById('edit-category-form');
+        /*
+         * The current categories.html only contains
+         * the Add Category modal, not an Edit modal.
+         *
+         * Therefore do not create a broken edit flow.
+         * If another page/template provides an edit modal,
+         * populate it automatically.
+         */
+
+        const editModal =
+            document.getElementById(
+                'edit-category-modal'
+            );
+
+        const editForm =
+            document.getElementById(
+                'edit-category-form'
+            );
 
         if (editModal && editForm) {
-            const nameInput = editForm.querySelector('[name="name"]');
-            const iconInput = editForm.querySelector('[name="icon"]');
-            const descriptionInput = editForm.querySelector('[name="description"]');
+            const nameInput =
+                editForm.querySelector(
+                    '[name="name"]'
+                );
 
-            if (nameInput) nameInput.value = category.name || '';
-            if (iconInput) iconInput.value = category.icon || '';
-            if (descriptionInput) descriptionInput.value = category.description || '';
+            const slugInput =
+                editForm.querySelector(
+                    '[name="slug"]'
+                );
 
-            editForm.setAttribute('data-category-id', categoryId);
-            editModal.classList.add('active');
-        } else {
-            console.warn('Edit modal or form not found in DOM');
+            const iconInput =
+                editForm.querySelector(
+                    '[name="icon"]'
+                );
+
+            const descriptionInput =
+                editForm.querySelector(
+                    '[name="description"]'
+                );
+
+            const featuredInput =
+                editForm.querySelector(
+                    '[name="featured"]'
+                );
+
+            if (nameInput) {
+                nameInput.value =
+                    category.name || '';
+            }
+
+            if (slugInput) {
+                slugInput.value =
+                    category.slug ||
+                    generateSlug(
+                        category.name || ''
+                    );
+            }
+
+            if (iconInput) {
+                iconInput.value =
+                    category.icon || '';
+            }
+
+            if (descriptionInput) {
+                descriptionInput.value =
+                    category.description || '';
+            }
+
+            if (featuredInput) {
+                featuredInput.checked =
+                    Boolean(
+                        category.featured
+                    );
+            }
+
+            editForm.setAttribute(
+                'data-category-id',
+                categoryId
+            );
+
+            editModal.classList.add(
+                'active'
+            );
+
+            return true;
         }
 
-    } catch (error) {
-        console.error('Error preparing category for edit:', error);
+        /*
+         * No edit modal exists in the supplied HTML.
+         * Show a clear message rather than failing silently.
+         */
 
         if (typeof showToast === 'function') {
-            showToast('Unable to edit category. Please try again.', 'error');
+            showToast(
+                'Edit interface is not available on this page yet.',
+                'info'
+            );
         }
+
+        return false;
+
+    } catch (error) {
+        console.error(
+            'Error preparing category for edit:',
+            error
+        );
+
+        if (typeof showToast === 'function') {
+            showToast(
+                'Unable to edit category. Please try again.',
+                'error'
+            );
+        }
+
+        return false;
     }
 }
 
-async function updateCategory(categoryId, updateData) {
-    if (!categoryId) return false;
+// ============================================================================
+// UPDATE CATEGORY
+// ============================================================================
+
+async function updateCategory(
+    categoryId,
+    updateData
+) {
+    if (!categoryId) {
+        return false;
+    }
+
+    if (
+        !updateData ||
+        typeof updateData !== 'object'
+    ) {
+        return false;
+    }
 
     try {
-        if (typeof showLoading === 'function') showLoading();
+        if (typeof showLoading === 'function') {
+            showLoading();
+        }
 
-        const categoriesRef = getCategoriesCollection();
-        if (!categoriesRef) throw new Error('Unable to access database');
+        const categoriesRef =
+            getCategoriesCollection();
 
-        const finalUpdateData = {
+        if (!categoriesRef) {
+            throw new Error(
+                'Unable to access Firestore.'
+            );
+        }
+
+        const safeUpdateData = {
             ...updateData,
-            updatedAt: new Date()
+            updatedAt:
+                typeof firebase !== 'undefined' &&
+                firebase.firestore &&
+                firebase.firestore.Timestamp
+                    ? firebase.firestore.Timestamp.now()
+                    : new Date()
         };
 
-        await categoriesRef.doc(categoryId).update(finalUpdateData);
+        if (safeUpdateData.slug) {
+            safeUpdateData.slug =
+                generateSlug(
+                    safeUpdateData.slug
+                );
+        }
+
+        await categoriesRef
+            .doc(categoryId)
+            .update(safeUpdateData);
 
         if (typeof showToast === 'function') {
-            showToast('Category updated successfully!', 'success');
+            showToast(
+                'Category updated successfully!',
+                'success'
+            );
         }
 
         await loadCategories();
+
         return true;
 
     } catch (error) {
-        console.error('Error updating category:', error);
+        console.error(
+            'Error updating category:',
+            error
+        );
+
         if (typeof showToast === 'function') {
-            showToast('Unable to update category. Please try again.', 'error');
+            let message =
+                'Unable to update category. Please try again.';
+
+            if (
+                error.code ===
+                'permission-denied'
+            ) {
+                message =
+                    'Permission denied. Please check your authentication.';
+            }
+
+            showToast(
+                message,
+                'error'
+            );
         }
+
         return false;
+
     } finally {
-        if (typeof hideLoading === 'function') hideLoading();
+        if (typeof hideLoading === 'function') {
+            hideLoading();
+        }
     }
 }
 
 // ============================================================================
-// DELETE CATEGORY (Support both handleDeleteCategory and performDeleteCategory)
+// DELETE CATEGORY
 // ============================================================================
 
-async function handleDeleteCategory(categoryId) {
-    if (!categoryId) return false;
+async function handleDeleteCategory(
+    categoryId
+) {
+    if (!categoryId) {
+        return false;
+    }
 
-    const category = allCategories.find(cat => cat.id === categoryId);
-    const categoryName = category ? category.name : 'this category';
+    const category =
+        allCategories.find(
+            item =>
+                item.id === categoryId
+        );
 
-    if (!confirm(`Are you sure you want to delete "${categoryName}"? This action cannot be undone.`)) {
+    const categoryName =
+        category && category.name
+            ? category.name
+            : 'this category';
+
+    const confirmed = window.confirm(
+        `Are you sure you want to delete "${categoryName}"?\n\nProducts in this category will become uncategorized.`
+    );
+
+    if (!confirmed) {
         return false;
     }
 
     try {
-        if (typeof showLoading === 'function') showLoading();
+        if (typeof showLoading === 'function') {
+            showLoading();
+        }
 
-        const categoriesRef = getCategoriesCollection();
-        if (!categoriesRef) throw new Error('Unable to access database');
+        const categoriesRef =
+            getCategoriesCollection();
 
-        await categoriesRef.doc(categoryId).delete();
+        if (!categoriesRef) {
+            throw new Error(
+                'Unable to access Firestore.'
+            );
+        }
+
+        await categoriesRef
+            .doc(categoryId)
+            .delete();
 
         if (typeof showToast === 'function') {
-            showToast('Category deleted successfully!', 'success');
+            showToast(
+                'Category deleted successfully!',
+                'success'
+            );
         }
 
         await loadCategories();
+
         return true;
 
     } catch (error) {
-        console.error('Error deleting category:', error);
-        if (typeof showToast === 'function') {
-            showToast('Unable to delete category. Please try again.', 'error');
+        console.error(
+            'Error deleting category:',
+            error
+        );
+
+        let message =
+            'Unable to delete category. Please try again.';
+
+        if (
+            error.code ===
+            'permission-denied'
+        ) {
+            message =
+                'Permission denied. Please check your authentication.';
         }
+
+        if (typeof showToast === 'function') {
+            showToast(
+                message,
+                'error'
+            );
+        }
+
         return false;
+
     } finally {
-        if (typeof hideLoading === 'function') hideLoading();
+        if (typeof hideLoading === 'function') {
+            hideLoading();
+        }
     }
 }
 
-// Alias functions for compatibility
-function deleteCategoryConfirm(categoryId) {
-    handleDeleteCategory(categoryId);
+// Compatibility aliases.
+function deleteCategoryConfirm(
+    categoryId
+) {
+    return handleDeleteCategory(
+        categoryId
+    );
 }
 
-async function performDeleteCategory(categoryId) {
-    return await handleDeleteCategory(categoryId);
+async function performDeleteCategory(
+    categoryId
+) {
+    return handleDeleteCategory(
+        categoryId
+    );
 }
 
 // ============================================================================
-// CATEGORY SEARCH/FILTER
+// CATEGORY SEARCH / FILTER
 // ============================================================================
 
 function searchCategories(query) {
-    if (!query || query.trim() === '') {
-        renderCategories(allCategories);
+    const searchTerm =
+        String(query || '')
+            .trim()
+            .toLowerCase();
+
+    if (!searchTerm) {
+        displayCategories();
         return;
     }
 
-    const searchTerm = query.toLowerCase().trim();
-    const filtered = allCategories.filter(category => {
-        const name = (category.name || '').toLowerCase();
-        const slug = (category.slug || '').toLowerCase();
-        const description = (category.description || '').toLowerCase();
+    const filtered =
+        allCategories.filter(
+            category => {
+                const name =
+                    String(
+                        category.name || ''
+                    ).toLowerCase();
 
-        return name.includes(searchTerm) || 
-               slug.includes(searchTerm) || 
-               description.includes(searchTerm);
-    });
+                const slug =
+                    String(
+                        category.slug || ''
+                    ).toLowerCase();
 
-    renderCategories(filtered);
+                const description =
+                    String(
+                        category.description ||
+                            ''
+                    ).toLowerCase();
+
+                return (
+                    name.includes(
+                        searchTerm
+                    ) ||
+                    slug.includes(
+                        searchTerm
+                    ) ||
+                    description.includes(
+                        searchTerm
+                    )
+                );
+            }
+        );
+
+    renderCategories(
+        filtered,
+        'categoriesGrid'
+    );
 }
 
-function initCategorySearch() {
-    const searchInput = document.getElementById('category-search-input');
+// ============================================================================
+// CATEGORY SEARCH INITIALIZATION
+// ============================================================================
 
-    if (searchInput) {
-        let searchTimeout;
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                searchCategories(e.target.value);
-            }, 300);
-        });
+function initCategorySearch() {
+    const searchInput =
+        document.getElementById(
+            'category-search-input'
+        );
+
+    if (!searchInput) {
+        return;
     }
+
+    if (categorySearchInitialized) {
+        return;
+    }
+
+    categorySearchInitialized = true;
+
+    let searchTimeout = null;
+
+    searchInput.addEventListener(
+        'input',
+        function (event) {
+            clearTimeout(
+                searchTimeout
+            );
+
+            searchTimeout =
+                setTimeout(
+                    function () {
+                        searchCategories(
+                            event.target.value
+                        );
+                    },
+                    300
+                );
+        }
+    );
 }
 
 // ============================================================================
@@ -606,40 +1271,121 @@ function initCategorySearch() {
 
 async function updateCategoryProductCounts() {
     try {
-        const categoriesRef = getCategoriesCollection();
-        const productsRef = db.collection('products');
+        const categoriesRef =
+            getCategoriesCollection();
 
-        if (!categoriesRef || !productsRef) return;
+        const database =
+            window.db ||
+            (
+                typeof db !== 'undefined'
+                    ? db
+                    : null
+            );
 
-        const categoriesSnapshot = await categoriesRef.get();
-        const productsSnapshot = await productsRef.get();
+        if (
+            !categoriesRef ||
+            !database ||
+            typeof database.collection !==
+                'function'
+        ) {
+            return;
+        }
+
+        const productsRef =
+            database.collection(
+                'products'
+            );
+
+        const [
+            categoriesSnapshot,
+            productsSnapshot
+        ] = await Promise.all([
+            categoriesRef.get(),
+            productsRef.get()
+        ]);
 
         const productCounts = {};
 
-        productsSnapshot.forEach(doc => {
-            const product = doc.data();
-            const category = product.category;
+        productsSnapshot.forEach(
+            document => {
+                const product =
+                    document.data() || {};
 
-            if (category) {
-                productCounts[category] = (productCounts[category] || 0) + 1;
+                const category =
+                    product.category;
+
+                if (!category) {
+                    return;
+                }
+
+                const normalizedCategory =
+                    String(
+                        category
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                productCounts[
+                    normalizedCategory
+                ] =
+                    (
+                        productCounts[
+                            normalizedCategory
+                        ] || 0
+                    ) + 1;
             }
-        });
+        );
 
-        const database = window.db || db;
-        const batch = database.batch();
+        const batch =
+            database.batch();
 
-        categoriesSnapshot.forEach(doc => {
-            const categorySlug = doc.data().slug;
-            const count = productCounts[categorySlug] || 0;
+        categoriesSnapshot.forEach(
+            document => {
+                const data =
+                    document.data() || {};
 
-            batch.update(doc.ref, { productCount: count });
-        });
+                const slug =
+                    String(
+                        data.slug || ''
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                const name =
+                    String(
+                        data.name || ''
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                const count =
+                    productCounts[slug] ||
+                    productCounts[name] ||
+                    0;
+
+                batch.update(
+                    document.ref,
+                    {
+                        productCount:
+                            count
+                    }
+                );
+            }
+        );
 
         await batch.commit();
-        console.log('Category product counts updated successfully');
+
+        console.log(
+            'Category product counts updated successfully.'
+        );
+
+        await loadCategories();
 
     } catch (error) {
-        console.error('Error updating category product counts:', error);
+        console.error(
+            'Error updating category product counts:',
+            error
+        );
     }
 }
 
@@ -647,42 +1393,240 @@ async function updateCategoryProductCounts() {
 // INITIALIZATION
 // ============================================================================
 
-function initCategories() {
-    loadCategories().catch(err => console.error('Error during category initialization:', err));
-    initCategoryForm();
-    initCategorySearch();
+async function initCategories() {
+    if (categoriesInitialized) {
+        return;
+    }
+
+    categoriesInitialized = true;
+
+    try {
+        /*
+         * Initialize form/search first so they are ready
+         * independently of Firestore loading.
+         */
+        initCategoryForm();
+        initCategorySearch();
+
+        /*
+         * Load categories only once.
+         */
+        await loadCategories();
+
+        console.log(
+            'Categories system initialized successfully.'
+        );
+
+    } catch (error) {
+        console.error(
+            'Error during category initialization:',
+            error
+        );
+
+        categoriesInitialized = false;
+    }
 }
 
 // ============================================================================
-// AUTO-INITIALIZATION
+// AUTO INITIALIZATION
 // ============================================================================
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCategories);
-} else {
-    initCategories();
+if (
+    typeof document !== 'undefined'
+) {
+    if (
+        document.readyState ===
+        'loading'
+    ) {
+        document.addEventListener(
+            'DOMContentLoaded',
+            initCategories,
+            {
+                once: true
+            }
+        );
+    } else {
+        initCategories();
+    }
 }
 
 // ============================================================================
 // GLOBAL EXPORTS
 // ============================================================================
 
-if (typeof window !== 'undefined') {
-    window.loadCategories = loadCategories;
-    window.loadAllCategories = loadAllCategories;
-    window.renderCategories = renderCategories;
-    window.displayCategories = displayCategories;
-    window.createCategoryCard = createCategoryCard;
-    window.generateSlug = generateSlug;
-    window.handleEditCategory = handleEditCategory;
-    window.updateCategory = updateCategory;
-    window.handleDeleteCategory = handleDeleteCategory;
-    window.deleteCategoryConfirm = deleteCategoryConfirm;
-    window.performDeleteCategory = performDeleteCategory;
-    window.searchCategories = searchCategories;
-    window.updateCategoryProductCounts = updateCategoryProductCounts;
-    window.initCategories = initCategories;
-    window.init3DTiltCategory = init3DTiltCategory;
-    window.handleCategoryTilt = handleCategoryTilt;
-    window.resetCategoryTilt = resetCategoryTilt;
+if (
+    typeof window !== 'undefined'
+) {
+    window.loadCategories =
+        loadCategories;
+
+    window.loadAllCategories =
+        loadAllCategories;
+
+    window.renderCategories =
+        renderCategories;
+
+    window.displayCategories =
+        displayCategories;
+
+    window.createCategoryCard =
+        createCategoryCard;
+
+    window.generateSlug =
+        generateSlug;
+
+    window.handleEditCategory =
+        handleEditCategory;
+
+    window.updateCategory =
+        updateCategory;
+
+    window.handleDeleteCategory =
+        handleDeleteCategory;
+
+    window.deleteCategoryConfirm =
+        deleteCategoryConfirm;
+
+    window.performDeleteCategory =
+        performDeleteCategory;
+
+    window.searchCategories =
+        searchCategories;
+
+    window.updateCategoryProductCounts =
+        updateCategoryProductCounts;
+
+    window.initCategories =
+        initCategories;
+
+    window.initCategoryForm =
+        initCategoryForm;
+
+    window.initCategorySearch =
+        initCategorySearch;
+
+    window.init3DTiltCategory =
+        init3DTiltCategory;
+
+    window.handleCategoryTilt =
+        handleCategoryTilt;
+
+    window.resetCategoryTilt =
+        resetCategoryTilt;
 }
+
+// ============================================================================
+// 3D TILT EFFECT
+// ============================================================================
+
+function init3DTiltCategory(card) {
+    if (!card) {
+        return;
+    }
+
+    const reducedMotion =
+        window.matchMedia &&
+        window.matchMedia(
+            '(prefers-reduced-motion: reduce)'
+        ).matches;
+
+    if (reducedMotion) {
+        return;
+    }
+
+    card.addEventListener(
+        'mousemove',
+        handleCategoryTilt,
+        {
+            passive: true
+        }
+    );
+
+    card.addEventListener(
+        'mouseleave',
+        resetCategoryTilt,
+        {
+            passive: true
+        }
+    );
+
+    card.addEventListener(
+        'mouseenter',
+        function () {
+            this.style.transition =
+                'none';
+        },
+        {
+            passive: true
+        }
+    );
+}
+
+function handleCategoryTilt(event) {
+    const card =
+        event.currentTarget;
+
+    if (!card) {
+        return;
+    }
+
+    const rect =
+        card.getBoundingClientRect();
+
+    if (
+        rect.width === 0 ||
+        rect.height === 0
+    ) {
+        return;
+    }
+
+    const x =
+        event.clientX -
+        rect.left;
+
+    const y =
+        event.clientY -
+        rect.top;
+
+    const centerX =
+        rect.width / 2;
+
+    const centerY =
+        rect.height / 2;
+
+    const rotateX =
+        (y - centerY) / 20;
+
+    const rotateY =
+        (centerX - x) / 20;
+
+    requestAnimationFrame(
+        function () {
+            card.style.transform =
+                `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+        }
+    );
+}
+
+function resetCategoryTilt(event) {
+    const card =
+        event.currentTarget;
+
+    if (!card) {
+        return;
+    }
+
+    requestAnimationFrame(
+        function () {
+            card.style.transition =
+                'transform 0.4s ease';
+
+            card.style.transform =
+                'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+        }
+    );
+}
+
+// ============================================================================
+// END OF categories.js
+// ============================================================================
