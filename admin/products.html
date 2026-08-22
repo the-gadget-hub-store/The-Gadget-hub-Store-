@@ -1,1069 +1,453 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products Management - Admin - The Gadget Hub Store</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Products - Admin - The Gadget Hub Store</title>
+  
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  
+  <style>
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg-primary);
+    }
     
-    <!-- Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    .admin-sidebar {
+      width: 260px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 1000;
+      transition: transform var(--transition-base);
+    }
     
-    <!-- Stylesheets - FIXED PATHS -->
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/animations.css">
-    <link rel="stylesheet" href="../css/responsive.css">
+    .admin-sidebar-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
     
-    <style>
-        .admin-container {
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            min-height: 100vh;
-        }
-        
-        .admin-sidebar {
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            padding: 2rem 0;
-            position: fixed;
-            height: 100vh;
-            width: 250px;
-            overflow-y: auto;
-        }
-        
-        .admin-logo {
-            padding: 0 2rem 2rem;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 2rem;
-        }
-        
-        .admin-logo h2 {
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .admin-logo i {
-            color: var(--accent-primary);
-        }
-        
-        .admin-nav {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .admin-nav-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem 2rem;
-            color: var(--text-secondary);
-            transition: all var(--transition-fast);
-            cursor: pointer;
-            text-decoration: none;
-        }
-        
-        .admin-nav-item:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-        
-        .admin-nav-item.active {
-            background: var(--accent-gradient);
-            color: white;
-        }
-        
-        .admin-nav-item i {
-            width: 20px;
-            text-align: center;
-        }
-        
-        .admin-main {
-            margin-left: 250px;
-            padding: 2rem;
-            background: var(--bg-primary);
-            min-height: 100vh;
-        }
-        
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .admin-header-title h1 {
-            margin-bottom: 0.5rem;
-        }
-        
-        .admin-header-title p {
-            color: var(--text-secondary);
-            margin: 0;
-        }
-        
-        .admin-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        
-        .admin-content-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        .admin-table-container {
-            overflow-x: auto;
-        }
-        
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .admin-table thead {
-            background: var(--bg-secondary);
-        }
-        
-        .admin-table th {
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .admin-table td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .admin-table tbody tr {
-            transition: background var(--transition-fast);
-        }
-        
-        .admin-table tbody tr:hover {
-            background: var(--bg-secondary);
-        }
-        
-        .product-thumbnail {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: var(--radius-md);
-            background: var(--bg-secondary);
-        }
-        
-        .product-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .product-details h4 {
-            margin-bottom: 0.25rem;
-            font-size: 0.9375rem;
-        }
-        
-        .product-category {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-        }
-        
-        .status-badge {
-            padding: 0.375rem 0.75rem;
-            border-radius: var(--radius-full);
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .status-active {
-            background: rgba(0, 230, 118, 0.1);
-            color: var(--success);
-        }
-        
-        .status-out-of-stock {
-            background: rgba(255, 61, 113, 0.1);
-            color: var(--danger);
-        }
-        
-        .admin-table-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .btn-icon {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-        
-        .btn-icon:hover {
-            background: var(--surface-hover);
-            color: var(--text-primary);
-            border-color: var(--accent-primary);
-        }
-        
-        .btn-icon.btn-danger:hover {
-            background: var(--danger);
-            border-color: var(--danger);
-            color: white;
-        }
-        
-        .search-filter-bar {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        
-        .search-input-wrapper {
-            position: relative;
-            flex: 1;
-            min-width: 250px;
-        }
-        
-        .search-input-wrapper i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-        }
-        
-        .search-input-wrapper input {
-            width: 100%;
-            padding: 0.75rem 1rem 0.75rem 3rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-size: 0.9375rem;
-        }
-        
-        .filter-select {
-            padding: 0.75rem 1rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            cursor: pointer;
-            min-width: 150px;
-        }
-        
-        .empty-state-admin {
-            text-align: center;
-            padding: 4rem 2rem;
-        }
-        
-        .empty-state-admin i {
-            font-size: 4rem;
-            color: var(--text-muted);
-            margin-bottom: 1.5rem;
-        }
-        
-        .empty-state-admin h3 {
-            margin-bottom: 1rem;
-        }
-        
-        .empty-state-admin p {
-            color: var(--text-secondary);
-            max-width: 400px;
-            margin: 0 auto 2rem;
-        }
-        
-        /* MODAL STYLES */
-        .custom-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            z-index: var(--z-modal);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity var(--transition-base);
-        }
-        
-        .custom-modal.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        
-        .custom-modal-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(4px);
-        }
-        
-        .custom-modal-content {
-            position: relative;
-            width: 90%;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xl);
-            transform: scale(0.9);
-            transition: transform var(--transition-base);
-        }
-        
-        .custom-modal.active .custom-modal-content {
-            transform: scale(1);
-        }
-        
-        .custom-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .custom-modal-header h3 {
-            margin: 0;
-            font-size: 1.5rem;
-        }
-        
-        .custom-modal-close {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-secondary);
-            border: none;
-            border-radius: var(--radius-md);
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-        
-        .custom-modal-close:hover {
-            background: var(--surface-hover);
-            color: var(--text-primary);
-            transform: rotate(90deg);
-        }
-        
-        .custom-modal-body {
-            padding: 2rem;
-        }
-        
-        .custom-modal-footer {
-            padding: 1.5rem 2rem;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: flex-end;
-            gap: 1rem;
-        }
-        
-        /* FORM STYLES */
-        .admin-form {
-            display: grid;
-            gap: 1.5rem;
-        }
-        
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .form-group label {
-            font-weight: 600;
-            font-size: 0.9375rem;
-        }
-        
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            padding: 0.75rem 1rem;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 0.9375rem;
-            transition: all var(--transition-fast);
-        }
-        
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            background: var(--surface);
-        }
-        
-        .form-group small {
-            color: var(--text-muted);
-            font-size: 0.8125rem;
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-        
-        .form-checkboxes {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: var(--radius-md);
-        }
-        
-        .form-checkboxes label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        
-        .form-checkboxes input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-        
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
-        }
-        
-        @media (max-width: 991px) {
-            .admin-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .admin-sidebar {
-                position: static;
-                width: 100%;
-                height: auto;
-                border-right: none;
-                border-bottom: 1px solid var(--border);
-            }
-            
-            .admin-main {
-                margin-left: 0;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .admin-table-container {
-                overflow-x: scroll;
-            }
-        }
-    </style>
+    .admin-nav {
+      padding: 1rem;
+    }
+    
+    .admin-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 1rem;
+      color: var(--text-secondary);
+      border-radius: var(--radius-md);
+      margin-bottom: 0.25rem;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+    
+    .admin-nav-item:hover,
+    .admin-nav-item.active {
+      background: var(--surface-hover);
+      color: var(--text-primary);
+    }
+    
+    .admin-nav-item.active {
+      background: var(--accent-gradient);
+      color: white;
+    }
+    
+    .admin-main {
+      flex: 1;
+      margin-left: 260px;
+      padding: 2rem;
+    }
+    
+    .admin-header {
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .admin-table {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+    
+    .admin-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .admin-table th {
+      background: var(--bg-secondary);
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .admin-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    
+    .admin-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .admin-table tr:hover {
+      background: var(--surface-hover);
+    }
+    
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-size: 1.1rem;
+    }
+    
+    .btn-icon:hover {
+      background: var(--surface-hover);
+      transform: translateY(-2px);
+    }
+    
+    .badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-block;
+    }
+    
+    .badge-success {
+      background: var(--success);
+      color: white;
+    }
+    
+    .badge-info {
+      background: var(--info);
+      color: white;
+    }
+    
+    .admin-sidebar-toggle {
+      display: none;
+      width: 40px;
+      height: 40px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1100;
+    }
+    
+    .admin-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+    
+    .admin-overlay.active {
+      display: block;
+    }
+    
+    @media (max-width: 1024px) {
+      .admin-sidebar {
+        transform: translateX(-100%);
+      }
+      
+      .admin-sidebar.active {
+        transform: translateX(0);
+      }
+      
+      .admin-main {
+        margin-left: 0;
+      }
+      
+      .admin-sidebar-toggle {
+        display: flex;
+      }
+      
+      .admin-table {
+        overflow-x: auto;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="admin-container">
-        <!-- Sidebar -->
-        <aside class="admin-sidebar">
-            <div class="admin-logo">
-                <h2>
-                    <i class="fas fa-shield-alt"></i>
-                    Admin Panel
-                </h2>
-            </div>
-            <nav class="admin-nav">
-                <a href="index.html" class="admin-nav-item">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="products.html" class="admin-nav-item active">
-                    <i class="fas fa-box"></i>
-                    <span>Products</span>
-                </a>
-                <a href="categories.html" class="admin-nav-item">
-                    <i class="fas fa-th"></i>
-                    <span>Categories</span>
-                </a>
-                <a href="settings.html" class="admin-nav-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-                <a href="../index.html" class="admin-nav-item">
-                    <i class="fas fa-home"></i>
-                    <span>View Website</span>
-                </a>
-                <div class="admin-nav-item" onclick="signOut()" style="margin-top: auto; border-top: 1px solid var(--border);">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sign Out</span>
-                </div>
-            </nav>
-        </aside>
-        
-        <!-- Main Content -->
-        <main class="admin-main">
-            <div class="admin-header">
-                <div class="admin-header-title">
-                    <h1>Products Management</h1>
-                    <p>Manage your product catalog</p>
-                </div>
-                <div class="admin-actions">
-                    <button class="btn btn-primary" onclick="showAddProductForm()" id="addProductBtn">
-                        <i class="fas fa-plus"></i>
-                        <span>Add New Product</span>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Search and Filters -->
-            <div class="search-filter-bar">
-                <div class="search-input-wrapper">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="productSearch" placeholder="Search products..." onkeyup="filterProducts()">
-                </div>
-                <select class="filter-select" id="categoryFilter" onchange="filterProducts()">
-                    <option value="">All Categories</option>
-                </select>
-                <select class="filter-select" id="statusFilter" onchange="filterProducts()">
-                    <option value="">All Status</option>
-                    <option value="in-stock">In Stock</option>
-                    <option value="out-of-stock">Out of Stock</option>
-                </select>
-            </div>
-            
-            <!-- Products Table -->
-            <div class="admin-content-card">
-                <div class="admin-table-container">
-                    <table class="admin-table" id="productsTable">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th>Discount</th>
-                                <th>Status</th>
-                                <th>Featured</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productsTableBody">
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 3rem;">
-                                    <p style="color: var(--text-secondary);">Loading products...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </div>
+  <div class="admin-layout">
+    <!-- Sidebar Toggle (Mobile) -->
+    <button class="admin-sidebar-toggle">☰</button>
     
-    <!-- ADD PRODUCT MODAL -->
-    <div class="custom-modal" id="productModal">
-        <div class="custom-modal-overlay" onclick="closeProductModal()"></div>
-        <div class="custom-modal-content">
-            <div class="custom-modal-header">
-                <h3 id="modalTitle">Add New Product</h3>
-                <button class="custom-modal-close" onclick="closeProductModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="custom-modal-body">
-                <form id="productForm" class="admin-form">
-                    <div class="form-group">
-                        <label for="productTitle">Product Title *</label>
-                        <input type="text" id="productTitle" required placeholder="Enter product title">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productDescription">Description *</label>
-                        <textarea id="productDescription" rows="4" required placeholder="Enter detailed product description"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productShortDesc">Short Description</label>
-                        <input type="text" id="productShortDesc" placeholder="Brief product description">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productPrice">Price (USD) *</label>
-                            <input type="number" id="productPrice" step="0.01" required placeholder="0.00">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productOriginalPrice">Original Price (USD)</label>
-                            <input type="number" id="productOriginalPrice" step="0.01" placeholder="0.00">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productCategory">Category *</label>
-                            <select id="productCategory" required>
-                                <option value="">Select category</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productStock">Stock Status *</label>
-                            <select id="productStock" required>
-                                <option value="in-stock">In Stock</option>
-                                <option value="out-of-stock">Out of Stock</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productAffiliateUrl">AliExpress Affiliate URL *</label>
-                        <input type="url" id="productAffiliateUrl" required placeholder="https://s.click.aliexpress.com/...">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productImages">Product Images (URLs, comma-separated) *</label>
-                        <textarea id="productImages" rows="2" required placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"></textarea>
-                        <small>Enter image URLs separated by commas</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="productTags">Tags (comma-separated)</label>
-                        <input type="text" id="productTags" placeholder="wireless, audio, bluetooth">
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="productRating">Rating (0-5)</label>
-                            <input type="number" id="productRating" step="0.1" min="0" max="5" value="0" placeholder="4.5">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productReviews">Review Count</label>
-                            <input type="number" id="productReviews" min="0" value="0" placeholder="100">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Product Flags</label>
-                        <div class="form-checkboxes">
-                            <label>
-                                <input type="checkbox" id="productFeatured">
-                                <span>Featured</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="productTrending">
-                                <span>Trending</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="productBestseller">
-                                <span>Bestseller</span>
-                            </label>
-                            <label>
-                                <input type="checkbox" id="productNewArrival">
-                                <span>New Arrival</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" onclick="closeProductModal()" class="btn btn-outline">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="submitProductBtn">
-                            <i class="fas fa-plus"></i>
-                            <span>Add Product</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
+    <!-- Overlay -->
+    <div class="admin-overlay"></div>
+    
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-header">
+        <a href="/index.html" class="logo">The Gadget Hub Store</a>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">Admin Panel</p>
+      </div>
+      
+      <nav class="admin-nav">
+        <a href="/admin/index.html" class="admin-nav-item">
+          <span>📊</span>
+          <span>Dashboard</span>
+        </a>
+        
+        <a href="/admin/products.html" class="admin-nav-item active">
+          <span>📦</span>
+          <span>Products</span>
+        </a>
+        
+        <a href="/admin/categories.html" class="admin-nav-item">
+          <span>📂</span>
+          <span>Categories</span>
+        </a>
+        
+        <a href="/admin/settings.html" class="admin-nav-item">
+          <span>⚙️</span>
+          <span>Settings</span>
+        </a>
+        
+        <div style="height: 1px; background: var(--border); margin: 1rem 0;"></div>
+        
+        <a href="/index.html" class="admin-nav-item">
+          <span>🏠</span>
+          <span>View Website</span>
+        </a>
+        
+        <a href="/account.html" class="admin-nav-item sign-out-btn">
+          <span>🚪</span>
+          <span>Sign Out</span>
+        </a>
+      </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="admin-main">
+      <div class="admin-header">
+        <div>
+          <h1>Products</h1>
+          <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+            Manage your product catalog
+          </p>
         </div>
+        
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <button class="theme-toggle" aria-label="Toggle theme">
+            <div class="theme-toggle-slider">🌙</div>
+          </button>
+          
+          <button class="btn btn-primary" onclick="showProductModal()">
+            ➕ Add Product
+          </button>
+        </div>
+      </div>
+      
+      <!-- Products Table -->
+      <div class="admin-table fade-in">
+        <table>
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-table-body">
+            <tr>
+              <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                Loading products...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Add Product</h3>
+        <div class="modal-close" onclick="closeProductModal()">✕</div>
+      </div>
+      
+      <form class="modal-body" id="product-form">
+        <input type="hidden" name="product-id" id="product-id" />
+        
+        <div class="form-group">
+          <label class="form-label">Product Title *</label>
+          <input type="text" class="form-input" name="title" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Short Description</label>
+          <input type="text" class="form-input" name="short-description" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" name="description" rows="4"></textarea>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">Price *</label>
+            <input type="number" class="form-input" name="price" step="0.01" required />
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Original Price</label>
+            <input type="number" class="form-input" name="original-price" step="0.01" />
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Category *</label>
+          <select class="form-select" name="category" id="product-category" required>
+            <option value="">Select category</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Affiliate URL *</label>
+          <input type="url" class="form-input" name="affiliate-url" required />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Product Image</label>
+          <input type="file" class="form-input" name="image" id="product-image" accept="image/*" />
+          <img id="image-preview" style="max-width: 200px; margin-top: 1rem; display: none; border-radius: var(--radius-md);" />
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Stock Status</label>
+          <select class="form-select" name="stock-status">
+            <option value="in-stock">In Stock</option>
+            <option value="out-of-stock">Out of Stock</option>
+          </select>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" name="featured" />
+            <span>Featured</span>
+          </label>
+          
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" name="trending" />
+            <span>Trending</span>
+          </label>
+          
+          <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" name="bestseller" />
+            <span>Best Seller</span>
+          </label>
+        </div>
+        
+        <div class="modal-footer" style="margin-top: 2rem;">
+          <button type="button" class="btn btn-outline" onclick="closeProductModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Save Product
+          </button>
+        </div>
+      </form>
     </div>
+  </div>
+  
+  <!-- Scripts -->
+  <script type="module">
+    import { initializeFirebase } from '/js/firebase-init.js';
+    import { initAuth } from '/js/auth.js';
+    import { initTheme } from '/js/theme.js';
+    import { initAdminDashboard } from '/js/admin.js';
+    import { initProductsListener } from '/js/products.js';
+    import { initCategoriesListener } from '/js/categories.js';
+    import { getState, subscribe } from '/js/state.js';
     
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    // Initialize
+    async function init() {
+      await initializeFirebase();
+      initTheme();
+      await initAuth();
+      await initProductsListener();
+      await initCategoriesListener();
+      await initAdminDashboard();
+      
+      setupSidebar();
+      loadCategories();
+    }
     
-    <!-- Firebase SDK & Config - LOADED FIRST -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <script src="../js/firebase.js"></script>
+    // Setup sidebar
+    function setupSidebar() {
+      const toggle = document.querySelector('.admin-sidebar-toggle');
+      const sidebar = document.querySelector('.admin-sidebar');
+      const overlay = document.querySelector('.admin-overlay');
+      
+      toggle?.addEventListener('click', () => {
+        sidebar?.classList.add('active');
+        overlay?.classList.add('active');
+      });
+      
+      overlay?.addEventListener('click', () => {
+        sidebar?.classList.remove('active');
+        overlay?.classList.remove('active');
+      });
+    }
     
-    <!-- Application Scripts - LOADED AFTER FIREBASE -->
-    <script src="../js/ui.js"></script>
-    <script src="../js/auth.js"></script>
-    <script src="../js/products.js"></script>
-    <script src="../js/categories.js"></script>
-    <script src="../js/admin.js"></script>
+    // Load categories into select
+    function loadCategories() {
+      subscribe('categories', (categories) => {
+        const select = document.getElementById('product-category');
+        if (select) {
+          const currentValue = select.value;
+          select.innerHTML = '<option value="">Select category</option>' +
+            categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
+          select.value = currentValue;
+        }
+      });
+    }
     
-    <script>
-        let allProducts = [];
-        let allCategories = [];
-        
-        // ========================================
-        // MODAL FUNCTIONS
-        // ========================================
-        
-        // Show add product form
-        function showAddProductForm() {
-            console.log('Opening add product modal...');
-            const modal = document.getElementById('productModal');
-            const form = document.getElementById('productForm');
-            
-            if (!modal || !form) {
-                console.error('Modal or form not found!');
-                return;
-            }
-            
-            // Reset form
-            form.reset();
-            
-            // Set modal title
-            document.getElementById('modalTitle').textContent = 'Add New Product';
-            
-            // Update submit button
-            const submitBtn = document.getElementById('submitProductBtn');
-            submitBtn.innerHTML = '<i class="fas fa-plus"></i><span>Add Product</span>';
-            
-            // Load categories
-            loadCategoriesIntoModal();
-            
-            // Show modal
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-        
-        // Close product modal
-        function closeProductModal() {
-            console.log('Closing modal...');
-            const modal = document.getElementById('productModal');
-            if (modal) {
-                modal.classList.remove('active');
-                document.body.style.overflow = '';
-            }
-        }
-        
-        // Load categories into modal dropdown
-        async function loadCategoriesIntoModal() {
-            try {
-                const categories = await getCategories();
-                const select = document.getElementById('productCategory');
-                
-                if (select) {
-                    select.innerHTML = '<option value="">Select category</option>' +
-                        categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
-                }
-            } catch (error) {
-                console.error('Error loading categories into modal:', error);
-            }
-        }
-        
-        // Handle form submission
-        document.getElementById('productForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            console.log('Form submitted...');
-            
-            const submitBtn = document.getElementById('submitProductBtn');
-            const originalText = submitBtn.innerHTML;
-            
-            // Show loading state
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Adding...</span>';
-            
-            // Get form data
-            const images = document.getElementById('productImages').value
-                .split(',')
-                .map(url => url.trim())
-                .filter(url => url);
-            
-            const tags = document.getElementById('productTags').value
-                .split(',')
-                .map(tag => tag.trim())
-                .filter(tag => tag);
-            
-            const productData = {
-                title: document.getElementById('productTitle').value,
-                description: document.getElementById('productDescription').value,
-                shortDescription: document.getElementById('productShortDesc').value,
-                price: parseFloat(document.getElementById('productPrice').value),
-                originalPrice: parseFloat(document.getElementById('productOriginalPrice').value) || null,
-                category: document.getElementById('productCategory').value,
-                affiliateUrl: document.getElementById('productAffiliateUrl').value,
-                images: images,
-                thumbnail: images[0] || '',
-                tags: tags,
-                rating: parseFloat(document.getElementById('productRating').value) || 0,
-                reviewCount: parseInt(document.getElementById('productReviews').value) || 0,
-                featured: document.getElementById('productFeatured').checked,
-                trending: document.getElementById('productTrending').checked,
-                bestseller: document.getElementById('productBestseller').checked,
-                newArrival: document.getElementById('productNewArrival').checked,
-                stockStatus: document.getElementById('productStock').value,
-                currency: 'USD'
-            };
-            
-            // Calculate discount
-            if (productData.originalPrice && productData.originalPrice > productData.price) {
-                productData.discount = calculateDiscount(productData.originalPrice, productData.price);
-            }
-            
-            try {
-                const result = await addProduct(productData);
-                
-                if (result.success) {
-                    showToast('Product added successfully!', 'success');
-                    closeProductModal();
-                    await loadAllProducts();
-                } else {
-                    showToast(result.message || 'Failed to add product', 'error');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                }
-            } catch (error) {
-                console.error('Error adding product:', error);
-                showToast('Failed to add product', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        });
-        
-        // ========================================
-        // PAGE INITIALIZATION
-        // ========================================
-        
-        // Initialize products page
-        async function initProductsPage() {
-            try {
-                console.log('Initializing products page...');
-                
-                // Load categories for filter
-                await loadCategoriesForFilter();
-                
-                // Load all products
-                await loadAllProducts();
-                
-                console.log('Products page initialized successfully');
-            } catch (error) {
-                console.error('Error initializing products page:', error);
-                showToast('Error loading products page', 'error');
-            }
-        }
-        
-        // Load all products
-        async function loadAllProducts() {
-            try {
-                allProducts = await getProducts();
-                displayProducts(allProducts);
-            } catch (error) {
-                console.error('Error loading products:', error);
-                showToast('Failed to load products', 'error');
-                
-                const tbody = document.getElementById('productsTableBody');
-                if (tbody) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 3rem;">
-                                <p style="color: var(--text-secondary);">Error loading products. Please refresh the page.</p>
-                            </td>
-                        </tr>
-                    `;
-                }
-            }
-        }
-        
-        // Load categories for filter
-        async function loadCategoriesForFilter() {
-            try {
-                allCategories = await getCategories();
-                const categoryFilter = document.getElementById('categoryFilter');
-                
-                if (categoryFilter) {
-                    categoryFilter.innerHTML = '<option value="">All Categories</option>' +
-                        allCategories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
-                }
-            } catch (error) {
-                console.error('Error loading categories:', error);
-            }
-        }
-        
-        // Display products in table
-        function displayProducts(products) {
-            const tbody = document.getElementById('productsTableBody');
-            
-            if (!tbody) {
-                console.error('Products table body not found');
-                return;
-            }
-            
-            if (products.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7">
-                            <div class="empty-state-admin">
-                                <i class="fas fa-box-open"></i>
-                                <h3>No Products Found</h3>
-                                <p>Start by adding your first product to the catalog.</p>
-                                <button class="btn btn-primary" onclick="showAddProductForm()">
-                                    <i class="fas fa-plus"></i>
-                                    <span>Add Product</span>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tbody.innerHTML = products.map(product => {
-                const category = allCategories.find(c => c.id === product.category);
-                const discount = product.originalPrice ? calculateDiscount(product.originalPrice, product.price) : 0;
-                const statusClass = product.stockStatus === 'in-stock' ? 'status-active' : 'status-out-of-stock';
-                const statusText = product.stockStatus === 'in-stock' ? 'In Stock' : 'Out of Stock';
-                
-                return `
-                    <tr>
-                        <td>
-                            <div class="product-info">
-                                <img src="${product.thumbnail || product.images[0] || '../assets/images/placeholder.jpg'}" 
-                                     alt="${product.title}" 
-                                     class="product-thumbnail"
-                                     onerror="this.src='../assets/images/placeholder.jpg'">
-                                <div class="product-details">
-                                    <h4>${truncateText(product.title, 40)}</h4>
-                                    <p class="product-category">${category ? category.name : 'Uncategorized'}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td>${category ? category.name : '-'}</td>
-                        <td>
-                            <strong>${formatPrice(product.price)}</strong>
-                            ${product.originalPrice ? `<br><small style="color: var(--text-muted); text-decoration: line-through;">${formatPrice(product.originalPrice)}</small>` : ''}
-                        </td>
-                        <td>${discount > 0 ? `<span class="status-badge" style="background: rgba(255, 61, 113, 0.1); color: var(--danger);">${discount}% OFF</span>` : '-'}</td>
-                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                        <td>
-                            ${product.featured ? '<i class="fas fa-star" style="color: var(--warning);"></i>' : ''}
-                            ${product.trending ? '<i class="fas fa-fire" style="color: var(--danger);"></i>' : ''}
-                            ${product.bestseller ? '<i class="fas fa-trophy" style="color: var(--accent-primary);"></i>' : ''}
-                            ${product.newArrival ? '<i class="fas fa-sparkles" style="color: var(--success);"></i>' : ''}
-                        </td>
-                        <td>
-                            <div class="admin-table-actions">
-                                <button class="btn-icon" onclick="viewProduct('${product.id}')" title="View">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn-icon btn-danger" onclick="deleteProductConfirm('${product.id}')" title="Delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-        
-        // Filter products
-        function filterProducts() {
-            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
-            const categoryFilter = document.getElementById('categoryFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            
-            let filtered = allProducts.filter(product => {
-                const matchesSearch = product.title.toLowerCase().includes(searchTerm) ||
-                                    (product.description && product.description.toLowerCase().includes(searchTerm));
-                const matchesCategory = !categoryFilter || product.category === categoryFilter;
-                const matchesStatus = !statusFilter || product.stockStatus === statusFilter;
-                
-                return matchesSearch && matchesCategory && matchesStatus;
-            });
-            
-            displayProducts(filtered);
-        }
-        
-        // View product
-        function viewProduct(productId) {
-            window.open(`../pages/product.html?id=${productId}`, '_blank');
-        }
-        
-        // Delete product confirmation
-        function deleteProductConfirm(productId) {
-            if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-                performDeleteProduct(productId);
-            }
-        }
-        
-        // Perform product deletion
-        async function performDeleteProduct(productId) {
-            try {
-                const result = await deleteProduct(productId);
-                
-                if (result.success) {
-                    showToast('Product deleted successfully', 'success');
-                    await loadAllProducts();
-                } else {
-                    showToast(result.message || 'Failed to delete product', 'error');
-                }
-            } catch (error) {
-                console.error('Error deleting product:', error);
-                showToast('Failed to delete product', 'error');
-            }
-        }
-        
-        // Make functions globally accessible
-        window.showAddProductForm = showAddProductForm;
-        window.closeProductModal = closeProductModal;
-        window.filterProducts = filterProducts;
-        window.viewProduct = viewProduct;
-        window.deleteProductConfirm = deleteProductConfirm;
-        window.performDeleteProduct = performDeleteProduct;
-        window.loadAllProducts = loadAllProducts;
-        
-        // Initialize page when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initProductsPage);
-        } else {
-            initProductsPage();
-        }
-        
-        // Close modal on ESC key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeProductModal();
-            }
-        });
-        
-        console.log('Products page script loaded');
-    </script>
+    init();
+  </script>
 </body>
 </html>
