@@ -1,464 +1,671 @@
-// ===================================
-// ADMIN FUNCTIONS
-// ===================================
+import { getFirebaseInstances, safeFirebaseOperation } from './firebase-init.js';
+import { COLLECTIONS, APP_SETTINGS } from './config.js';
+import { requireAdmin } from './auth.js';
+import { 
+  createProduct, 
+  updateProduct, 
+  deleteProduct, 
+  uploadProductImage 
+} from './products.js';
+import {
+  createCategory,
+  updateCategory,
+  deleteCategory
+} from './categories.js';
+import { 
+  showSuccessToast, 
+  showErrorToast, 
+  setLoading,
+  createEmptyState,
+  createErrorState,
+  handleFirebaseError
+} from './ui.js';
+import { getState, subscribe } from './state.js';
 
-// Check if user is admin
-async function checkAdminAccess() {
-    if (!isUserSignedIn()) {
-        window.location.href = '../index.html';
-        return false;
-    }
-    
-    if (!isFirebaseConfigured) {
-        console.warn('Firebase not configured - using demo mode');
-        return true; // Allow access in demo mode
-    }
-    
-    try {
-        const userDoc = await db.collection('users').doc(currentUser.uid).get();
-        const userData = userDoc.data();
-        
-        if (!userData || !userData.isAdmin) {
-            showToast('Access denied. Admin privileges required.', 'error');
-            setTimeout(() => {
-                window.location.href = '../index.html';
-            }, 2000);
-            return false;
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Error checking admin access:', error);
-        // Allow access in case of error (demo mode)
-        return true;
-    }
+/**
+ * Initialize admin dashboard
+ */
+export async function initAdminDashboard() {
+  const hasAccess = await requireAdmin();
+  
+  if (!hasAccess) {
+    return;
+  }
+  
+  setupAdminUI();
+  loadAdminData();
+  setupAdminEventListeners();
 }
 
-// Initialize admin dashboard
-async function initAdminDashboard() {
-    const hasAccess = await checkAdminAccess();
-    if (!hasAccess) return;
-    
-    loadAdminStats();
-    loadRecentProducts();
-    loadRecentSubscribers();
-}
-
-// Load admin statistics
-async function loadAdminStats() {
-    try {
-        const products = await getProducts();
-        const categories = await getCategories();
-        
-        // Update stat cards
-        const totalProductsEl = document.getElementById('totalProducts');
-        const totalCategoriesEl = document.getElementById('totalCategories');
-        const activeProductsEl = document.getElementById('activeProducts');
-        const totalSubscribersEl = document.getElementById('totalSubscribers');
-        
-        if (totalProductsEl) totalProductsEl.textContent = products.length || 0;
-        if (totalCategoriesEl) totalCategoriesEl.textContent = categories.length || 0;
-        
-        const activeProducts = products.filter(p => p.stockStatus === 'in-stock').length;
-        if (activeProductsEl) activeProductsEl.textContent = activeProducts || 0;
-        
-        // Get newsletter subscribers count
-        if (isFirebaseConfigured && totalSubscribersEl) {
-            const subscribersSnapshot = await db.collection('newsletterSubscribers').get();
-            totalSubscribersEl.textContent = subscribersSnapshot.size || 0;
-        } else if (totalSubscribersEl) {
-            totalSubscribersEl.textContent = '0';
-        }
-    } catch (error) {
-        console.error('Error loading admin stats:', error);
-    }
-}
-
-// Load recent products
-async function loadRecentProducts() {
-    const container = document.getElementById('recentProductsList');
-    if (!container) return;
-    
-    try {
-        const products = await getProducts(10);
-        
-        if (products.length === 0) {
-            container.innerHTML = '<p style="color: var(--text-secondary);">No products yet. Click "Add Product" to create your first product.</p>';
-            return;
-        }
-        
-        container.innerHTML = products.map(product => `
-            <div class="admin-product-item">
-                <img src="${product.thumbnail || product.images[0] || '../assets/images/placeholder.jpg'}" alt="${product.title}">
-                <div class="product-info">
-                    <h4>${truncateText(product.title, 40)}</h4>
-                    <p>${formatPrice(product.price)}</p>
-                </div>
-                <div class="product-actions">
-                    <button class="btn-icon" onclick="editProduct('${product.id}')" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-icon" onclick="deleteProductConfirm('${product.id}')" title="Delete">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error loading recent products:', error);
-        container.innerHTML = '<p style="color: var(--text-secondary);">Error loading products.</p>';
-    }
-}
-
-// Load recent subscribers (placeholder)
-async function loadRecentSubscribers() {
-    // Placeholder function for newsletter subscribers
-    console.log('Newsletter subscribers feature ready');
-}
-
-// Show add product form
-function showAddProductForm() {
-    const formHTML = `
-        <form id="addProductForm" class="admin-form">
-            <div class="form-group">
-                <label for="productTitle">Product Title *</label>
-                <input type="text" id="productTitle" required placeholder="Enter product title">
-            </div>
-            
-            <div class="form-group">
-                <label for="productDescription">Description *</label>
-                <textarea id="productDescription" rows="4" required placeholder="Enter detailed product description"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="productShortDesc">Short Description</label>
-                <input type="text" id="productShortDesc" placeholder="Brief product description">
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="productPrice">Price (USD) *</label>
-                    <input type="number" id="productPrice" step="0.01" required placeholder="0.00">
-                </div>
-                
-                <div class="form-group">
-                    <label for="productOriginalPrice">Original Price (USD)</label>
-                    <input type="number" id="productOriginalPrice" step="0.01" placeholder="0.00">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="productCategory">Category *</label>
-                    <select id="productCategory" required>
-                        <option value="">Select category</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="productStock">Stock Status *</label>
-                    <select id="productStock" required>
-                        <option value="in-stock">In Stock</option>
-                        <option value="out-of-stock">Out of Stock</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="productAffiliateUrl">AliExpress Affiliate URL *</label>
-                <input type="url" id="productAffiliateUrl" required 
-                       placeholder="https://s.click.aliexpress.com/...">
-            </div>
-            
-            <div class="form-group">
-                <label for="productImages">Product Images (URLs, comma-separated) *</label>
-                <textarea id="productImages" rows="2" required 
-                          placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"></textarea>
-                <small style="color: var(--text-muted);">Enter image URLs separated by commas</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="productTags">Tags (comma-separated)</label>
-                <input type="text" id="productTags" placeholder="wireless, audio, bluetooth">
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="productRating">Rating (0-5)</label>
-                    <input type="number" id="productRating" step="0.1" min="0" max="5" value="0" placeholder="4.5">
-                </div>
-                
-                <div class="form-group">
-                    <label for="productReviews">Review Count</label>
-                    <input type="number" id="productReviews" min="0" value="0" placeholder="100">
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Product Flags</label>
-                <div class="form-checkboxes">
-                    <label>
-                        <input type="checkbox" id="productFeatured">
-                        <span>Featured</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" id="productTrending">
-                        <span>Trending</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" id="productBestseller">
-                        <span>Bestseller</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" id="productNewArrival">
-                        <span>New Arrival</span>
-                    </label>
-                </div>
-            </div>
-            
-            <div class="form-actions">
-                <button type="button" onclick="closeModal()" class="btn btn-outline">Cancel</button>
-                <button type="submit" class="btn btn-primary">Add Product</button>
-            </div>
-        </form>
-    `;
-    
-    const modal = createModal('Add New Product', formHTML);
-    
-    // Load categories into select
-    getCategories().then(categories => {
-        const select = document.getElementById('productCategory');
-        if (select) {
-            select.innerHTML = '<option value="">Select category</option>' + 
-                categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('');
-        }
+/**
+ * Setup admin UI
+ */
+function setupAdminUI() {
+  // Mobile sidebar toggle
+  const sidebarToggle = document.querySelector('.admin-sidebar-toggle');
+  const sidebar = document.querySelector('.admin-sidebar');
+  const overlay = document.querySelector('.admin-overlay');
+  
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+      overlay?.classList.toggle('active');
     });
     
-    // Handle form submission
-    const form = document.getElementById('addProductForm');
-    if (form) {
-        form.addEventListener('submit', handleAddProduct);
-    }
+    overlay?.addEventListener('click', () => {
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+    });
+  }
 }
 
-// Handle add product
-async function handleAddProduct(e) {
-    e.preventDefault();
+/**
+ * Load admin data
+ */
+function loadAdminData() {
+  const currentPage = window.location.pathname;
+  
+  if (currentPage.includes('products.html')) {
+    loadProductsAdmin();
+  } else if (currentPage.includes('categories.html')) {
+    loadCategoriesAdmin();
+  } else if (currentPage.includes('settings.html')) {
+    loadSettingsAdmin();
+  } else {
+    loadDashboardStats();
+  }
+}
+
+/**
+ * Load dashboard stats
+ */
+function loadDashboardStats() {
+  subscribe('products', (products) => {
+    updateStat('total-products', products.length);
+  });
+  
+  subscribe('categories', (categories) => {
+    updateStat('total-categories', categories.length);
+  });
+  
+  const products = getState('products');
+  const featuredCount = products.filter(p => p.featured).length;
+  updateStat('featured-products', featuredCount);
+}
+
+/**
+ * Update stat
+ */
+function updateStat(id, value) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.textContent = value;
+  }
+}
+
+/**
+ * Load products admin
+ */
+function loadProductsAdmin() {
+  const productsTable = document.getElementById('products-table-body');
+  
+  if (!productsTable) return;
+  
+  // Subscribe to products updates
+  subscribe('products', (products) => {
+    renderProductsTable(products, productsTable);
+  });
+  
+  // Initial render
+  const products = getState('products');
+  renderProductsTable(products, productsTable);
+}
+
+/**
+ * Render products table
+ */
+function renderProductsTable(products, container) {
+  if (products.length === 0) {
+    container.innerHTML = '';
+    const emptyState = createEmptyState(
+      '📦',
+      'No products yet',
+      'Create your first product to get started',
+      'Add Product',
+      () => showProductModal()
+    );
+    container.parentElement.parentElement.appendChild(emptyState);
+    return;
+  }
+  
+  container.innerHTML = products.map(product => `
+    <tr>
+      <td>
+        <img src="${product.thumbnail || product.images?.[0] || '/assets/images/placeholder.jpg'}" 
+             alt="${product.title}" 
+             style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" />
+      </td>
+      <td>${product.title}</td>
+      <td>${product.category || 'Uncategorized'}</td>
+      <td>$${product.price}</td>
+      <td>
+        ${product.featured ? '<span class="badge badge-success">Featured</span>' : ''}
+        ${product.trending ? '<span class="badge badge-info">Trending</span>' : ''}
+      </td>
+      <td>
+        <button class="btn-icon" onclick="editProduct('${product.id}')" title="Edit">
+          ✏️
+        </button>
+        <button class="btn-icon" onclick="confirmDeleteProduct('${product.id}')" title="Delete">
+          🗑️
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+/**
+ * Show product modal
+ */
+export function showProductModal(productId = null) {
+  const modal = document.getElementById('product-modal');
+  const form = document.getElementById('product-form');
+  const title = document.getElementById('modal-title');
+  
+  if (!modal || !form) return;
+  
+  if (productId) {
+    title.textContent = 'Edit Product';
+    loadProductData(productId, form);
+  } else {
+    title.textContent = 'Add New Product';
+    form.reset();
+  }
+  
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Close product modal
+ */
+export function closeProductModal() {
+  const modal = document.getElementById('product-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+}
+
+/**
+ * Load product data into form
+ */
+async function loadProductData(productId, form) {
+  try {
+    const { db } = getFirebaseInstances();
+    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
     
-    const images = document.getElementById('productImages').value
-        .split(',')
-        .map(url => url.trim())
-        .filter(url => url);
+    const productRef = doc(db, COLLECTIONS.PRODUCTS, productId);
+    const snapshot = await getDoc(productRef);
     
-    const tags = document.getElementById('productTags').value
-        .split(',')
-        .map(tag => tag.trim())
-        .filter(tag => tag);
+    if (snapshot.exists()) {
+      const product = snapshot.data();
+      
+      form.elements['product-id'].value = productId;
+      form.elements['title'].value = product.title || '';
+      form.elements['description'].value = product.description || '';
+      form.elements['short-description'].value = product.shortDescription || '';
+      form.elements['price'].value = product.price || '';
+      form.elements['original-price'].value = product.originalPrice || '';
+      form.elements['category'].value = product.category || '';
+      form.elements['affiliate-url'].value = product.affiliateUrl || '';
+      form.elements['stock-status'].value = product.stockStatus || 'in-stock';
+      form.elements['featured'].checked = product.featured || false;
+      form.elements['trending'].checked = product.trending || false;
+      form.elements['bestseller'].checked = product.bestseller || false;
+      
+      // Display current image
+      if (product.thumbnail) {
+        const preview = document.getElementById('image-preview');
+        if (preview) {
+          preview.src = product.thumbnail;
+          preview.style.display = 'block';
+        }
+      }
+    }
+  } catch (error) {
+    showErrorToast(handleFirebaseError(error));
+  }
+}
+
+/**
+ * Handle product form submit
+ */
+export async function handleProductSubmit(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const productId = form.elements['product-id'].value;
+  
+  try {
+    setLoading(submitBtn, true, 'Saving...');
     
+    // Prepare product data
     const productData = {
-        title: document.getElementById('productTitle').value,
-        description: document.getElementById('productDescription').value,
-        shortDescription: document.getElementById('productShortDesc').value,
-        price: parseFloat(document.getElementById('productPrice').value),
-        originalPrice: parseFloat(document.getElementById('productOriginalPrice').value) || null,
-        category: document.getElementById('productCategory').value,
-        affiliateUrl: document.getElementById('productAffiliateUrl').value,
-        images: images,
-        thumbnail: images[0] || '',
-        tags: tags,
-        rating: parseFloat(document.getElementById('productRating').value) || 0,
-        reviewCount: parseInt(document.getElementById('productReviews').value) || 0,
-        featured: document.getElementById('productFeatured').checked,
-        trending: document.getElementById('productTrending').checked,
-        bestseller: document.getElementById('productBestseller').checked,
-        newArrival: document.getElementById('productNewArrival').checked,
-        stockStatus: document.getElementById('productStock').value,
-        currency: 'USD'
+      title: form.elements['title'].value.trim(),
+      description: form.elements['description'].value.trim(),
+      shortDescription: form.elements['short-description'].value.trim(),
+      price: parseFloat(form.elements['price'].value),
+      originalPrice: parseFloat(form.elements['original-price'].value) || null,
+      category: form.elements['category'].value,
+      affiliateUrl: form.elements['affiliate-url'].value.trim(),
+      stockStatus: form.elements['stock-status'].value,
+      featured: form.elements['featured'].checked,
+      trending: form.elements['trending'].checked,
+      bestseller: form.elements['bestseller'].checked,
+      rating: 0,
+      reviewCount: 0
     };
     
     // Calculate discount
     if (productData.originalPrice && productData.originalPrice > productData.price) {
-        productData.discount = calculateDiscount(productData.originalPrice, productData.price);
+      productData.discount = Math.round(
+        ((productData.originalPrice - productData.price) / productData.originalPrice) * 100
+      );
     }
     
-    try {
-        // Show loading state
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Adding...</span>';
-        
-        const result = await addProduct(productData);
-        
-        if (result.success) {
-            showToast('Product added successfully!', 'success');
-            closeModal();
-            
-            // Reload products if on products page
-            if (typeof loadAllProducts === 'function') {
-                await loadAllProducts();
-            }
-            
-            // Reload recent products if on dashboard
-            if (typeof loadRecentProducts === 'function') {
-                await loadRecentProducts();
-            }
-            
-            // Reload stats
-            if (typeof loadAdminStats === 'function') {
-                await loadAdminStats();
-            }
-        } else {
-            showToast(result.message || 'Failed to add product', 'error');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        }
-    } catch (error) {
-        console.error('Error adding product:', error);
-        showToast('Failed to add product', 'error');
+    // Handle image upload
+    const imageFile = form.elements['image'].files[0];
+    if (imageFile) {
+      const imageUrl = await uploadProductImage(imageFile);
+      productData.thumbnail = imageUrl;
+      productData.images = [imageUrl];
     }
+    
+    // Create or update product
+    if (productId) {
+      await updateProduct(productId, productData);
+    } else {
+      await createProduct(productData);
+    }
+    
+    closeProductModal();
+    form.reset();
+  } catch (error) {
+    console.error('Product submit error:', error);
+    showErrorToast(handleFirebaseError(error));
+  } finally {
+    setLoading(submitBtn, false);
+  }
 }
 
-// Edit product (navigate to edit page or show edit form)
-function editProduct(productId) {
-    // For now, redirect to products page with edit parameter
-    window.location.href = `products.html?edit=${productId}`;
+/**
+ * Confirm delete product
+ */
+export async function confirmDeleteProduct(productId) {
+  if (!confirm('Are you sure you want to delete this product?')) {
+    return;
+  }
+  
+  try {
+    await deleteProduct(productId);
+  } catch (error) {
+    showErrorToast(handleFirebaseError(error));
+  }
 }
 
-// Delete product confirmation
-function deleteProductConfirm(productId) {
-    const modal = createModal(
-        'Confirm Delete',
-        '<p>Are you sure you want to delete this product? This action cannot be undone.</p>',
-        {
-            footer: `
-                <button onclick="closeModal()" class="btn btn-outline">Cancel</button>
-                <button onclick="performDeleteProduct('${productId}')" class="btn btn-primary" style="background: var(--danger); border-color: var(--danger);">
-                    <i class="fas fa-trash"></i>
-                    <span>Delete Product</span>
-                </button>
-            `
-        }
+/**
+ * Edit product
+ */
+export function editProduct(productId) {
+  showProductModal(productId);
+}
+
+/**
+ * Load categories admin
+ */
+function loadCategoriesAdmin() {
+  const categoriesGrid = document.getElementById('categories-grid');
+  
+  if (!categoriesGrid) return;
+  
+  subscribe('categories', (categories) => {
+    renderCategoriesGrid(categories, categoriesGrid);
+  });
+  
+  const categories = getState('categories');
+  renderCategoriesGrid(categories, categoriesGrid);
+}
+
+/**
+ * Render categories grid
+ */
+function renderCategoriesGrid(categories, container) {
+  if (categories.length === 0) {
+    container.innerHTML = '';
+    const emptyState = createEmptyState(
+      '📂',
+      'No categories yet',
+      'Create your first category to organize products',
+      'Add Category',
+      () => showCategoryModal()
     );
+    container.appendChild(emptyState);
+    return;
+  }
+  
+  container.innerHTML = categories.map(category => `
+    <div class="category-admin-card">
+      <div class="category-admin-icon">${category.icon || '📦'}</div>
+      <h3>${category.name}</h3>
+      <p>${category.description || ''}</p>
+      <div class="category-admin-actions">
+        <button class="btn btn-sm btn-outline" onclick="editCategory('${category.id}')">
+          Edit
+        </button>
+        <button class="btn btn-sm btn-outline" onclick="confirmDeleteCategory('${category.id}')">
+          Delete
+        </button>
+      </div>
+    </div>
+  `).join('');
 }
 
-// Perform product deletion
-async function performDeleteProduct(productId) {
-    try {
-        const result = await deleteProduct(productId);
-        
-        if (result.success) {
-            showToast('Product deleted successfully', 'success');
-            closeModal();
-            
-            // Reload products if on products page
-            if (typeof loadAllProducts === 'function') {
-                await loadAllProducts();
-            }
-            
-            // Reload recent products if on dashboard
-            if (typeof loadRecentProducts === 'function') {
-                await loadRecentProducts();
-            }
-            
-            // Reload stats
-            if (typeof loadAdminStats === 'function') {
-                await loadAdminStats();
-            }
-        } else {
-            showToast(result.message || 'Failed to delete product', 'error');
-        }
-    } catch (error) {
-        console.error('Error deleting product:', error);
-        showToast('Failed to delete product', 'error');
-    }
+/**
+ * Show category modal
+ */
+export function showCategoryModal(categoryId = null) {
+  const modal = document.getElementById('category-modal');
+  const form = document.getElementById('category-form');
+  const title = document.getElementById('category-modal-title');
+  
+  if (!modal || !form) return;
+  
+  if (categoryId) {
+    title.textContent = 'Edit Category';
+    loadCategoryData(categoryId, form);
+  } else {
+    title.textContent = 'Add New Category';
+    form.reset();
+  }
+  
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
-// Close modal
-function closeModal() {
-    const modal = document.querySelector('.custom-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => modal.remove(), 300);
-    }
+/**
+ * Close category modal
+ */
+export function closeCategoryModal() {
+  const modal = document.getElementById('category-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
 }
 
-// Settings management
-async function loadSettingsPage() {
-    const hasAccess = await checkAdminAccess();
-    if (!hasAccess) return;
+/**
+ * Load category data
+ */
+async function loadCategoryData(categoryId, form) {
+  try {
+    const { db } = getFirebaseInstances();
+    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
     
-    try {
-        const settings = await getSettings();
-        
-        // Populate form fields
-        const storeNameEl = document.getElementById('settingStoreName');
-        const storeEmailEl = document.getElementById('settingEmail');
-        const storeCurrencyEl = document.getElementById('settingCurrency');
-        
-        if (storeNameEl) storeNameEl.value = settings.storeName || '';
-        if (storeEmailEl) storeEmailEl.value = settings.email || '';
-        if (storeCurrencyEl) storeCurrencyEl.value = settings.currency || 'USD';
-        
-        if (settings.socialLinks) {
-            const facebookEl = document.getElementById('settingFacebook');
-            const instagramEl = document.getElementById('settingInstagram');
-            const youtubeEl = document.getElementById('settingYoutube');
-            const tiktokEl = document.getElementById('settingTiktok');
-            
-            if (facebookEl) facebookEl.value = settings.socialLinks.facebook || '';
-            if (instagramEl) instagramEl.value = settings.socialLinks.instagram || '';
-            if (youtubeEl) youtubeEl.value = settings.socialLinks.youtube || '';
-            if (tiktokEl) tiktokEl.value = settings.socialLinks.tiktok || '';
-        }
-        
-        const affiliateUrlEl = document.getElementById('settingAffiliateUrl');
-        if (affiliateUrlEl) affiliateUrlEl.value = settings.masterAffiliateUrl || '';
-    } catch (error) {
-        console.error('Error loading settings:', error);
+    const categoryRef = doc(db, COLLECTIONS.CATEGORIES, categoryId);
+    const snapshot = await getDoc(categoryRef);
+    
+    if (snapshot.exists()) {
+      const category = snapshot.data();
+      
+      form.elements['category-id'].value = categoryId;
+      form.elements['name'].value = category.name || '';
+      form.elements['description'].value = category.description || '';
+      form.elements['icon'].value = category.icon || '';
     }
+  } catch (error) {
+    showErrorToast(handleFirebaseError(error));
+  }
 }
 
-// Save settings
-async function handleSaveSettings(e) {
-    e.preventDefault();
+/**
+ * Handle category form submit
+ */
+export async function handleCategorySubmit(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const categoryId = form.elements['category-id'].value;
+  
+  try {
+    setLoading(submitBtn, true, 'Saving...');
     
-    const settingsData = {
-        storeName: document.getElementById('settingStoreName').value,
-        email: document.getElementById('settingEmail').value,
-        currency: document.getElementById('settingCurrency').value,
-        socialLinks: {
-            facebook: document.getElementById('settingFacebook').value,
-            instagram: document.getElementById('settingInstagram').value,
-            youtube: document.getElementById('settingYoutube').value,
-            tiktok: document.getElementById('settingTiktok').value
-        },
-        masterAffiliateUrl: document.getElementById('settingAffiliateUrl').value
+    const categoryData = {
+      name: form.elements['name'].value.trim(),
+      description: form.elements['description'].value.trim(),
+      icon: form.elements['icon'].value.trim() || '📦',
+      slug: form.elements['name'].value.trim().toLowerCase().replace(/\s+/g, '-')
     };
     
-    try {
-        const result = await saveSettings(settingsData);
-        
-        if (result.success) {
-            showToast('Settings saved successfully!', 'success');
-        } else {
-            showToast(result.message || 'Failed to save settings', 'error');
-        }
-    } catch (error) {
-        console.error('Error saving settings:', error);
-        showToast('Failed to save settings', 'error');
+    if (categoryId) {
+      await updateCategory(categoryId, categoryData);
+    } else {
+      await createCategory(categoryData);
     }
+    
+    closeCategoryModal();
+    form.reset();
+  } catch (error) {
+    showErrorToast(handleFirebaseError(error));
+  } finally {
+    setLoading(submitBtn, false);
+  }
 }
 
-// Make functions globally accessible
-window.showAddProductForm = showAddProductForm;
-window.editProduct = editProduct;
-window.deleteProductConfirm = deleteProductConfirm;
-window.performDeleteProduct = performDeleteProduct;
-window.closeModal = closeModal;
-window.checkAdminAccess = checkAdminAccess;
-window.initAdminDashboard = initAdminDashboard;
-window.loadAdminStats = loadAdminStats;
-window.loadRecentProducts = loadRecentProducts;
-window.loadSettingsPage = loadSettingsPage;
-window.handleSaveSettings = handleSaveSettings;
+/**
+ * Confirm delete category
+ */
+export async function confirmDeleteCategory(categoryId) {
+  if (!confirm('Are you sure you want to delete this category?')) {
+    return;
+  }
+  
+  try {
+    await deleteCategory(categoryId);
+  } catch (error) {
+    showErrorToast(handleFirebaseError(error));
+  }
+}
+
+/**
+ * Edit category
+ */
+export function editCategory(categoryId) {
+  showCategoryModal(categoryId);
+}
+
+/**
+ * Load settings admin
+ */
+function loadSettingsAdmin() {
+  loadSiteSettings();
+  loadSocialSettings();
+}
+
+/**
+ * Load site settings
+ */
+async function loadSiteSettings() {
+  try {
+    const { db } = getFirebaseInstances();
+    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    
+    const settingsRef = doc(db, COLLECTIONS.SETTINGS, 'site');
+    const snapshot = await getDoc(settingsRef);
+    
+    if (snapshot.exists()) {
+      const settings = snapshot.data();
+      const form = document.getElementById('site-settings-form');
+      
+      if (form) {
+        form.elements['site-name'].value = settings.siteName || '';
+        form.elements['site-description'].value = settings.siteDescription || '';
+        form.elements['contact-email'].value = settings.contactEmail || '';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading site settings:', error);
+  }
+}
+
+/**
+ * Load social settings
+ */
+async function loadSocialSettings() {
+  try {
+    const { db } = getFirebaseInstances();
+    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    
+    const settingsRef = doc(db, COLLECTIONS.SETTINGS, 'social');
+    const snapshot = await getDoc(settingsRef);
+    
+    if (snapshot.exists()) {
+      const settings = snapshot.data();
+      const form = document.getElementById('social-settings-form');
+      
+      if (form) {
+        form.elements['facebook-url'].value = settings.facebookUrl || '';
+        form.elements['instagram-url'].value = settings.instagramUrl || '';
+        form.elements['youtube-url'].value = settings.youtubeUrl || '';
+        form.elements['tiktok-url'].value = settings.tiktokUrl || '';
+      }
+    }
+  } catch (error) {
+    console.error('Error loading social settings:', error);
+  }
+}
+
+/**
+ * Handle site settings submit
+ */
+export async function handleSiteSettingsSubmit(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  
+  try {
+    setLoading(submitBtn, true, 'Saving...');
+    
+    const { db } = getFirebaseInstances();
+    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    
+    const settingsData = {
+      siteName: form.elements['site-name'].value.trim(),
+      siteDescription: form.elements['site-description'].value.trim(),
+      contactEmail: form.elements['contact-email'].value.trim()
+    };
+    
+    const settingsRef = doc(db, COLLECTIONS.SETTINGS, 'site');
+    await setDoc(settingsRef, settingsData, { merge: true });
+    
+    showSuccessToast('Settings saved successfully!');
+  } catch (error) {
+    showErrorToast(handleFirebaseError(error));
+  } finally {
+    setLoading(submitBtn, false);
+  }
+}
+
+/**
+ * Handle social settings submit
+ */
+export async function handleSocialSettingsSubmit(e) {
+  e.preventDefault();
+  
+  const form = e.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  
+  try {
+    setLoading(submitBtn, true, 'Saving...');
+    
+    const { db } = getFirebaseInstances();
+    const { doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    
+    const settingsData = {
+      facebookUrl: form.elements['facebook-url'].value.trim(),
+      instagramUrl: form.elements['instagram-url'].value.trim(),
+      youtubeUrl: form.elements['youtube-url'].value.trim(),
+      tiktokUrl: form.elements['tiktok-url'].value.trim()
+    };
+    
+    const settingsRef = doc(db, COLLECTIONS.SETTINGS, 'social');
+    await setDoc(settingsRef, settingsData, { merge: true });
+    
+    showSuccessToast('Social links saved successfully!');
+  } catch (error) {
+    showErrorToast(handleFirebaseError(error));
+  } finally {
+    setLoading(submitBtn, false);
+  }
+}
+
+/**
+ * Setup admin event listeners
+ */
+function setupAdminEventListeners() {
+  // Make functions globally available
+  window.showProductModal = showProductModal;
+  window.closeProductModal = closeProductModal;
+  window.editProduct = editProduct;
+  window.confirmDeleteProduct = confirmDeleteProduct;
+  
+  window.showCategoryModal = showCategoryModal;
+  window.closeCategoryModal = closeCategoryModal;
+  window.editCategory = editCategory;
+  window.confirmDeleteCategory = confirmDeleteCategory;
+  
+  // Product form
+  const productForm = document.getElementById('product-form');
+  if (productForm) {
+    productForm.addEventListener('submit', handleProductSubmit);
+  }
+  
+  // Category form
+  const categoryForm = document.getElementById('category-form');
+  if (categoryForm) {
+    categoryForm.addEventListener('submit', handleCategorySubmit);
+  }
+  
+  // Settings forms
+  const siteSettingsForm = document.getElementById('site-settings-form');
+  if (siteSettingsForm) {
+    siteSettingsForm.addEventListener('submit', handleSiteSettingsSubmit);
+  }
+  
+  const socialSettingsForm = document.getElementById('social-settings-form');
+  if (socialSettingsForm) {
+    socialSettingsForm.addEventListener('submit', handleSocialSettingsSubmit);
+  }
+  
+  // Image preview
+  const imageInput = document.getElementById('product-image');
+  if (imageInput) {
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const preview = document.getElementById('image-preview');
+          if (preview) {
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+}
