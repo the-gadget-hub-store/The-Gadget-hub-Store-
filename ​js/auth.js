@@ -1,285 +1,225 @@
-// ===================================
-// AUTHENTICATION FUNCTIONS
-// ===================================
+import { getFirebaseInstances, safeFirebaseOperation } from './firebase-init.js';
+import { showSuccessToast, showErrorToast, handleFirebaseError } from './ui.js';
 
 let currentUser = null;
+let authStateListeners = [];
 
-// Initialize auth state listener
-if (isFirebaseConfigured) {
-    auth.onAuthStateChanged((user) => {
-        currentUser = user;
-        updateAuthUI();
-        
-        if (user) {
-            console.log('User signed in:', user.email);
-            loadUserFavorites();
-        } else {
-            console.log('User signed out');
-            clearUserFavorites();
-        }
+/**
+ * Initialize auth state listener
+ */
+export async function initAuth() {
+  try {
+    const { auth } = getFirebaseInstances();
+    const { onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      updateAuthUI(user);
+      notifyAuthStateListeners(user);
     });
+  } catch (error) {
+    console.error('Auth initialization error:', error);
+  }
 }
 
-// Update UI based on auth state
-function updateAuthUI() {
-    const accountBtn = document.getElementById('accountBtn');
+/**
+ * Sign up with email and password
+ */
+export async function signUp(email, password, displayName) {
+  return safeFirebaseOperation(async () => {
+    const { auth } = getFirebaseInstances();
+    const { createUserWithEmailAndPassword, updateProfile } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
     
-    if (!accountBtn) return;
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     
-    if (currentUser) {
-        // User is signed in
-        accountBtn.innerHTML = '<i class="fas fa-user"></i>';
-        accountBtn.title = currentUser.email;
-    } else {
-        // User is signed out
-        accountBtn.innerHTML = '<i class="far fa-user"></i>';
-        accountBtn.title = 'Sign In';
+    if (displayName) {
+      await updateProfile(userCredential.user, { displayName });
     }
+    
+    await createUserDocument(userCredential.user);
+    
+    showSuccessToast('Account created successfully!');
+    return userCredential.user;
+  }, 'Sign up failed');
 }
 
-// Show login modal
-function showLoginModal() {
-    // Create login modal dynamically
-    const modal = document.createElement('div');
-    modal.className = 'auth-modal';
-    modal.innerHTML = `
-        <div class="auth-modal-overlay"></div>
-        <div class="auth-modal-content">
-            <button class="auth-modal-close" onclick="closeAuthModal()">
-                <i class="fas fa-times"></i>
-            </button>
-            
-            <div class="auth-modal-header">
-                <h2>Welcome Back</h2>
-                <p>Sign in to save your favorites and preferences</p>
-            </div>
-            
-            <div class="auth-tabs">
-                <button class="auth-tab active" data-tab="signin">Sign In</button>
-                <button class="auth-tab" data-tab="signup">Sign Up</button>
-            </div>
-            
-            <div class="auth-tab-content active" id="signin-tab">
-                <form id="signinForm" class="auth-form">
-                    <div class="form-group">
-                        <label for="signinEmail">Email</label>
-                        <input type="email" id="signinEmail" required placeholder="Enter your email">
-                    </div>
-                    <div class="form-group">
-                        <label for="signinPassword">Password</label>
-                        <input type="password" id="signinPassword" required placeholder="Enter your password">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">
-                        <span>Sign In</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </form>
-                
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-                
-                <button class="btn btn-outline btn-block" onclick="signInWithGoogle()">
-                    <i class="fab fa-google"></i>
-                    <span>Continue with Google</span>
-                </button>
-            </div>
-            
-            <div class="auth-tab-content" id="signup-tab">
-                <form id="signupForm" class="auth-form">
-                    <div class="form-group">
-                        <label for="signupName">Name</label>
-                        <input type="text" id="signupName" required placeholder="Enter your name">
-                    </div>
-                    <div class="form-group">
-                        <label for="signupEmail">Email</label>
-                        <input type="email" id="signupEmail" required placeholder="Enter your email">
-                    </div>
-                    <div class="form-group">
-                        <label for="signupPassword">Password</label>
-                        <input type="password" id="signupPassword" required placeholder="Create a password">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">
-                        <span>Create Account</span>
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </form>
-                
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-                
-                <button class="btn btn-outline btn-block" onclick="signInWithGoogle()">
-                    <i class="fab fa-google"></i>
-                    <span>Continue with Google</span>
-                </button>
-            </div>
-        </div>
-    `;
+/**
+ * Sign in with email and password
+ */
+export async function signIn(email, password) {
+  return safeFirebaseOperation(async () => {
+    const { auth } = getFirebaseInstances();
+    const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
     
-    document.body.appendChild(modal);
-    
-    // Add event listeners
-    setTimeout(() => {
-        modal.classList.add('active');
-        
-        // Tab switching
-        const tabBtns = modal.querySelectorAll('.auth-tab');
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabName = btn.dataset.tab;
-                switchAuthTab(tabName);
-            });
-        });
-        
-        // Form submissions
-        document.getElementById('signinForm').addEventListener('submit', handleSignIn);
-        document.getElementById('signupForm').addEventListener('submit', handleSignUp);
-        
-        // Close on overlay click
-        modal.querySelector('.auth-modal-overlay').addEventListener('click', closeAuthModal);
-    }, 10);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    showSuccessToast('Welcome back!');
+    return userCredential.user;
+  }, 'Sign in failed');
 }
 
-// Switch auth tabs
-function switchAuthTab(tabName) {
-    const tabs = document.querySelectorAll('.auth-tab');
-    const contents = document.querySelectorAll('.auth-tab-content');
+/**
+ * Sign in with Google
+ */
+export async function signInWithGoogle() {
+  return safeFirebaseOperation(async () => {
+    const { auth } = getFirebaseInstances();
+    const { signInWithPopup, GoogleAuthProvider } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
     
-    tabs.forEach(tab => {
-        if (tab.dataset.tab === tabName) {
-            tab.classList.add('active');
-        } else {
-            tab.classList.remove('active');
-        }
+    const provider = new GoogleAuthProvider();
+    const userCredential = await signInWithPopup(auth, provider);
+    
+    await createUserDocument(userCredential.user);
+    
+    showSuccessToast('Signed in with Google!');
+    return userCredential.user;
+  }, 'Google sign in failed');
+}
+
+/**
+ * Sign out
+ */
+export async function signOut() {
+  return safeFirebaseOperation(async () => {
+    const { auth } = getFirebaseInstances();
+    const { signOut: firebaseSignOut } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    
+    await firebaseSignOut(auth);
+    showSuccessToast('Signed out successfully');
+  }, 'Sign out failed');
+}
+
+/**
+ * Send password reset email
+ */
+export async function resetPassword(email) {
+  return safeFirebaseOperation(async () => {
+    const { auth } = getFirebaseInstances();
+    const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+    
+    await sendPasswordResetEmail(auth, email);
+    showSuccessToast('Password reset email sent!');
+  }, 'Password reset failed');
+}
+
+/**
+ * Get current user
+ */
+export function getCurrentUser() {
+  return currentUser;
+}
+
+/**
+ * Check if user is authenticated
+ */
+export function isAuthenticated() {
+  return !!currentUser;
+}
+
+/**
+ * Check if user is admin
+ */
+export async function isAdmin() {
+  if (!currentUser) return false;
+  
+  try {
+    const { db } = getFirebaseInstances();
+    const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    
+    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+    return userDoc.exists() && userDoc.data().role === 'admin';
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+}
+
+/**
+ * Create user document
+ */
+async function createUserDocument(user) {
+  try {
+    const { db } = getFirebaseInstances();
+    const { doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+    
+    const userRef = doc(db, 'users', user.uid);
+    
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName || '',
+      photoURL: user.photoURL || '',
+      role: 'user',
+      createdAt: serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error creating user document:', error);
+  }
+}
+
+/**
+ * Update auth UI
+ */
+function updateAuthUI(user) {
+  const accountBtns = document.querySelectorAll('.account-btn');
+  const signInBtns = document.querySelectorAll('.sign-in-btn');
+  const signOutBtns = document.querySelectorAll('.sign-out-btn');
+  const userDisplays = document.querySelectorAll('.user-display');
+  
+  if (user) {
+    accountBtns.forEach(btn => btn.style.display = 'flex');
+    signInBtns.forEach(btn => btn.style.display = 'none');
+    signOutBtns.forEach(btn => btn.style.display = 'block');
+    userDisplays.forEach(display => {
+      display.textContent = user.displayName || user.email;
     });
-    
-    contents.forEach(content => {
-        if (content.id === `${tabName}-tab`) {
-            content.classList.add('active');
-        } else {
-            content.classList.remove('active');
-        }
-    });
+  } else {
+    accountBtns.forEach(btn => btn.style.display = 'none');
+    signInBtns.forEach(btn => btn.style.display = 'flex');
+    signOutBtns.forEach(btn => btn.style.display = 'none');
+  }
 }
 
-// Close auth modal
-function closeAuthModal() {
-    const modal = document.querySelector('.auth-modal');
-    if (modal) {
-        modal.classList.remove('active');
-        setTimeout(() => modal.remove(), 300);
-    }
+/**
+ * Auth state listener
+ */
+export function onAuthStateChange(callback) {
+  authStateListeners.push(callback);
+  if (currentUser !== null) {
+    callback(currentUser);
+  }
 }
 
-// Handle sign in
-async function handleSignIn(e) {
-    e.preventDefault();
-    
-    if (!isFirebaseConfigured) {
-        showToast('Firebase not configured', 'error');
-        return;
-    }
-    
-    const email = document.getElementById('signinEmail').value;
-    const password = document.getElementById('signinPassword').value;
-    
-    try {
-        await auth.signInWithEmailAndPassword(email, password);
-        showToast('Successfully signed in!', 'success');
-        closeAuthModal();
-    } catch (error) {
-        console.error('Sign in error:', error);
-        showToast(error.message, 'error');
-    }
+function notifyAuthStateListeners(user) {
+  authStateListeners.forEach(callback => callback(user));
 }
 
-// Handle sign up
-async function handleSignUp(e) {
-    e.preventDefault();
-    
-    if (!isFirebaseConfigured) {
-        showToast('Firebase not configured', 'error');
-        return;
-    }
-    
-    const name = document.getElementById('signupName').value;
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
-    
-    try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        
-        // Update profile with name
-        await userCredential.user.updateProfile({
-            displayName: name
-        });
-        
-        // Create user document
-        await db.collection('users').doc(userCredential.user.uid).set({
-            name: name,
-            email: email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        showToast('Account created successfully!', 'success');
-        closeAuthModal();
-    } catch (error) {
-        console.error('Sign up error:', error);
-        showToast(error.message, 'error');
-    }
+/**
+ * Require authentication
+ */
+export async function requireAuth() {
+  if (!isAuthenticated()) {
+    showErrorToast('Please sign in to continue');
+    return false;
+  }
+  return true;
 }
 
-// Sign in with Google
-async function signInWithGoogle() {
-    if (!isFirebaseConfigured) {
-        showToast('Firebase not configured', 'error');
-        return;
-    }
-    
-    try {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        await auth.signInWithPopup(provider);
-        showToast('Successfully signed in with Google!', 'success');
-        closeAuthModal();
-    } catch (error) {
-        console.error('Google sign in error:', error);
-        showToast(error.message, 'error');
-    }
-}
-
-// Sign out
-async function signOut() {
-    if (!isFirebaseConfigured) {
-        showToast('Firebase not configured', 'error');
-        return;
-    }
-    
-    try {
-        await auth.signOut();
-        showToast('Successfully signed out', 'success');
-        window.location.href = '/';
-    } catch (error) {
-        console.error('Sign out error:', error);
-        showToast(error.message, 'error');
-    }
-}
-
-// Check if user is signed in
-function isUserSignedIn() {
-    return currentUser !== null;
-}
-
-// Get current user
-function getCurrentUser() {
-    return currentUser;
-}
-
-// Require authentication
-function requireAuth(callback) {
-    if (isUserSignedIn()) {
-        callback();
-    } else {
-        showLoginModal();
-    }
+/**
+ * Require admin
+ */
+export async function requireAdmin() {
+  if (!isAuthenticated()) {
+    showErrorToast('Please sign in to continue');
+    window.location.href = '/index.html';
+    return false;
+  }
+  
+  const adminStatus = await isAdmin();
+  if (!adminStatus) {
+    showErrorToast('Access denied. Admin privileges required.');
+    window.location.href = '/index.html';
+    return false;
+  }
+  
+  return true;
 }
