@@ -1,8 +1,13 @@
 // ===================================
 // FIREBASE CONFIGURATION & SETUP
+// The Gadget Hub Store
+// Production-ready Firebase / Firestore layer
 // ===================================
 
-// Firebase Configuration
+// ===================================
+// FIREBASE CONFIGURATION
+// ===================================
+
 const firebaseConfig = {
     apiKey: "AIzaSyDwGH1EmaJS4gjPJvJGWrOIm5lUV4exbpQ",
     authDomain: "the-gadget-hub-store-33876.firebaseapp.com",
@@ -12,30 +17,381 @@ const firebaseConfig = {
     appId: "1:1065231323861:web:883e8a4724e28db2ce485c"
 };
 
-// Initialize Firebase
-let app, auth, db, storage;
-let isFirebaseConfigured = false;
+// ===================================
+// GLOBAL FIREBASE REFERENCES
+// ===================================
 
-try {
-    // Check if Firebase config is set
-    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-        app = firebase.initializeApp(firebaseConfig);
-        auth = firebase.auth();
-        db = firebase.firestore();
-        storage = firebase.storage();
-        isFirebaseConfigured = true;
-        console.log('Firebase initialized successfully');
-    } else {
-        console.warn('Firebase not configured. Using demo data.');
-        isFirebaseConfigured = false;
+let app = null;
+let auth = null;
+let db = null;
+let storage = null;
+
+let isFirebaseConfigured = false;
+let firebaseInitializationError = null;
+let firebaseReady = false;
+
+// Promise used by other files if Firebase is still initializing.
+let firebaseReadyPromise = null;
+
+// ===================================
+// FIREBASE ERROR HELPERS
+// ===================================
+
+function getFirebaseErrorMessage(error, fallbackMessage = 'An unexpected Firebase error occurred.') {
+    if (!error) {
+        return fallbackMessage;
     }
-} catch (error) {
-    console.error('Firebase initialization error:', error);
-    isFirebaseConfigured = false;
+
+    const code = error.code || '';
+
+    const messages = {
+        'permission-denied': 'Permission denied. Please check your Firebase authentication and Firestore security rules.',
+        'unauthenticated': 'You must be logged in to perform this action.',
+        'not-found': 'The requested record was not found.',
+        'already-exists': 'This record already exists.',
+        'unavailable': 'Firebase is temporarily unavailable. Please check your internet connection and try again.',
+        'deadline-exceeded': 'The Firebase request took too long. Please try again.',
+        'failed-precondition': 'This Firebase operation cannot be completed because a required condition is not satisfied.',
+        'resource-exhausted': 'Firebase quota has been exceeded. Please try again later.',
+        'cancelled': 'The Firebase operation was cancelled.',
+        'invalid-argument': 'Invalid data was provided to Firebase.',
+        'network-request-failed': 'Network connection failed. Please check your internet connection.',
+        'storage/unauthorized': 'Storage permission denied.',
+        'storage/canceled': 'The file upload was cancelled.',
+        'storage/retry-limit-exceeded': 'The file upload took too long. Please try again.',
+        'auth/network-request-failed': 'Authentication network request failed.',
+        'auth/user-not-found': 'User account was not found.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/invalid-credential': 'The provided login credentials are invalid.'
+    };
+
+    if (messages[code]) {
+        return messages[code];
+    }
+
+    if (error.message && typeof error.message === 'string') {
+        return error.message;
+    }
+
+    return fallbackMessage;
 }
 
 // ===================================
-// DEMO DATA (Fallback)
+// FIREBASE AVAILABILITY CHECK
+// ===================================
+
+function isFirebaseAvailable() {
+    return Boolean(
+        isFirebaseConfigured &&
+        firebaseReady &&
+        db &&
+        typeof db.collection === 'function'
+    );
+}
+
+// ===================================
+// FIREBASE INITIALIZATION
+// ===================================
+
+function initializeFirebase() {
+    try {
+        firebaseInitializationError = null;
+        firebaseReady = false;
+
+        // Check Firebase SDK
+        if (typeof firebase === 'undefined') {
+            throw new Error(
+                'Firebase SDK is not loaded. Make sure the Firebase CDN scripts are loaded before firebase.js.'
+            );
+        }
+
+        // Check configuration
+        if (
+            !firebaseConfig ||
+            !firebaseConfig.apiKey ||
+            firebaseConfig.apiKey === 'YOUR_API_KEY' ||
+            !firebaseConfig.projectId
+        ) {
+            console.warn('Firebase is not configured. Demo mode will be used.');
+            isFirebaseConfigured = false;
+            firebaseReady = false;
+            return false;
+        }
+
+        // Reuse an existing Firebase app instead of initializing twice.
+        if (firebase.apps && firebase.apps.length > 0) {
+            app = firebase.apps[0];
+        } else {
+            app = firebase.initializeApp(firebaseConfig);
+        }
+
+        // Initialize Authentication
+        if (typeof firebase.auth === 'function') {
+            auth = firebase.auth();
+        } else {
+            console.warn('Firebase Authentication SDK is unavailable.');
+        }
+
+        // Initialize Firestore
+        if (typeof firebase.firestore === 'function') {
+            db = firebase.firestore();
+        } else {
+            throw new Error(
+                'Firebase Firestore SDK is not loaded. Make sure firebase-firestore is loaded before firebase.js.'
+            );
+        }
+
+        // Initialize Storage
+        if (typeof firebase.storage === 'function') {
+            storage = firebase.storage();
+        } else {
+            console.warn('Firebase Storage SDK is unavailable.');
+        }
+
+        isFirebaseConfigured = true;
+        firebaseReady = true;
+
+        // Explicitly expose Firebase references globally.
+        // This is important for categories.js, products.js and admin files.
+        if (typeof window !== 'undefined') {
+            window.firebaseApp = app;
+            window.app = app;
+            window.auth = auth;
+            window.db = db;
+            window.storage = storage;
+
+            window.isFirebaseConfigured = isFirebaseConfigured;
+            window.firebaseReady = firebaseReady;
+        }
+
+        console.log('Firebase initialized successfully.');
+        console.log('Firestore connection ready.');
+
+        return true;
+
+    } catch (error) {
+        firebaseInitializationError = error;
+        isFirebaseConfigured = false;
+        firebaseReady = false;
+
+        console.error('Firebase initialization error:', error);
+
+        if (typeof window !== 'undefined') {
+            window.firebaseApp = null;
+            window.app = null;
+            window.auth = null;
+            window.db = null;
+            window.storage = null;
+            window.isFirebaseConfigured = false;
+            window.firebaseReady = false;
+        }
+
+        return false;
+    }
+}
+
+// ===================================
+// FIREBASE READY PROMISE
+// ===================================
+
+function createFirebaseReadyPromise() {
+    firebaseReadyPromise = new Promise((resolve) => {
+        if (firebaseReady && db) {
+            resolve(true);
+            return;
+        }
+
+        // Firebase initialization is synchronous with the compat SDK,
+        // but this small timeout gives other scripts a safe opportunity
+        // to finish loading if script order is not perfect.
+        const startedAt = Date.now();
+        const timeout = 10000;
+
+        const checkReady = () => {
+            if (firebaseReady && db) {
+                resolve(true);
+                return;
+            }
+
+            if (Date.now() - startedAt >= timeout) {
+                resolve(false);
+                return;
+            }
+
+            setTimeout(checkReady, 50);
+        };
+
+        checkReady();
+    });
+
+    return firebaseReadyPromise;
+}
+
+// ===================================
+// GET FIREBASE READY PROMISE
+// ===================================
+
+function waitForFirebaseReady() {
+    if (firebaseReady && db) {
+        return Promise.resolve(true);
+    }
+
+    if (!firebaseReadyPromise) {
+        return createFirebaseReadyPromise();
+    }
+
+    return firebaseReadyPromise;
+}
+
+// ===================================
+// GET FIRESTORE INSTANCE
+// ===================================
+
+function getFirestore() {
+    if (db && typeof db.collection === 'function') {
+        return db;
+    }
+
+    if (
+        typeof window !== 'undefined' &&
+        window.db &&
+        typeof window.db.collection === 'function'
+    ) {
+        db = window.db;
+        return db;
+    }
+
+    if (
+        typeof firebase !== 'undefined' &&
+        typeof firebase.firestore === 'function'
+    ) {
+        try {
+            db = firebase.firestore();
+
+            if (typeof window !== 'undefined') {
+                window.db = db;
+            }
+
+            return db;
+        } catch (error) {
+            console.error('Unable to access Firestore:', error);
+        }
+    }
+
+    return null;
+}
+
+// ===================================
+// GET AUTH INSTANCE
+// ===================================
+
+function getAuth() {
+    if (auth) {
+        return auth;
+    }
+
+    if (
+        typeof window !== 'undefined' &&
+        window.auth
+    ) {
+        auth = window.auth;
+        return auth;
+    }
+
+    if (
+        typeof firebase !== 'undefined' &&
+        typeof firebase.auth === 'function'
+    ) {
+        try {
+            auth = firebase.auth();
+
+            if (typeof window !== 'undefined') {
+                window.auth = auth;
+            }
+
+            return auth;
+        } catch (error) {
+            console.error('Unable to access Firebase Auth:', error);
+        }
+    }
+
+    return null;
+}
+
+// ===================================
+// GET STORAGE INSTANCE
+// ===================================
+
+function getStorage() {
+    if (storage) {
+        return storage;
+    }
+
+    if (
+        typeof window !== 'undefined' &&
+        window.storage
+    ) {
+        storage = window.storage;
+        return storage;
+    }
+
+    if (
+        typeof firebase !== 'undefined' &&
+        typeof firebase.storage === 'function'
+    ) {
+        try {
+            storage = firebase.storage();
+
+            if (typeof window !== 'undefined') {
+                window.storage = storage;
+            }
+
+            return storage;
+        } catch (error) {
+            console.error('Unable to access Firebase Storage:', error);
+        }
+    }
+
+    return null;
+}
+
+// ===================================
+// SAFE FIRESTORE COLLECTION ACCESS
+// ===================================
+
+function getCollection(collectionName) {
+    try {
+        if (!collectionName || typeof collectionName !== 'string') {
+            throw new Error('A valid Firestore collection name is required.');
+        }
+
+        const database = getFirestore();
+
+        if (!database) {
+            throw new Error('Firestore database is not available.');
+        }
+
+        return database.collection(collectionName);
+
+    } catch (error) {
+        console.error(
+            `Unable to access Firestore collection "${collectionName}":`,
+            error
+        );
+
+        return null;
+    }
+}
+
+// ===================================
+// FIREBASE INITIALIZATION
+// ===================================
+
+initializeFirebase();
+createFirebaseReadyPromise();
+
+// ===================================
+// DEMO DATA (FALLBACK)
 // ===================================
 
 const DEMO_CATEGORIES = [
@@ -400,303 +756,1195 @@ const DEMO_SETTINGS = {
 };
 
 // ===================================
-// FIREBASE FIRESTORE FUNCTIONS
+// INTERNAL FIRESTORE DATA HELPER
 // ===================================
 
-// Get all products
-async function getProducts(limit = null) {
-    if (!isFirebaseConfigured) {
-        return limit ? DEMO_PRODUCTS.slice(0, limit) : DEMO_PRODUCTS;
+function mapSnapshot(snapshot) {
+    if (!snapshot || !snapshot.docs) {
+        return [];
     }
-    
+
+    return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
+}
+
+// ===================================
+// GET ALL PRODUCTS
+// ===================================
+
+async function getProducts(limit = null) {
     try {
-        let query = db.collection('products').orderBy('createdAt', 'desc');
-        
+        if (!isFirebaseAvailable()) {
+            return limit
+                ? DEMO_PRODUCTS.slice(0, limit)
+                : DEMO_PRODUCTS;
+        }
+
+        let query = getCollection('products');
+
+        if (!query) {
+            throw new Error('Products collection is unavailable.');
+        }
+
+        query = query.orderBy('createdAt', 'desc');
+
         if (limit) {
             query = query.limit(limit);
         }
-        
+
         const snapshot = await query.get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        return mapSnapshot(snapshot);
+
     } catch (error) {
         console.error('Error getting products:', error);
-        return DEMO_PRODUCTS;
+
+        return limit
+            ? DEMO_PRODUCTS.slice(0, limit)
+            : DEMO_PRODUCTS;
     }
 }
 
-// Get product by ID
+// ===================================
+// GET PRODUCT BY ID
+// ===================================
+
 async function getProductById(productId) {
-    if (!isFirebaseConfigured) {
-        return DEMO_PRODUCTS.find(p => p.id === productId);
-    }
-    
-    try {
-        const doc = await db.collection('products').doc(productId).get();
-        if (doc.exists) {
-            return { id: doc.id, ...doc.data() };
-        }
+    if (!productId) {
         return null;
+    }
+
+    try {
+        if (!isFirebaseAvailable()) {
+            return DEMO_PRODUCTS.find(p => p.id === productId) || null;
+        }
+
+        const productsRef = getCollection('products');
+
+        if (!productsRef) {
+            throw new Error('Products collection is unavailable.');
+        }
+
+        const doc = await productsRef.doc(productId).get();
+
+        if (doc.exists) {
+            return {
+                id: doc.id,
+                ...doc.data()
+            };
+        }
+
+        return null;
+
     } catch (error) {
         console.error('Error getting product:', error);
         return null;
     }
 }
 
-// Get products by category
+// ===================================
+// GET PRODUCTS BY CATEGORY
+// ===================================
+
 async function getProductsByCategory(categoryId, limit = null) {
-    if (!isFirebaseConfigured) {
-        const filtered = DEMO_PRODUCTS.filter(p => p.category === categoryId);
-        return limit ? filtered.slice(0, limit) : filtered;
+    if (!categoryId) {
+        return [];
     }
-    
+
     try {
-        let query = db.collection('products')
+        if (!isFirebaseAvailable()) {
+            const filtered = DEMO_PRODUCTS.filter(
+                product => product.category === categoryId
+            );
+
+            return limit
+                ? filtered.slice(0, limit)
+                : filtered;
+        }
+
+        let query = getCollection('products');
+
+        if (!query) {
+            throw new Error('Products collection is unavailable.');
+        }
+
+        query = query
             .where('category', '==', categoryId)
             .orderBy('createdAt', 'desc');
-        
+
         if (limit) {
             query = query.limit(limit);
         }
-        
+
         const snapshot = await query.get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        return mapSnapshot(snapshot);
+
     } catch (error) {
         console.error('Error getting products by category:', error);
         return [];
     }
 }
 
-// Get trending products
+// ===================================
+// GET TRENDING PRODUCTS
+// ===================================
+
 async function getTrendingProducts(limit = 8) {
-    if (!isFirebaseConfigured) {
-        return DEMO_PRODUCTS.filter(p => p.trending).slice(0, limit);
-    }
-    
     try {
-        const snapshot = await db.collection('products')
+        if (!isFirebaseAvailable()) {
+            return DEMO_PRODUCTS
+                .filter(p => p.trending)
+                .slice(0, limit);
+        }
+
+        const productsRef = getCollection('products');
+
+        if (!productsRef) {
+            throw new Error('Products collection is unavailable.');
+        }
+
+        const snapshot = await productsRef
             .where('trending', '==', true)
             .limit(limit)
             .get();
-        
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        return mapSnapshot(snapshot);
+
     } catch (error) {
         console.error('Error getting trending products:', error);
-        return DEMO_PRODUCTS.filter(p => p.trending).slice(0, limit);
+
+        return DEMO_PRODUCTS
+            .filter(p => p.trending)
+            .slice(0, limit);
     }
 }
 
-// Get featured products
+// ===================================
+// GET FEATURED PRODUCTS
+// ===================================
+
 async function getFeaturedProducts(limit = 8) {
-    if (!isFirebaseConfigured) {
-        return DEMO_PRODUCTS.filter(p => p.featured).slice(0, limit);
-    }
-    
     try {
-        const snapshot = await db.collection('products')
+        if (!isFirebaseAvailable()) {
+            return DEMO_PRODUCTS
+                .filter(p => p.featured)
+                .slice(0, limit);
+        }
+
+        const productsRef = getCollection('products');
+
+        if (!productsRef) {
+            throw new Error('Products collection is unavailable.');
+        }
+
+        const snapshot = await productsRef
             .where('featured', '==', true)
             .limit(limit)
             .get();
-        
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        return mapSnapshot(snapshot);
+
     } catch (error) {
         console.error('Error getting featured products:', error);
-        return DEMO_PRODUCTS.filter(p => p.featured).slice(0, limit);
+
+        return DEMO_PRODUCTS
+            .filter(p => p.featured)
+            .slice(0, limit);
     }
 }
 
-// Get new arrival products
+// ===================================
+// GET NEW ARRIVAL PRODUCTS
+// ===================================
+
 async function getNewArrivalProducts(limit = 8) {
-    if (!isFirebaseConfigured) {
-        return DEMO_PRODUCTS.filter(p => p.newArrival).slice(0, limit);
-    }
-    
     try {
-        const snapshot = await db.collection('products')
+        if (!isFirebaseAvailable()) {
+            return DEMO_PRODUCTS
+                .filter(p => p.newArrival)
+                .slice(0, limit);
+        }
+
+        const productsRef = getCollection('products');
+
+        if (!productsRef) {
+            throw new Error('Products collection is unavailable.');
+        }
+
+        const snapshot = await productsRef
             .where('newArrival', '==', true)
             .limit(limit)
             .get();
-        
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        return mapSnapshot(snapshot);
+
     } catch (error) {
         console.error('Error getting new arrivals:', error);
-        return DEMO_PRODUCTS.filter(p => p.newArrival).slice(0, limit);
+
+        return DEMO_PRODUCTS
+            .filter(p => p.newArrival)
+            .slice(0, limit);
     }
 }
 
-// Search products
+// ===================================
+// SEARCH PRODUCTS
+// ===================================
+
 async function searchProducts(searchTerm) {
-    if (!isFirebaseConfigured) {
-        const term = searchTerm.toLowerCase();
-        return DEMO_PRODUCTS.filter(p => 
-            p.title.toLowerCase().includes(term) ||
-            p.description.toLowerCase().includes(term) ||
-            p.tags.some(tag => tag.toLowerCase().includes(term))
-        );
+    if (!searchTerm || !searchTerm.trim()) {
+        return [];
     }
-    
+
+    const term = searchTerm.toLowerCase().trim();
+
     try {
-        // Note: Firestore doesn't have full-text search built-in
-        // This is a simple implementation. Consider using Algolia or similar for production
-        const snapshot = await db.collection('products').get();
-        const allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        const term = searchTerm.toLowerCase();
-        return allProducts.filter(p => 
-            p.title.toLowerCase().includes(term) ||
-            p.description.toLowerCase().includes(term) ||
-            (p.tags && p.tags.some(tag => tag.toLowerCase().includes(term)))
-        );
+        if (!isFirebaseAvailable()) {
+            return DEMO_PRODUCTS.filter(product => {
+                const title = String(product.title || '').toLowerCase();
+                const description = String(product.description || '').toLowerCase();
+
+                const tags = Array.isArray(product.tags)
+                    ? product.tags
+                    : [];
+
+                return (
+                    title.includes(term) ||
+                    description.includes(term) ||
+                    tags.some(tag =>
+                        String(tag).toLowerCase().includes(term)
+                    )
+                );
+            });
+        }
+
+        const productsRef = getCollection('products');
+
+        if (!productsRef) {
+            throw new Error('Products collection is unavailable.');
+        }
+
+        const snapshot = await productsRef.get();
+        const allProducts = mapSnapshot(snapshot);
+
+        return allProducts.filter(product => {
+            const title = String(product.title || '').toLowerCase();
+            const description = String(product.description || '').toLowerCase();
+
+            const tags = Array.isArray(product.tags)
+                ? product.tags
+                : [];
+
+            return (
+                title.includes(term) ||
+                description.includes(term) ||
+                tags.some(tag =>
+                    String(tag).toLowerCase().includes(term)
+                )
+            );
+        });
+
     } catch (error) {
         console.error('Error searching products:', error);
         return [];
     }
 }
 
-// Get all categories
+// ===================================
+// GET ALL CATEGORIES
+// ===================================
+
 async function getCategories() {
-    if (!isFirebaseConfigured) {
-        return DEMO_CATEGORIES;
-    }
-    
     try {
-        const snapshot = await db.collection('categories').orderBy('name').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (!isFirebaseAvailable()) {
+            return DEMO_CATEGORIES;
+        }
+
+        const categoriesRef = getCollection('categories');
+
+        if (!categoriesRef) {
+            throw new Error('Categories collection is unavailable.');
+        }
+
+        const snapshot = await categoriesRef
+            .orderBy('name', 'asc')
+            .get();
+
+        // IMPORTANT:
+        // An empty Firestore collection is a VALID result.
+        // Do NOT replace an empty collection with demo categories.
+        return mapSnapshot(snapshot);
+
     } catch (error) {
         console.error('Error getting categories:', error);
+
+        // Demo fallback only when Firebase itself is unavailable
+        // or the request genuinely fails.
         return DEMO_CATEGORIES;
     }
 }
 
-// Get category by ID
+// ===================================
+// GET CATEGORY BY ID
+// ===================================
+
 async function getCategoryById(categoryId) {
-    if (!isFirebaseConfigured) {
-        return DEMO_CATEGORIES.find(c => c.id === categoryId);
-    }
-    
-    try {
-        const doc = await db.collection('categories').doc(categoryId).get();
-        if (doc.exists) {
-            return { id: doc.id, ...doc.data() };
-        }
+    if (!categoryId) {
         return null;
+    }
+
+    try {
+        if (!isFirebaseAvailable()) {
+            return DEMO_CATEGORIES.find(
+                category => category.id === categoryId
+            ) || null;
+        }
+
+        const categoriesRef = getCollection('categories');
+
+        if (!categoriesRef) {
+            throw new Error('Categories collection is unavailable.');
+        }
+
+        const doc = await categoriesRef
+            .doc(categoryId)
+            .get();
+
+        if (doc.exists) {
+            return {
+                id: doc.id,
+                ...doc.data()
+            };
+        }
+
+        return null;
+
     } catch (error) {
         console.error('Error getting category:', error);
         return null;
     }
 }
 
-// Get settings
+// ===================================
+// GET SETTINGS
+// ===================================
+
 async function getSettings() {
-    if (!isFirebaseConfigured) {
-        return DEMO_SETTINGS;
-    }
-    
     try {
-        const doc = await db.collection('settings').doc('general').get();
-        if (doc.exists) {
-            return doc.data();
+        if (!isFirebaseAvailable()) {
+            return DEMO_SETTINGS;
         }
+
+        const settingsRef = getCollection('settings');
+
+        if (!settingsRef) {
+            throw new Error('Settings collection is unavailable.');
+        }
+
+        const doc = await settingsRef
+            .doc('general')
+            .get();
+
+        if (doc.exists) {
+            return {
+                ...DEMO_SETTINGS,
+                ...doc.data()
+            };
+        }
+
         return DEMO_SETTINGS;
+
     } catch (error) {
         console.error('Error getting settings:', error);
         return DEMO_SETTINGS;
     }
 }
 
-// Subscribe to newsletter
+// ===================================
+// SUBSCRIBE TO NEWSLETTER
+// ===================================
+
 async function subscribeNewsletter(email) {
-    if (!isFirebaseConfigured) {
-        console.log('Demo mode: Newsletter subscription simulated for', email);
-        return { success: true, message: 'Successfully subscribed!' };
+    if (!email || typeof email !== 'string') {
+        return {
+            success: false,
+            message: 'A valid email address is required.'
+        };
     }
-    
+
     try {
-        await db.collection('newsletterSubscribers').add({
-            email: email,
-            subscribedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        if (!isFirebaseAvailable()) {
+            console.log(
+                'Demo mode: Newsletter subscription simulated for',
+                email
+            );
+
+            return {
+                success: true,
+                message: 'Successfully subscribed!'
+            };
+        }
+
+        const newsletterRef = getCollection('newsletterSubscribers');
+
+        if (!newsletterRef) {
+            throw new Error(
+                'Newsletter collection is unavailable.'
+            );
+        }
+
+        const timestamp =
+            firebase.firestore.FieldValue.serverTimestamp();
+
+        await newsletterRef.add({
+            email: email.trim().toLowerCase(),
+            subscribedAt: timestamp,
             active: true
         });
-        
-        return { success: true, message: 'Successfully subscribed!' };
+
+        return {
+            success: true,
+            message: 'Successfully subscribed!'
+        };
+
     } catch (error) {
-        console.error('Error subscribing to newsletter:', error);
-        return { success: false, message: 'Subscription failed. Please try again.' };
+        console.error(
+            'Error subscribing to newsletter:',
+            error
+        );
+
+        return {
+            success: false,
+            message: getFirebaseErrorMessage(
+                error,
+                'Subscription failed. Please try again.'
+            )
+        };
     }
 }
 
 // ===================================
-// ADMIN FUNCTIONS (Protected)
+// ADMIN AUTHENTICATION CHECK
 // ===================================
 
-// Add product (Admin only)
-async function addProduct(productData) {
-    if (!isFirebaseConfigured) {
-        console.log('Demo mode: Product add simulated');
-        return { success: false, message: 'Firebase not configured' };
-    }
-    
+function getCurrentUser() {
     try {
-        const docRef = await db.collection('products').add({
+        const firebaseAuth = getAuth();
+
+        if (!firebaseAuth) {
+            return null;
+        }
+
+        return firebaseAuth.currentUser || null;
+
+    } catch (error) {
+        console.error('Error getting current Firebase user:', error);
+        return null;
+    }
+}
+
+// ===================================
+// ADMIN: ADD PRODUCT
+// ===================================
+
+async function addProduct(productData) {
+    if (!productData || typeof productData !== 'object') {
+        return {
+            success: false,
+            message: 'Invalid product data.'
+        };
+    }
+
+    try {
+        if (!isFirebaseAvailable()) {
+            console.log('Demo mode: Product add simulated.');
+
+            return {
+                success: false,
+                message: 'Firebase not configured.'
+            };
+        }
+
+        const productsRef = getCollection('products');
+
+        if (!productsRef) {
+            throw new Error(
+                'Products collection is unavailable.'
+            );
+        }
+
+        const now =
+            firebase.firestore.FieldValue.serverTimestamp();
+
+        const cleanProductData = {
             ...productData,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        return { success: true, id: docRef.id };
+            createdAt: productData.createdAt || now,
+            updatedAt: now
+        };
+
+        const docRef = await productsRef.add(cleanProductData);
+
+        return {
+            success: true,
+            id: docRef.id,
+            message: 'Product added successfully.'
+        };
+
     } catch (error) {
         console.error('Error adding product:', error);
-        return { success: false, message: error.message };
+
+        return {
+            success: false,
+            message: getFirebaseErrorMessage(
+                error,
+                'Unable to add product. Please try again.'
+            ),
+            code: error.code || null
+        };
     }
 }
 
-// Update product (Admin only)
+// ===================================
+// ADMIN: UPDATE PRODUCT
+// ===================================
+
 async function updateProduct(productId, productData) {
-    if (!isFirebaseConfigured) {
-        console.log('Demo mode: Product update simulated');
-        return { success: false, message: 'Firebase not configured' };
+    if (!productId) {
+        return {
+            success: false,
+            message: 'Product ID is required.'
+        };
     }
-    
+
+    if (!productData || typeof productData !== 'object') {
+        return {
+            success: false,
+            message: 'Invalid product data.'
+        };
+    }
+
     try {
-        await db.collection('products').doc(productId).update({
-            ...productData,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        return { success: true };
+        if (!isFirebaseAvailable()) {
+            console.log('Demo mode: Product update simulated.');
+
+            return {
+                success: false,
+                message: 'Firebase not configured.'
+            };
+        }
+
+        const productsRef = getCollection('products');
+
+        if (!productsRef) {
+            throw new Error(
+                'Products collection is unavailable.'
+            );
+        }
+
+        await productsRef
+            .doc(productId)
+            .update({
+                ...productData,
+                updatedAt:
+                    firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+        return {
+            success: true,
+            message: 'Product updated successfully.'
+        };
+
     } catch (error) {
         console.error('Error updating product:', error);
-        return { success: false, message: error.message };
+
+        return {
+            success: false,
+            message: getFirebaseErrorMessage(
+                error,
+                'Unable to update product. Please try again.'
+            ),
+            code: error.code || null
+        };
     }
 }
 
-// Delete product (Admin only)
+// ===================================
+// ADMIN: DELETE PRODUCT
+// ===================================
+
 async function deleteProduct(productId) {
-    if (!isFirebaseConfigured) {
-        console.log('Demo mode: Product delete simulated');
-        return { success: false, message: 'Firebase not configured' };
+    if (!productId) {
+        return {
+            success: false,
+            message: 'Product ID is required.'
+        };
     }
-    
+
     try {
-        await db.collection('products').doc(productId).delete();
-        return { success: true };
+        if (!isFirebaseAvailable()) {
+            console.log('Demo mode: Product delete simulated.');
+
+            return {
+                success: false,
+                message: 'Firebase not configured.'
+            };
+        }
+
+        const productsRef = getCollection('products');
+
+        if (!productsRef) {
+            throw new Error(
+                'Products collection is unavailable.'
+            );
+        }
+
+        await productsRef
+            .doc(productId)
+            .delete();
+
+        return {
+            success: true,
+            message: 'Product deleted successfully.'
+        };
+
     } catch (error) {
         console.error('Error deleting product:', error);
-        return { success: false, message: error.message };
+
+        return {
+            success: false,
+            message: getFirebaseErrorMessage(
+                error,
+                'Unable to delete product. Please try again.'
+            ),
+            code: error.code || null
+        };
     }
 }
 
-// Save settings (Admin only)
-async function saveSettings(settingsData) {
-    if (!isFirebaseConfigured) {
-        console.log('Demo mode: Settings save simulated');
-        return { success: false, message: 'Firebase not configured' };
+// ===================================
+// ADMIN: ADD CATEGORY
+// ===================================
+
+async function addCategory(categoryData) {
+    if (!categoryData || typeof categoryData !== 'object') {
+        return {
+            success: false,
+            message: 'Invalid category data.'
+        };
     }
-    
+
     try {
-        await db.collection('settings').doc('general').set(settingsData, { merge: true });
-        return { success: true };
+        if (!isFirebaseAvailable()) {
+            console.log('Demo mode: Category add simulated.');
+
+            return {
+                success: false,
+                message: 'Firebase not configured.'
+            };
+        }
+
+        const categoriesRef = getCollection('categories');
+
+        if (!categoriesRef) {
+            throw new Error(
+                'Categories collection is unavailable.'
+            );
+        }
+
+        const now =
+            firebase.firestore.FieldValue.serverTimestamp();
+
+        const finalCategoryData = {
+            ...categoryData,
+            createdAt: categoryData.createdAt || now,
+            updatedAt: now
+        };
+
+        const docRef =
+            await categoriesRef.add(finalCategoryData);
+
+        return {
+            success: true,
+            id: docRef.id,
+            message: 'Category added successfully.'
+        };
+
     } catch (error) {
-        console.error('Error saving settings:', error);
-        return { success: false, message: error.message };
+        console.error('Error adding category:', error);
+
+        return {
+            success: false,
+            message: getFirebaseErrorMessage(
+                error,
+                'Unable to add category. Please try again.'
+            ),
+            code: error.code || null
+        };
     }
 }
+
+// ===================================
+// ADMIN: UPDATE CATEGORY
+// ===================================
+
+async function updateCategory(categoryId, categoryData) {
+    if (!categoryId) {
+        return {
+            success: false,
+            message: 'Category ID is required.'
+        };
+    }
+
+    if (!categoryData || typeof categoryData !== 'object') {
+        return {
+            success: false,
+            message: 'Invalid category data.'
+        };
+    }
+
+    try {
+        if (!isFirebaseAvailable()) {
+            console.log('Demo mode: Category update simulated.');
+
+            return {
+                success: false,
+                message: 'Firebase not configured.'
+            };
+        }
+
+        const categoriesRef = getCollection('categories');
+
+        if (!categoriesRef) {
+            throw new Error(
+                'Categories collection is unavailable.'
+            );
+        }
+
+        await categoriesRef
+            .doc(categoryId)
+            .update({
+                ...categoryData,
+                updatedAt:
+                    firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+        return {
+            success: true,
+            message: 'Category updated successfully.'
+        };
+
+    } catch (error) {
+        console.error('Error updating category:', error);
+
+        return {
+            success: false,
+            message: getFirebaseErrorMessage(
+                error,
+                'Unable to update category. Please try again.'
+            ),
+            code: error.code || null
+        };
+    }
+}
+
+// ===================================
+// ADMIN: DELETE CATEGORY
+// ===================================
+
+async function deleteCategory(categoryId) {
+    if (!categoryId) {
+        return {
+            success: false,
+            message: 'Category ID is required.'
+        };
+    }
+
+    try {
+        if (!isFirebaseAvailable()) {
+            console.log('Demo mode: Category delete simulated.');
+
+            return {
+                success: false,
+                message: 'Firebase not configured.'
+            };
+        }
+
+        const categoriesRef = getCollection('categories');
+
+        if (!categoriesRef) {
+            throw new Error(
+                'Categories collection is unavailable.'
+            );
+        }
+
+        await categoriesRef
+            .doc(categoryId)
+            .delete();
+
+        return {
+            success: true,
+            message: 'Category deleted successfully.'
+        };
+
+    } catch (error) {
+        console.error('Error deleting category:', error);
+
+        return {
+            success: false,
+            message: getFirebaseErrorMessage(
+                error,
+                'Unable to delete category. Please try again.'
+            ),
+            code: error.code || null
+        };
+    }
+}
+
+// ===================================
+// ADMIN: SAVE SETTINGS
+// ===================================
+
+async function saveSettings(settingsData) {
+    if (!settingsData || typeof settingsData !== 'object') {
+        return {
+            success: false,
+            message: 'Invalid settings data.'
+        };
+    }
+
+    try {
+        if (!isFirebaseAvailable()) {
+            console.log('Demo mode: Settings save simulated.');
+
+            return {
+                success: false,
+                message: 'Firebase not configured.'
+            };
+        }
+
+        const settingsRef = getCollection('settings');
+
+        if (!settingsRef) {
+            throw new Error(
+                'Settings collection is unavailable.'
+            );
+        }
+
+        await settingsRef
+            .doc('general')
+            .set(settingsData, {
+                merge: true
+            });
+
+        return {
+            success: true,
+            message: 'Settings saved successfully.'
+        };
+
+    } catch (error) {
+        console.error('Error saving settings:', error);
+
+        return {
+            success: false,
+            message: getFirebaseErrorMessage(
+                error,
+                'Unable to save settings. Please try again.'
+            ),
+            code: error.code || null
+        };
+    }
+}
+
+// ===================================
+// SAFE BATCH HELPER
+// ===================================
+
+function createFirestoreBatch() {
+    try {
+        const database = getFirestore();
+
+        if (!database || typeof database.batch !== 'function') {
+            return null;
+        }
+
+        return database.batch();
+
+    } catch (error) {
+        console.error('Error creating Firestore batch:', error);
+        return null;
+    }
+}
+
+// ===================================
+// CATEGORY PRODUCT COUNTS
+// ===================================
+
+async function updateCategoryProductCounts() {
+    try {
+        if (!isFirebaseAvailable()) {
+            console.warn(
+                'Cannot update category product counts: Firebase unavailable.'
+            );
+            return false;
+        }
+
+        const categoriesRef = getCollection('categories');
+        const productsRef = getCollection('products');
+
+        if (!categoriesRef || !productsRef) {
+            throw new Error(
+                'Categories or products collection is unavailable.'
+            );
+        }
+
+        const [
+            categoriesSnapshot,
+            productsSnapshot
+        ] = await Promise.all([
+            categoriesRef.get(),
+            productsRef.get()
+        ]);
+
+        const productCounts = {};
+
+        productsSnapshot.forEach(doc => {
+            const product = doc.data() || {};
+            const category = product.category;
+
+            if (category) {
+                productCounts[category] =
+                    (productCounts[category] || 0) + 1;
+            }
+        });
+
+        const batch = createFirestoreBatch();
+
+        if (!batch) {
+            throw new Error(
+                'Unable to create Firestore batch.'
+            );
+        }
+
+        categoriesSnapshot.forEach(doc => {
+            const categoryData = doc.data() || {};
+            const categorySlug = categoryData.slug || '';
+            const count = productCounts[categorySlug] || 0;
+
+            batch.update(doc.ref, {
+                productCount: count,
+                updatedAt:
+                    firebase.firestore.FieldValue.serverTimestamp()
+            });
+        });
+
+        // No documents = nothing to commit.
+        if (categoriesSnapshot.empty) {
+            return true;
+        }
+
+        await batch.commit();
+
+        console.log(
+            'Category product counts updated successfully.'
+        );
+
+        return true;
+
+    } catch (error) {
+        console.error(
+            'Error updating category product counts:',
+            error
+        );
+
+        return false;
+    }
+}
+
+// ===================================
+// FIRESTORE CONNECTION TEST
+// ===================================
+
+async function testFirebaseConnection() {
+    try {
+        if (!isFirebaseAvailable()) {
+            return {
+                success: false,
+                connected: false,
+                message: 'Firebase is not initialized.'
+            };
+        }
+
+        const categoriesRef = getCollection('categories');
+
+        if (!categoriesRef) {
+            return {
+                success: false,
+                connected: false,
+                message: 'Categories collection is unavailable.'
+            };
+        }
+
+        await categoriesRef.limit(1).get();
+
+        return {
+            success: true,
+            connected: true,
+            message: 'Firebase Firestore connection is working.'
+        };
+
+    } catch (error) {
+        console.error(
+            'Firebase connection test failed:',
+            error
+        );
+
+        return {
+            success: false,
+            connected: false,
+            code: error.code || null,
+            message: getFirebaseErrorMessage(
+                error,
+                'Unable to connect to Firebase Firestore.'
+            )
+        };
+    }
+}
+
+// ===================================
+// FIREBASE STATUS
+// ===================================
+
+function getFirebaseStatus() {
+    return {
+        configured: isFirebaseConfigured,
+        ready: firebaseReady,
+        available: isFirebaseAvailable(),
+        hasApp: Boolean(app),
+        hasAuth: Boolean(auth),
+        hasFirestore: Boolean(db),
+        hasStorage: Boolean(storage),
+        initializationError: firebaseInitializationError
+            ? firebaseInitializationError.message
+            : null
+    };
+}
+
+// ===================================
+// GLOBAL EXPORTS
+// ===================================
+// IMPORTANT:
+// These exports make the Firebase layer accessible to
+// categories.js, products.js, admin.js, UI.js and other
+// scripts without depending on fragile local-scope behavior.
+
+if (typeof window !== 'undefined') {
+
+    // Firebase references
+    window.firebaseApp = app;
+    window.app = app;
+    window.auth = auth;
+    window.db = db;
+    window.storage = storage;
+
+    // Firebase state
+    window.isFirebaseConfigured = isFirebaseConfigured;
+    window.firebaseReady = firebaseReady;
+
+    // Firebase helpers
+    window.isFirebaseAvailable = isFirebaseAvailable;
+    window.waitForFirebaseReady = waitForFirebaseReady;
+    window.getFirestore = getFirestore;
+    window.getAuth = getAuth;
+    window.getStorage = getStorage;
+    window.getCollection = getCollection;
+    window.getCurrentUser = getCurrentUser;
+    window.getFirebaseStatus = getFirebaseStatus;
+    window.testFirebaseConnection = testFirebaseConnection;
+    window.getFirebaseErrorMessage = getFirebaseErrorMessage;
+
+    // Product functions
+    window.getProducts = getProducts;
+    window.getProductById = getProductById;
+    window.getProductsByCategory = getProductsByCategory;
+    window.getTrendingProducts = getTrendingProducts;
+    window.getFeaturedProducts = getFeaturedProducts;
+    window.getNewArrivalProducts = getNewArrivalProducts;
+    window.searchProducts = searchProducts;
+
+    // Category functions
+    window.getCategories = getCategories;
+    window.getCategoryById = getCategoryById;
+    window.addCategory = addCategory;
+    window.updateCategory = updateCategory;
+    window.deleteCategory = deleteCategory;
+    window.updateCategoryProductCounts =
+        updateCategoryProductCounts;
+
+    // Settings / newsletter
+    window.getSettings = getSettings;
+    window.saveSettings = saveSettings;
+    window.subscribeNewsletter = subscribeNewsletter;
+
+    // Product admin functions
+    window.addProduct = addProduct;
+    window.updateProduct = updateProduct;
+    window.deleteProduct = deleteProduct;
+
+    // Demo data
+    window.DEMO_CATEGORIES = DEMO_CATEGORIES;
+    window.DEMO_PRODUCTS = DEMO_PRODUCTS;
+    window.DEMO_SETTINGS = DEMO_SETTINGS;
+}
+
+// ===================================
+// FIREBASE AUTH STATE MONITOR
+// ===================================
+
+try {
+    const firebaseAuth = getAuth();
+
+    if (
+        firebaseAuth &&
+        typeof firebaseAuth.onAuthStateChanged === 'function'
+    ) {
+        firebaseAuth.onAuthStateChanged(user => {
+
+            if (typeof window !== 'undefined') {
+                window.currentFirebaseUser = user || null;
+                window.isFirebaseAuthenticated = Boolean(user);
+            }
+
+            if (user) {
+                console.log(
+                    'Firebase authentication state: signed in.',
+                    user.email || ''
+                );
+            } else {
+                console.log(
+                    'Firebase authentication state: signed out.'
+                );
+            }
+        });
+    }
+} catch (error) {
+    console.warn(
+        'Firebase Auth state listener could not be initialized:',
+        error
+    );
+}
+
+// ===================================
+// FINAL GLOBAL STATE SYNCHRONIZATION
+// ===================================
+
+if (typeof window !== 'undefined') {
+    window.firebaseStatus = getFirebaseStatus();
+}
+
+console.log(
+    'Firebase.js loaded.',
+    getFirebaseStatus()
+);
