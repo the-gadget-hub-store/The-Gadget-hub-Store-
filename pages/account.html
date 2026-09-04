@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  
+  <!-- SEO Meta Tags -->
+  <title>My Account - The Gadget Hub Store</title>
+  <meta name="description" content="Manage your account, sign in, or create a new account.">
+  <meta name="robots" content="noindex, nofollow">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/assets/icons/favicon.png">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       NAVIGATION
+       ============================================================ -->
+  <nav class="navbar">
+    <div class="container navbar-container">
+      <a href="/" class="navbar-brand">
+        <span>THE GADGET HUB STORE</span>
+      </a>
+
+      <ul class="navbar-nav hide-mobile">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/pages/shop.html" class="nav-link">Shop</a></li>
+        <li><a href="/pages/categories.html" class="nav-link">Categories</a></li>
+        <li><a href="/pages/trending.html" class="nav-link">Trending</a></li>
+        <li><a href="/pages/deals.html" class="nav-link">Deals</a></li>
+      </ul>
+
+      <div class="navbar-actions">
+        <div class="currency-selector-wrapper hide-mobile">
+          <select data-currency-selector class="currency-selector" aria-label="Select currency">
+            <option value="USD">USD</option>
+          </select>
+        </div>
+        <button class="btn-icon hide-mobile" aria-label="Search" data-search-toggle>
+          <span>🔍</span>
+        </button>
+        <button class="btn-icon" aria-label="Favorites" data-favorites-button>
+          <span>❤️</span>
+          <span class="badge badge-primary" data-favorites-count style="display: none;">0</span>
+        </button>
+        <button class="btn-icon" aria-label="Account" data-auth-button>
+          <span>👤</span>
+        </button>
+        <button class="btn-icon" aria-label="Toggle theme" data-theme-toggle>
+          <span data-theme-icon>🌙</span>
+        </button>
+        <button class="btn-icon mobile-menu-toggle show-mobile" aria-label="Menu">
+          <span>☰</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <span class="navbar-brand">THE GADGET HUB STORE</span>
+      <button class="btn-icon mobile-menu-close" aria-label="Close menu">
+        <span>✕</span>
+      </button>
+    </div>
+    <nav class="mobile-menu-nav">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/pages/shop.html" class="nav-link">Shop</a>
+      <a href="/pages/categories.html" class="nav-link">Categories</a>
+      <a href="/pages/trending.html" class="nav-link">Trending</a>
+      <a href="/pages/deals.html" class="nav-link">Deals</a>
+      <a href="/pages/favorites.html" class="nav-link">Favorites</a>
+      <a href="/pages/account.html" class="nav-link">Account</a>
+      
+      <div class="mobile-menu-section">
+        <label for="mobile-currency-selector" class="form-label">Currency</label>
+        <select id="mobile-currency-selector" data-currency-selector class="currency-selector">
+          <option value="USD">USD</option>
+        </select>
+      </div>
+    </nav>
+  </div>
+
+  <div class="mobile-menu-backdrop"></div>
+
+  <!-- ============================================================
+       ACCOUNT PAGE CONTENT
+       ============================================================ -->
+  <div class="container" style="margin-top: 6rem; margin-bottom: 4rem;">
+
+    <!-- Account Container -->
+    <div id="account-container">
+      <!-- Loading State -->
+      <div class="loading-container">
+        <div class="spinner loading-spinner"></div>
+        <p class="loading-message">Loading...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3 class="footer-section-title">THE GADGET HUB STORE</h3>
+          <p class="text-secondary">Discover the latest tech gadgets and innovative products from around the world.</p>
+        </div>
+
+        <div class="footer-section">
+          <h4 class="footer-section-title">Explore</h4>
+          <ul class="footer-links">
+            <li><a href="/" class="footer-link">Home</a></li>
+            <li><a href="/pages/shop.html" class="footer-link">Shop</a></li>
+            <li><a href="/pages/trending.html" class="footer-link">Trending</a></li>
+            <li><a href="/pages/deals.html" class="footer-link">Deals</a></li>
+            <li><a href="/pages/categories.html" class="footer-link">Categories</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4 class="footer-section-title">Customer</h4>
+          <ul class="footer-links">
+            <li><a href="/pages/account.html" class="footer-link">Account</a></li>
+            <li><a href="/pages/favorites.html" class="footer-link">Favorites</a></li>
+            <li><a href="#" class="footer-link">Contact</a></li>
+            <li><a href="#" class="footer-link">Privacy Policy</a></li>
+            <li><a href="#" class="footer-link">Terms of Service</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4 class="footer-section-title">Follow</h4>
+          <ul class="footer-links">
+            <li><a href="#" class="footer-link" target="_blank" rel="noopener noreferrer">Facebook</a></li>
+            <li><a href="#" class="footer-link" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+            <li><a href="#" class="footer-link" target="_blank" rel="noopener noreferrer">YouTube</a></li>
+            <li><a href="#" class="footer-link" target="_blank" rel="noopener noreferrer">TikTok</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copyright">© 2026 The Gadget Hub Store. All rights reserved.</p>
+        <p class="text-sm text-muted mt-2">
+          This website contains affiliate links. We may earn a commission when you make a purchase through our links at no additional cost to you.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <button class="btn btn-primary btn-icon" data-scroll-top aria-label="Scroll to top" style="position: fixed; bottom: 2rem; right: 2rem; z-index: 100; display: none;">
+    <span>↑</span>
+  </button>
+
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
+  <script type="module" src="/js/firebase.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/products.js"></script>
+  <script type="module" src="/js/categories.js"></script>
+  <script type="module" src="/js/favorites.js"></script>
+  <script type="module" src="/js/search.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module" src="/js/currency.js"></script>
+  <script type="module" src="/js/advertising.js"></script>
+  <script type="module" src="/js/app.js"></script>
+
+  <!-- Account Page Script -->
+  <script type="module">
+    import { 
+      isAuthenticated, 
+      waitForAuth, 
+      onAuthChange, 
+      signIn, 
+      signUp, 
+      signInWithGoogle,
+      signOutUser,
+      resetPassword,
+      getUserDisplayName,
+      getUserEmail,
+      validateSignInForm,
+      validateSignUpForm,
+      validateEmail
+    } from '/js/auth.js';
+    import { getFavoritesCount, syncTempFavorites } from '/js/favorites.js';
+    import { showSuccess, showError, showWarning, setButtonLoading } from '/js/ui.js';
+
+    let currentView = 'signin'; // signin, signup, account
+
+    // Initialize Account Page
+    async function initAccountPage() {
+      // Wait for auth to be ready
+      await waitForAuth();
+
+      // Check authentication state
+      if (isAuthenticated()) {
+        showAccountView();
+      } else {
+        showAuthView();
+      }
+
+      // Listen to auth changes
+      onAuthChange((user) => {
+        if (user) {
+          showAccountView();
+          // Sync temporary favorites
+          syncTempFavorites();
+        } else {
+          showAuthView();
+        }
+      });
+    }
+
+    // Show Authentication View (Sign In / Sign Up)
+    function showAuthView() {
+      const container = document.getElementById('account-container');
+
+      container.innerHTML = `
+        <div style="max-width: 500px; margin: 0 auto;">
+          <!-- Auth Tabs -->
+          <div class="flex gap-4 mb-8 justify-center">
+            <button id="tab-signin" class="btn ${currentView === 'signin' ? 'btn-primary' : 'btn-ghost'}">
+              Sign In
+            </button>
+            <button id="tab-signup" class="btn ${currentView === 'signup' ? 'btn-primary' : 'btn-ghost'}">
+              Sign Up
+            </button>
+          </div>
+
+          <!-- Sign In Form -->
+          <div id="signin-form" class="card p-8" style="display: ${currentView === 'signin' ? 'block' : 'none'};">
+            <h2 class="mb-6 text-center">Welcome Back</h2>
+            
+            <form id="form-signin">
+              <div class="form-group">
+                <label for="signin-email" class="form-label">Email</label>
+                <input type="email" id="signin-email" class="form-input" required autocomplete="email">
+              </div>
+
+              <div class="form-group">
+                <label for="signin-password" class="form-label">Password</label>
+                <input type="password" id="signin-password" class="form-input" required autocomplete="current-password">
+              </div>
+
+              <button type="submit" class="btn btn-primary w-full mb-4">
+                Sign In
+              </button>
+            </form>
+
+            <button id="google-signin-btn" class="btn btn-secondary w-full mb-4">
+              <span style="margin-right: 8px;">🔐</span> Sign In with Google
+            </button>
+
+            <div class="text-center">
+              <button id="forgot-password-btn" class="btn btn-ghost btn-sm">
+                Forgot Password?
+              </button>
+            </div>
+          </div>
+
+          <!-- Sign Up Form -->
+          <div id="signup-form" class="card p-8" style="display: ${currentView === 'signup' ? 'block' : 'none'};">
+            <h2 class="mb-6 text-center">Create Account</h2>
+            
+            <form id="form-signup">
+              <div class="form-group">
+                <label for="signup-name" class="form-label">Display Name</label>
+                <input type="text" id="signup-name" class="form-input" autocomplete="name">
+              </div>
+
+              <div class="form-group">
+                <label for="signup-email" class="form-label">Email</label>
+                <input type="email" id="signup-email" class="form-input" required autocomplete="email">
+              </div>
+
+              <div class="form-group">
+                <label for="signup-password" class="form-label">Password</label>
+                <input type="password" id="signup-password" class="form-input" required autocomplete="new-password">
+                <p class="form-hint">At least 6 characters</p>
+              </div>
+
+              <div class="form-group">
+                <label for="signup-confirm-password" class="form-label">Confirm Password</label>
+                <input type="password" id="signup-confirm-password" class="form-input" required autocomplete="new-password">
+              </div>
+
+              <button type="submit" class="btn btn-primary w-full mb-4">
+                Create Account
+              </button>
+            </form>
+
+            <button id="google-signup-btn" class="btn btn-secondary w-full">
+              <span style="margin-right: 8px;">🔐</span> Sign Up with Google
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Setup event listeners
+      setupAuthEventListeners();
+    }
+
+    // Show Account View (Logged In)
+    function showAccountView() {
+      const container = document.getElementById('account-container');
+      const displayName = getUserDisplayName();
+      const email = getUserEmail();
+      const favoritesCount = getFavoritesCount();
+
+      container.innerHTML = `
+        <div style="max-width: 800px; margin: 0 auto;">
+          <!-- Account Header -->
+          <div class="card p-8 mb-6 text-center">
+            <div class="mb-4" style="font-size: 4rem;">👤</div>
+            <h1 class="mb-2">${displayName}</h1>
+            <p class="text-muted">${email}</p>
+          </div>
+
+          <!-- Account Stats -->
+          <div class="grid grid-cols-1 grid-cols-2 gap-6 mb-6">
+            <div class="card p-6 text-center">
+              <div class="text-4xl font-bold mb-2">${favoritesCount}</div>
+              <p class="text-muted">Favorite Products</p>
+              <a href="/pages/favorites.html" class="btn btn-secondary btn-sm mt-4">
+                View Favorites
+              </a>
+            </div>
+
+            <div class="card p-6 text-center">
+              <div class="text-4xl mb-2">🛍️</div>
+              <p class="text-muted">Start Shopping</p>
+              <a href="/pages/shop.html" class="btn btn-secondary btn-sm mt-4">
+                Browse Products
+              </a>
+            </div>
+          </div>
+
+          <!-- Quick Links -->
+          <div class="card p-8">
+            <h3 class="mb-6">Quick Links</h3>
+            <div class="flex flex-col gap-3">
+              <a href="/pages/favorites.html" class="btn btn-outline w-full justify-start">
+                <span style="margin-right: 8px;">❤️</span> My Favorites
+              </a>
+              <a href="/pages/shop.html" class="btn btn-outline w-full justify-start">
+                <span style="margin-right: 8px;">🛍️</span> Browse Products
+              </a>
+              <a href="/pages/trending.html" class="btn btn-outline w-full justify-start">
+                <span style="margin-right: 8px;">🔥</span> Trending Products
+              </a>
+              <a href="/pages/deals.html" class="btn btn-outline w-full justify-start">
+                <span style="margin-right: 8px;">💰</span> Special Deals
+              </a>
+            </div>
+          </div>
+
+          <!-- Sign Out -->
+          <div class="text-center mt-8">
+            <button id="signout-btn" class="btn btn-ghost">
+              Sign Out
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Setup sign out
+      const signOutBtn = document.getElementById('signout-btn');
+      signOutBtn.addEventListener('click', handleSignOut);
+    }
+
+    // Setup Auth Event Listeners
+    function setupAuthEventListeners() {
+      // Tab switching
+      document.getElementById('tab-signin')?.addEventListener('click', () => {
+        currentView = 'signin';
+        showAuthView();
+      });
+
+      document.getElementById('tab-signup')?.addEventListener('click', () => {
+        currentView = 'signup';
+        showAuthView();
+      });
+
+      // Sign In Form
+      const signinForm = document.getElementById('form-signin');
+      signinForm?.addEventListener('submit', handleSignIn);
+
+      // Sign Up Form
+      const signupForm = document.getElementById('form-signup');
+      signupForm?.addEventListener('submit', handleSignUp);
+
+      // Google Sign In
+      document.getElementById('google-signin-btn')?.addEventListener('click', handleGoogleSignIn);
+      document.getElementById('google-signup-btn')?.addEventListener('click', handleGoogleSignIn);
+
+      // Forgot Password
+      document.getElementById('forgot-password-btn')?.addEventListener('click', handleForgotPassword);
+    }
+
+    // Handle Sign In
+    async function handleSignIn(e) {
+      e.preventDefault();
+
+      const email = document.getElementById('signin-email').value.trim();
+      const password = document.getElementById('signin-password').value;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      // Validate
+      const validation = validateSignInForm(email, password);
+      if (!validation.valid) {
+        showError(validation.errors[0]);
+        return;
+      }
+
+      // Set loading state
+      setButtonLoading(submitBtn, true, 'Signing In...');
+
+      try {
+        const result = await signIn(email, password);
+
+        if (result.success) {
+          showSuccess('Signed in successfully!');
+          // View will update automatically via onAuthChange
+        } else {
+          showError(result.error);
+        }
+      } catch (error) {
+        console.error('Sign in error:', error);
+        showError('An error occurred. Please try again.');
+      } finally {
+        setButtonLoading(submitBtn, false);
+      }
+    }
+
+    // Handle Sign Up
+    async function handleSignUp(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      const confirmPassword = document.getElementById('signup-confirm-password').value;
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+
+      // Validate
+      const validation = validateSignUpForm(email, password, confirmPassword);
+      if (!validation.valid) {
+        showError(validation.errors[0]);
+        return;
+      }
+
+      // Set loading state
+      setButtonLoading(submitBtn, true, 'Creating Account...');
+
+      try {
+        const result = await signUp(email, password, name);
+
+        if (result.success) {
+          showSuccess('Account created successfully!');
+          // View will update automatically via onAuthChange
+        } else {
+          showError(result.error);
+        }
+      } catch (error) {
+        console.error('Sign up error:', error);
+        showError('An error occurred. Please try again.');
+      } finally {
+        setButtonLoading(submitBtn, false);
+      }
+    }
+
+    // Handle Google Sign In
+    async function handleGoogleSignIn(e) {
+      const button = e.currentTarget;
+      setButtonLoading(button, true, 'Signing In...');
+
+      try {
+        const result = await signInWithGoogle();
+
+        if (result.success) {
+          showSuccess('Signed in successfully!');
+          // View will update automatically via onAuthChange
+        } else {
+          showError(result.error);
+        }
+      } catch (error) {
+        console.error('Google sign in error:', error);
+        showError('An error occurred. Please try again.');
+      } finally {
+        setButtonLoading(button, false);
+      }
+    }
+
+    // Handle Forgot Password
+    async function handleForgotPassword() {
+      const email = document.getElementById('signin-email')?.value.trim();
+
+      if (!email) {
+        showWarning('Please enter your email address');
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        showError('Please enter a valid email address');
+        return;
+      }
+
+      try {
+        const result = await resetPassword(email);
+
+        if (result.success) {
+          showSuccess(result.message);
+        } else {
+          showError(result.error);
+        }
+      } catch (error) {
+        console.error('Password reset error:', error);
+        showError('Failed to send password reset email');
+      }
+    }
+
+    // Handle Sign Out
+    async function handleSignOut() {
+      if (!confirm('Are you sure you want to sign out?')) {
+        return;
+      }
+
+      try {
+        const result = await signOutUser();
+
+        if (result.success) {
+          showSuccess('Signed out successfully');
+          // View will update automatically via onAuthChange
+        } else {
+          showError(result.error);
+        }
+      } catch (error) {
+        console.error('Sign out error:', error);
+        showError('Failed to sign out');
+      }
+    }
+
+    // Initialize
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAccountPage);
+    } else {
+      initAccountPage();
+    }
+  </script>
+
+</body>
+</html>
