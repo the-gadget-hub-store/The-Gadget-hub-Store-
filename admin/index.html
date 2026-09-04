@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  
+  <!-- SEO Meta Tags -->
+  <title>Admin Dashboard - The Gadget Hub Store</title>
+  <meta name="description" content="Admin dashboard for managing The Gadget Hub Store.">
+  <meta name="robots" content="noindex, nofollow">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/assets/icons/favicon.png">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       ADMIN NAVIGATION
+       ============================================================ -->
+  <nav class="navbar">
+    <div class="container navbar-container">
+      <a href="/" class="navbar-brand">
+        <span>THE GADGET HUB STORE</span>
+      </a>
+
+      <div class="navbar-actions">
+        <span class="badge badge-warning hide-mobile">Admin Mode</span>
+        <button class="btn-icon" aria-label="Toggle theme" data-theme-toggle>
+          <span data-theme-icon>🌙</span>
+        </button>
+        <button class="btn-icon admin-mobile-toggle show-mobile" aria-label="Menu">
+          <span>☰</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================================================
+       ADMIN LAYOUT
+       ============================================================ -->
+  <div class="admin-layout">
+    
+    <!-- Admin Sidebar -->
+    <aside class="admin-sidebar glass">
+      <div class="admin-sidebar-header p-4 border-b show-mobile" style="border-color: var(--border-primary);">
+        <h3>Admin Panel</h3>
+        <button class="btn-icon admin-sidebar-close" aria-label="Close menu">
+          <span>✕</span>
+        </button>
+      </div>
+
+      <nav class="admin-nav p-4">
+        <h4 class="text-xs uppercase text-muted mb-3">Dashboard</h4>
+        <a href="/admin/index.html" class="admin-nav-link active">
+          <span>📊</span> Dashboard
+        </a>
+
+        <h4 class="text-xs uppercase text-muted mb-3 mt-6">Content</h4>
+        <a href="/admin/products.html" class="admin-nav-link">
+          <span>📦</span> Products
+        </a>
+        <a href="/admin/categories.html" class="admin-nav-link">
+          <span>📂</span> Categories
+        </a>
+
+        <h4 class="text-xs uppercase text-muted mb-3 mt-6">Configuration</h4>
+        <a href="/admin/settings.html" class="admin-nav-link">
+          <span>⚙️</span> Settings
+        </a>
+
+        <h4 class="text-xs uppercase text-muted mb-3 mt-6">Website</h4>
+        <a href="/" class="admin-nav-link" target="_blank">
+          <span>🌐</span> View Website
+        </a>
+
+        <div class="mt-8 pt-4 border-t" style="border-color: var(--border-primary);">
+          <button id="admin-signout" class="btn btn-ghost w-full">
+            Sign Out
+          </button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Admin Sidebar Backdrop (Mobile) -->
+    <div class="admin-sidebar-backdrop show-mobile"></div>
+
+    <!-- Admin Main Content -->
+    <main class="admin-main">
+      <div class="container" style="max-width: 1400px; padding: 2rem;">
+        
+        <!-- Admin Auth Check -->
+        <div id="admin-auth-check">
+          <div class="loading-container">
+            <div class="spinner loading-spinner"></div>
+            <p class="loading-message">Checking authorization...</p>
+          </div>
+        </div>
+
+        <!-- Admin Content (shown after auth) -->
+        <div id="admin-content" style="display: none;">
+          
+          <!-- Dashboard Header -->
+          <div class="mb-8">
+            <h1 class="mb-2">Dashboard</h1>
+            <p class="text-muted">Overview of your store statistics and quick actions</p>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 grid-cols-2 grid-cols-lg-3 grid-cols-4 stats-grid gap-6 mb-8">
+            <div class="card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="text-3xl">📦</div>
+                <span class="badge badge-primary">Total</span>
+              </div>
+              <div class="text-3xl font-bold mb-1" id="stat-products">0</div>
+              <p class="text-muted text-sm">Products</p>
+            </div>
+
+            <div class="card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="text-3xl">📂</div>
+                <span class="badge badge-info">Active</span>
+              </div>
+              <div class="text-3xl font-bold mb-1" id="stat-categories">0</div>
+              <p class="text-muted text-sm">Categories</p>
+            </div>
+
+            <div class="card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="text-3xl">🔥</div>
+                <span class="badge badge-warning">Featured</span>
+              </div>
+              <div class="text-3xl font-bold mb-1" id="stat-trending">0</div>
+              <p class="text-muted text-sm">Trending</p>
+            </div>
+
+            <div class="card p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="text-3xl">💰</div>
+                <span class="badge badge-success">Active</span>
+              </div>
+              <div class="text-3xl font-bold mb-1" id="stat-deals">0</div>
+              <p class="text-muted text-sm">Deals</p>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="card p-6 mb-8">
+            <h2 class="mb-6">Quick Actions</h2>
+            <div class="grid grid-cols-1 grid-cols-2 grid-cols-lg-3 gap-4">
+              <a href="/admin/products.html?action=new" class="btn btn-primary">
+                <span style="margin-right: 8px;">➕</span> Add New Product
+              </a>
+              <a href="/admin/categories.html?action=new" class="btn btn-secondary">
+                <span style="margin-right: 8px;">➕</span> Add New Category
+              </a>
+              <a href="/admin/settings.html" class="btn btn-outline">
+                <span style="margin-right: 8px;">⚙️</span> Configure Settings
+              </a>
+            </div>
+          </div>
+
+          <!-- Recent Products -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2>Recent Products</h2>
+              <a href="/admin/products.html" class="btn btn-ghost btn-sm">View All</a>
+            </div>
+            <div id="recent-products">
+              <div class="loading-container">
+                <div class="spinner loading-spinner"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
+  <script type="module" src="/js/firebase.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/products.js"></script>
+  <script type="module" src="/js/categories.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module" src="/js/app.js"></script>
+
+  <!-- Admin Dashboard Script -->
+  <script type="module">
+    import { isAdmin, waitForAuth, signOutUser, isAuthenticated } from '/js/auth.js';
+    import { getProducts, getDealProducts } from '/js/products.js';
+    import { getCategories } from '/js/categories.js';
+    import { showError, showSuccess } from '/js/ui.js';
+
+    // Initialize Admin Dashboard
+    async function initAdminDashboard() {
+      try {
+        // Wait for auth
+        await waitForAuth();
+
+        // Check if user is authenticated
+        if (!isAuthenticated()) {
+          showUnauthorized('Please sign in to access the admin panel.');
+          return;
+        }
+
+        // Check if user is admin
+        const adminStatus = await isAdmin();
+        
+        if (!adminStatus) {
+          showUnauthorized('You do not have permission to access the admin panel.');
+          return;
+        }
+
+        // User is authorized - show admin content
+        showAdminContent();
+
+        // Load dashboard data
+        await loadDashboardStats();
+        await loadRecentProducts();
+
+        // Setup event listeners
+        setupEventListeners();
+
+      } catch (error) {
+        console.error('Admin dashboard initialization error:', error);
+        showError('Failed to initialize admin dashboard');
+      }
+    }
+
+    // Show Unauthorized
+    function showUnauthorized(message) {
+      const authCheck = document.getElementById('admin-auth-check');
+      authCheck.innerHTML = `
+        <div class="error-state">
+          <div class="error-state-icon">🔒</div>
+          <h2 class="mb-4">Access Denied</h2>
+          <p class="error-state-message mb-6">${message}</p>
+          <div class="flex gap-4 justify-center">
+            <a href="/pages/account.html" class="btn btn-primary">Sign In</a>
+            <a href="/" class="btn btn-secondary">Go Home</a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Show Admin Content
+    function showAdminContent() {
+      document.getElementById('admin-auth-check').style.display = 'none';
+      document.getElementById('admin-content').style.display = 'block';
+    }
+
+    // Load Dashboard Stats
+    async function loadDashboardStats() {
+      try {
+        // Load all data
+        const [products, categories, deals] = await Promise.all([
+          getProducts(),
+          getCategories(),
+          getDealProducts(100)
+        ]);
+
+        // Update stats
+        document.getElementById('stat-products').textContent = products.length;
+        document.getElementById('stat-categories').textContent = categories.length;
+        
+        const trendingCount = products.filter(p => p.trending).length;
+        document.getElementById('stat-trending').textContent = trendingCount;
+        
+        document.getElementById('stat-deals').textContent = deals.length;
+
+      } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+        showError('Failed to load dashboard statistics');
+      }
+    }
+
+    // Load Recent Products
+    async function loadRecentProducts() {
+      try {
+        const container = document.getElementById('recent-products');
+        const products = await getProducts({ limit: 5, sortBy: 'createdAt', sortDirection: 'desc' });
+
+        if (products.length === 0) {
+          container.innerHTML = '<p class="text-muted text-center">No products found</p>';
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${products.map(product => `
+                  <tr>
+                    <td>
+                      <div class="flex items-center gap-3">
+                        <img src="${product.thumbnail || '/assets/images/placeholder-product.jpg'}" alt="${product.title}" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-md);">
+                        <div>
+                          <div class="font-medium">${product.title}</div>
+                          <div class="text-sm text-muted">ID: ${product.id}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>${product.category || 'Uncategorized'}</td>
+                    <td>${product.baseCurrency || 'USD'} ${product.basePrice || product.price || 0}</td>
+                    <td>
+                      ${product.featured ? '<span class="badge badge-primary">Featured</span>' : ''}
+                      ${product.trending ? '<span class="badge badge-warning">Trending</span>' : ''}
+                    </td>
+                    <td>
+                      <a href="/admin/products.html?id=${product.id}" class="btn btn-ghost btn-sm">Edit</a>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+      } catch (error) {
+        console.error('Error loading recent products:', error);
+        const container = document.getElementById('recent-products');
+        container.innerHTML = '<p class="text-error text-center">Failed to load products</p>';
+      }
+    }
+
+    // Setup Event Listeners
+    function setupEventListeners() {
+      // Sign out
+      const signOutBtn = document.getElementById('admin-signout');
+      signOutBtn?.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to sign out?')) {
+          return;
+        }
+
+        const result = await signOutUser();
+        if (result.success) {
+          showSuccess('Signed out successfully');
+          window.location.href = '/pages/account.html';
+        } else {
+          showError(result.error);
+        }
+      });
+
+      // Mobile sidebar toggle
+      const sidebarToggle = document.querySelector('.admin-mobile-toggle');
+      const sidebar = document.querySelector('.admin-sidebar');
+      const sidebarClose = document.querySelector('.admin-sidebar-close');
+      const backdrop = document.querySelector('.admin-sidebar-backdrop');
+
+      if (sidebarToggle && sidebar) {
+        sidebarToggle.addEventListener('click', () => {
+          sidebar.classList.add('active');
+          backdrop?.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        });
+
+        const closeSidebar = () => {
+          sidebar.classList.remove('active');
+          backdrop?.classList.remove('active');
+          document.body.style.overflow = '';
+        };
+
+        sidebarClose?.addEventListener('click', closeSidebar);
+        backdrop?.addEventListener('click', closeSidebar);
+      }
+    }
+
+    // Initialize
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initAdminDashboard);
+    } else {
+      initAdminDashboard();
+    }
+  </script>
+
+  <!-- Admin Styles -->
+  <style>
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: calc(100vh - 72px);
+      margin-top: 72px;
+    }
+
+    .admin-sidebar {
+      position: sticky;
+      top: 72px;
+      height: calc(100vh - 72px);
+      overflow-y: auto;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-primary);
+    }
+
+    .admin-nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      margin-bottom: 4px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+
+    .admin-nav-link:hover {
+      background: var(--glass-hover);
+      color: var(--text-primary);
+    }
+
+    .admin-nav-link.active {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent-primary);
+      font-weight: var(--font-semibold);
+    }
+
+    .admin-main {
+      overflow-y: auto;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-primary);
+    }
+
+    .table th {
+      font-weight: var(--font-semibold);
+      color: var(--text-muted);
+      font-size: var(--text-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .table tbody tr:hover {
+      background: var(--glass-hover);
+    }
+
+    @media (max-width: 767px) {
+      .admin-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 80%;
+        max-width: 280px;
+        z-index: var(--z-modal);
+        transform: translateX(-100%);
+        transition: transform var(--transition-base);
+      }
+
+      .admin-sidebar.active {
+        transform: translateX(0);
+      }
+
+      .admin-sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: calc(var(--z-modal) - 1);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-base);
+      }
+
+      .admin-sidebar-backdrop.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+    }
+  </style>
+
+</body>
+</html>
