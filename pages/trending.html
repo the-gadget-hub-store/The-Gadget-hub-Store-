@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  
+  <!-- SEO Meta Tags -->
+  <title>Trending Products - The Gadget Hub Store</title>
+  <meta name="description" content="Discover the hottest trending tech gadgets and products. Browse what's popular and see what everyone is talking about.">
+  <meta name="keywords" content="trending gadgets, popular tech, hot products, trending electronics">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="Trending Products - The Gadget Hub Store">
+  <meta property="og:description" content="Discover the hottest trending tech gadgets and products.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://the-gadget-hub-store.web.app/pages/trending.html">
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://the-gadget-hub-store.web.app/pages/trending.html">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/assets/icons/favicon.png">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       NAVIGATION
+       ============================================================ -->
+  <nav class="navbar">
+    <div class="container navbar-container">
+      <a href="/" class="navbar-brand">
+        <span>THE GADGET HUB STORE</span>
+      </a>
+
+      <ul class="navbar-nav hide-mobile">
+        <li><a href="/" class="nav-link">Home</a></li>
+        <li><a href="/pages/shop.html" class="nav-link">Shop</a></li>
+        <li><a href="/pages/categories.html" class="nav-link">Categories</a></li>
+        <li><a href="/pages/trending.html" class="nav-link active">Trending</a></li>
+        <li><a href="/pages/deals.html" class="nav-link">Deals</a></li>
+      </ul>
+
+      <div class="navbar-actions">
+        <div class="currency-selector-wrapper hide-mobile">
+          <select data-currency-selector class="currency-selector" aria-label="Select currency">
+            <option value="USD">USD</option>
+          </select>
+        </div>
+        <button class="btn-icon hide-mobile" aria-label="Search" data-search-toggle>
+          <span>🔍</span>
+        </button>
+        <button class="btn-icon" aria-label="Favorites" data-favorites-button>
+          <span>❤️</span>
+          <span class="badge badge-primary" data-favorites-count style="display: none;">0</span>
+        </button>
+        <button class="btn-icon" aria-label="Account" data-auth-button>
+          <span>👤</span>
+        </button>
+        <button class="btn-icon" aria-label="Toggle theme" data-theme-toggle>
+          <span data-theme-icon>🌙</span>
+        </button>
+        <button class="btn-icon mobile-menu-toggle show-mobile" aria-label="Menu">
+          <span>☰</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu">
+    <div class="mobile-menu-header">
+      <span class="navbar-brand">THE GADGET HUB STORE</span>
+      <button class="btn-icon mobile-menu-close" aria-label="Close menu">
+        <span>✕</span>
+      </button>
+    </div>
+    <nav class="mobile-menu-nav">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/pages/shop.html" class="nav-link">Shop</a>
+      <a href="/pages/categories.html" class="nav-link">Categories</a>
+      <a href="/pages/trending.html" class="nav-link">Trending</a>
+      <a href="/pages/deals.html" class="nav-link">Deals</a>
+      <a href="/pages/favorites.html" class="nav-link">Favorites</a>
+      <a href="/pages/account.html" class="nav-link">Account</a>
+      
+      <div class="mobile-menu-section">
+        <label for="mobile-currency-selector" class="form-label">Currency</label>
+        <select id="mobile-currency-selector" data-currency-selector class="currency-selector">
+          <option value="USD">USD</option>
+        </select>
+      </div>
+    </nav>
+  </div>
+
+  <div class="mobile-menu-backdrop"></div>
+
+  <!-- ============================================================
+       TRENDING PAGE CONTENT
+       ============================================================ -->
+  <div class="container" style="margin-top: 6rem; margin-bottom: 4rem;">
+    
+    <!-- Page Header -->
+    <div class="section-header text-center mb-8 reveal">
+      <div class="text-6xl mb-4">🔥</div>
+      <h1 class="section-title">Trending Products</h1>
+      <p class="section-subtitle">Discover what's hot in tech right now</p>
+    </div>
+
+    <!-- Sort & Filter Controls -->
+    <div class="glass p-6 mb-6" style="border-radius: var(--radius-xl);">
+      <div class="flex justify-between items-center gap-4 flex-wrap">
+        <div>
+          <p class="text-muted" id="product-count">Loading trending products...</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <select id="sort-select" class="form-select" aria-label="Sort products" style="min-width: 180px;">
+            <option value="newest">Newest First</option>
+            <option value="popular">Most Popular</option>
+            <option value="price-low-high">Price: Low to High</option>
+            <option value="price-high-low">Price: High to Low</option>
+            <option value="rating">Highest Rated</option>
+            <option value="discount">Biggest Discount</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div id="products-container" class="grid grid-cols-1 grid-cols-2 grid-cols-3 grid-cols-4 products-grid">
+      <!-- Loading Skeletons -->
+      <div class="product-card skeleton">
+        <div class="skeleton-image"></div>
+        <div class="product-info">
+          <div class="skeleton-text"></div>
+          <div class="skeleton-text"></div>
+        </div>
+      </div>
+      <div class="product-card skeleton">
+        <div class="skeleton-image"></div>
+        <div class="product-info">
+          <div class="skeleton-text"></div>
+          <div class="skeleton-text"></div>
+        </div>
+      </div>
+      <div class="product-card skeleton">
+        <div class="skeleton-image"></div>
+        <div class="product-info">
+          <div class="skeleton-text"></div>
+          <div class="skeleton-text"></div>
+        </div>
+      </div>
+      <div class="product-card skeleton">
+        <div class="skeleton-image"></div>
+        <div class="product-info">
+          <div class="skeleton-text"></div>
+          <div class="skeleton-text"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3 class="footer-section-title">THE GADGET HUB STORE</h3>
+          <p class="text-secondary">Discover the latest tech gadgets and innovative products from around the world.</p>
+        </div>
+
+        <div class="footer-section">
+          <h4 class="footer-section-title">Explore</h4>
+          <ul class="footer-links">
+            <li><a href="/" class="footer-link">Home</a></li>
+            <li><a href="/pages/shop.html" class="footer-link">Shop</a></li>
+            <li><a href="/pages/trending.html" class="footer-link">Trending</a></li>
+            <li><a href="/pages/deals.html" class="footer-link">Deals</a></li>
+            <li><a href="/pages/categories.html" class="footer-link">Categories</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4 class="footer-section-title">Customer</h4>
+          <ul class="footer-links">
+            <li><a href="/pages/account.html" class="footer-link">Account</a></li>
+            <li><a href="/pages/favorites.html" class="footer-link">Favorites</a></li>
+            <li><a href="#" class="footer-link">Contact</a></li>
+            <li><a href="#" class="footer-link">Privacy Policy</a></li>
+            <li><a href="#" class="footer-link">Terms of Service</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4 class="footer-section-title">Follow</h4>
+          <ul class="footer-links">
+            <li><a href="#" class="footer-link" target="_blank" rel="noopener noreferrer">Facebook</a></li>
+            <li><a href="#" class="footer-link" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+            <li><a href="#" class="footer-link" target="_blank" rel="noopener noreferrer">YouTube</a></li>
+            <li><a href="#" class="footer-link" target="_blank" rel="noopener noreferrer">TikTok</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copyright">© 2026 The Gadget Hub Store. All rights reserved.</p>
+        <p class="text-sm text-muted mt-2">
+          This website contains affiliate links. We may earn a commission when you make a purchase through our links at no additional cost to you.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <button class="btn btn-primary btn-icon" data-scroll-top aria-label="Scroll to top" style="position: fixed; bottom: 2rem; right: 2rem; z-index: 100; display: none;">
+    <span>↑</span>
+  </button>
+
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
+  <script type="module" src="/js/firebase.js"></script>
+  <script type="module" src="/js/auth.js"></script>
+  <script type="module" src="/js/products.js"></script>
+  <script type="module" src="/js/categories.js"></script>
+  <script type="module" src="/js/favorites.js"></script>
+  <script type="module" src="/js/search.js"></script>
+  <script type="module" src="/js/ui.js"></script>
+  <script type="module" src="/js/currency.js"></script>
+  <script type="module" src="/js/advertising.js"></script>
+  <script type="module" src="/js/app.js"></script>
+
+  <!-- Trending Page Script -->
+  <script type="module">
+    import { getTrendingProducts, sortProducts, getProductThumbnail, getProductUrl, getProductRatingStars } from '/js/products.js';
+    import { convertPrice, formatPrice, onCurrencyChange } from '/js/currency.js';
+    import { setupFavoriteButtons } from '/js/favorites.js';
+
+    let trendingProducts = [];
+    let sortedProducts = [];
+    let currentSort = 'newest';
+
+    // Initialize Trending Page
+    async function initTrendingPage() {
+      await loadTrendingProducts();
+      setupEventListeners();
+
+      // Update prices on currency change
+      onCurrencyChange(() => {
+        renderProducts();
+      });
+    }
+
+    // Load Trending Products
+    async function loadTrendingProducts() {
+      try {
+        const container = document.getElementById('products-container');
+        const countEl = document.getElementById('product-count');
+
+        trendingProducts = await getTrendingProducts(100); // Get all trending products
+        sortedProducts = sortProducts([...trendingProducts], currentSort);
+
+        if (trendingProducts.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+              <div class="empty-state-icon">🔥</div>
+              <p class="empty-state-message">No trending products found</p>
+              <a href="/pages/shop.html" class="btn btn-primary mt-4">Browse All Products</a>
+            </div>
+          `;
+          countEl.textContent = 'No trending products';
+          return;
+        }
+
+        countEl.textContent = `${trendingProducts.length} trending product${trendingProducts.length !== 1 ? 's' : ''}`;
+        renderProducts();
+
+      } catch (error) {
+        console.error('Error loading trending products:', error);
+        const container = document.getElementById('products-container');
+        container.innerHTML = `
+          <div class="error-state" style="grid-column: 1 / -1;">
+            <div class="error-state-icon">⚠️</div>
+            <p class="error-state-message">Failed to load trending products</p>
+            <button class="btn btn-secondary mt-4" onclick="location.reload()">Retry</button>
+          </div>
+        `;
+      }
+    }
+
+    // Render Products
+    function renderProducts() {
+      const container = document.getElementById('products-container');
+
+      container.innerHTML = sortedProducts.map(product => {
+        const basePrice = product.basePrice || product.price || 0;
+        const baseCurrency = product.baseCurrency || 'USD';
+        const convertedPrice = convertPrice(basePrice, baseCurrency);
+        const formattedPrice = formatPrice(convertedPrice);
+
+        return `
+          <div class="product-card card-interactive reveal">
+            <a href="${getProductUrl(product)}">
+              <div class="product-image-wrapper">
+                <img src="${getProductThumbnail(product)}" alt="${product.title}" class="product-image" loading="lazy">
+                <div class="product-badges">
+                  <span class="badge badge-warning">🔥 Trending</span>
+                  ${product.discount ? `<span class="badge badge-success">-${product.discount}%</span>` : ''}
+                </div>
+              </div>
+            </a>
+            <button class="product-favorite" data-favorite-btn data-product-id="${product.id}" aria-label="Add to favorites">
+              <span>❤️</span>
+            </button>
+            <div class="product-info">
+              <p class="product-category">${product.category || 'Gadgets'}</p>
+              <a href="${getProductUrl(product)}">
+                <h4 class="product-title">${product.title}</h4>
+              </a>
+              ${product.rating ? `
+                <div class="product-rating">
+                  <div class="product-stars">${getProductRatingStars(product.rating)}</div>
+                  <span class="product-reviews">(${product.reviewCount || 0})</span>
+                </div>
+              ` : ''}
+              <div class="product-price-wrapper">
+                <span class="product-price">${formattedPrice}</span>
+                ${product.originalPrice ? `<span class="product-original-price">${formatPrice(convertPrice(product.originalPrice, baseCurrency))}</span>` : ''}
+              </div>
+              <a href="${product.affiliateUrl || '#'}" class="btn btn-primary btn-sm w-full mt-4" target="_blank" rel="noopener noreferrer">
+                Shop on AliExpress
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Setup favorite buttons
+      setupFavoriteButtons();
+    }
+
+    // Apply Sort
+    function applySort() {
+      sortedProducts = sortProducts([...trendingProducts], currentSort);
+      renderProducts();
+    }
+
+    // Setup Event Listeners
+    function setupEventListeners() {
+      const sortSelect = document.getElementById('sort-select');
+      sortSelect.addEventListener('change', (e) => {
+        currentSort = e.target.value;
+        applySort();
+      });
+    }
+
+    // Initialize
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initTrendingPage);
+    } else {
+      initTrendingPage();
+    }
+  </script>
+
+</body>
+</html>
