@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Discover trending gadgets, smart accessories and innovative tech products from around the world. Explore curated tech deals from AliExpress.">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="The Gadget Hub Store - Discover What's Next in Tech">
+    <meta property="og:description" content="Explore trending gadgets, smart accessories and innovative tech products from around the world.">
+    <meta property="og:site_name" content="The Gadget Hub Store">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="The Gadget Hub Store - Discover What's Next in Tech">
+    <meta name="twitter:description" content="Explore trending gadgets, smart accessories and innovative tech products from around the world.">
+    
+    <title>The Gadget Hub Store - Discover What's Next in Tech</title>
+    
+    <!-- Preconnect to critical domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS - Root-level paths -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    
+    <!-- Navigation -->
+    <nav class="nav" id="mainNav" role="navigation" aria-label="Main navigation">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="index.html" class="logo" aria-label="The Gadget Hub Store Home">
+                    THE GADGET HUB STORE
+                </a>
+            </div>
+            
+            <ul class="nav-links" id="navLinks">
+                <li><a href="index.html" class="nav-link active" aria-current="page">Home</a></li>
+                <li><a href="pages/shop.html" class="nav-link">Shop</a></li>
+                <li><a href="pages/categories.html" class="nav-link">Categories</a></li>
+                <li><a href="pages/trending.html" class="nav-link">Trending</a></li>
+                <li><a href="pages/deals.html" class="nav-link">Deals</a></li>
+            </ul>
+            
+            <div class="nav-actions">
+                <!-- Currency Selector -->
+                <div class="currency-selector" id="currencySelector">
+                    <button class="currency-btn" id="currencyBtn" aria-label="Select currency" aria-haspopup="true" aria-expanded="false">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            <path d="M2 12h20"/>
+                        </svg>
+                        <span id="selectedCurrency">USD</span>
+                    </button>
+                    <div class="currency-dropdown" id="currencyDropdown" role="menu" aria-label="Currency selection">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Search -->
+                <button class="nav-icon-btn" id="searchBtn" aria-label="Search products">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                </button>
+                
+                <!-- Favorites -->
+                <a href="pages/favorites.html" class="nav-icon-btn" aria-label="View favorites">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                    <span class="favorites-badge" id="favoritesBadge" aria-live="polite">0</span>
+                </a>
+                
+                <!-- Account -->
+                <a href="pages/account.html" class="nav-icon-btn" aria-label="Account">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </a>
+                
+                <!-- Theme Toggle -->
+                <button class="nav-icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+                
+                <!-- Mobile Menu Toggle -->
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle mobile menu" aria-expanded="false" aria-controls="mobileMenu">
+                    <span class="hamburger"></span>
+                    <span class="hamburger"></span>
+                    <span class="hamburger"></span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-menu-content">
+                <ul class="mobile-nav-links">
+                    <li><a href="index.html" class="mobile-nav-link">Home</a></li>
+                    <li><a href="pages/shop.html" class="mobile-nav-link">Shop</a></li>
+                    <li><a href="pages/categories.html" class="mobile-nav-link">Categories</a></li>
+                    <li><a href="pages/trending.html" class="mobile-nav-link">Trending</a></li>
+                    <li><a href="pages/deals.html" class="mobile-nav-link">Deals</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Search Modal -->
+    <div class="search-modal" id="searchModal" role="dialog" aria-modal="true" aria-labelledby="searchModalTitle">
+        <div class="search-modal-content">
+            <div class="search-modal-header">
+                <h2 id="searchModalTitle" class="sr-only">Search Products</h2>
+                <button class="search-close" id="searchClose" aria-label="Close search">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="search-input-wrapper">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="search" id="searchInput" class="search-input" placeholder="Search gadgets, categories..." aria-label="Search products">
+            </div>
+            <div class="search-results" id="searchResults" aria-live="polite">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h1 class="hero-title fade-in-up">Discover What's Next in Tech</h1>
+            <p class="hero-subtitle fade-in-up" style="animation-delay: 0.1s;">
+                Explore trending gadgets, smart accessories and innovative tech products from around the world.
+            </p>
+            <div class="hero-cta fade-in-up" style="animation-delay: 0.2s;">
+                <a href="pages/shop.html" class="btn btn-primary">
+                    Explore Gadgets
+                </a>
+                <a href="pages/trending.html" class="btn btn-secondary">
+                    View Trending
+                </a>
+                <a href="https://s.click.aliexpress.com/e/_c2Jd2z2R" class="btn btn-accent" target="_blank" rel="noopener noreferrer">
+                    Visit AliExpress Store
+                </a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <!-- 3D animated gradient background -->
+            <div class="hero-gradient"></div>
+        </div>
+    </section>
+    
+    <!-- Featured Categories Section -->
+    <section class="section featured-categories" id="featuredCategories">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Featured Categories</h2>
+                <p class="section-subtitle">Discover products across popular tech categories</p>
+            </div>
+            <div class="categories-grid" id="categoriesGrid">
+                <!-- Populated by JavaScript from Firebase -->
+                <div class="categories-loading">
+                    <div class="spinner"></div>
+                    <p>Loading categories...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Trending Products Section -->
+    <section class="section trending-products" id="trendingProducts">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Trending Products</h2>
+                <p class="section-subtitle">Popular gadgets everyone's talking about</p>
+            </div>
+            <div class="products-grid" id="trendingProductsGrid">
+                <!-- Populated by JavaScript from Firebase -->
+                <div class="products-loading">
+                    <div class="spinner"></div>
+                    <p>Loading trending products...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Products Advertisement Slot -->
+    <section class="section ad-section" id="productsAdSection">
+        <div class="container">
+            <div class="ad-container" id="productsAdContainer" aria-label="Advertisement">
+                <!-- Advertisement content will be loaded by centralized ad system -->
+                <div class="ad-placeholder">
+                    <!-- Products Advertisement Slot -->
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Featured Deal Section -->
+    <section class="section featured-deal" id="featuredDeal">
+        <div class="container">
+            <div class="deal-card" id="dealCard">
+                <!-- Populated by JavaScript from Firebase -->
+                <div class="deal-loading">
+                    <div class="spinner"></div>
+                    <p>Loading featured deal...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Why Shop With Us Section -->
+    <section class="section why-shop">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Why Shop With Us</h2>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                            <path d="M2 17l10 5 10-5"/>
+                            <path d="M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Curated Tech Products</h3>
+                    <p class="feature-description">Handpicked selection of the latest and most innovative gadgets</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            <path d="M2 12h20"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Worldwide Product Discovery</h3>
+                    <p class="feature-description">Access to innovative tech from global marketplaces</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
+                            <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
+                            <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Best Gadget Deals</h3>
+                    <p class="feature-description">Discover amazing deals and discounts on trending tech</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                        </svg>
+                    </div>
+                    <h3 class="feature-title">Secure & Easy Shopping</h3>
+                    <p class="feature-description">Shop confidently through trusted marketplace partners</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Trending Collection Section -->
+    <section class="section trending-collection" id="trendingCollection">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Trending Collection</h2>
+                <p class="section-subtitle">Must-have gadgets of the season</p>
+            </div>
+            <div class="products-grid" id="trendingCollectionGrid">
+                <!-- Populated by JavaScript from Firebase -->
+                <div class="products-loading">
+                    <div class="spinner"></div>
+                    <p>Loading collection...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Newsletter Section -->
+    <section class="section newsletter" id="newsletter">
+        <div class="container">
+            <div class="newsletter-content">
+                <div class="newsletter-text">
+                    <h2 class="newsletter-title">Stay Ahead of the Gadget Curve</h2>
+                    <p class="newsletter-description">
+                        Get the latest gadget discoveries, deals and tech trends directly into your inbox.
+                    </p>
+                </div>
+                <form class="newsletter-form" id="newsletterForm" novalidate>
+                    <div class="newsletter-input-wrapper">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        <input 
+                            type="email" 
+                            id="newsletterEmail" 
+                            class="newsletter-input" 
+                            placeholder="Enter your email" 
+                            required 
+                            aria-label="Email address for newsletter"
+                        >
+                    </div>
+                    <button type="submit" class="btn btn-primary newsletter-btn" id="newsletterSubmitBtn">
+                        <span class="btn-text">Subscribe</span>
+                        <span class="btn-loading">
+                            <span class="spinner-small"></span>
+                        </span>
+                    </button>
+                </form>
+                <p class="newsletter-privacy">We respect your privacy. Unsubscribe at any time.</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Social Section -->
+    <section class="section social-section" id="socialSection">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Follow Us</h2>
+                <p class="section-subtitle">Stay connected for the latest tech updates</p>
+            </div>
+            <div class="social-links" id="socialLinks">
+                <!-- Populated by JavaScript from Firebase -->
+                <div class="social-loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Pre-Footer Advertisement Slot -->
+    <section class="section ad-section pre-footer-ad" id="preFooterAdSection">
+        <div class="container">
+            <div class="ad-container" id="preFooterAdContainer" aria-label="Advertisement">
+                <!-- Advertisement content will be loaded by centralized ad system -->
+                <div class="ad-placeholder">
+                    <!-- Pre-Footer Advertisement Slot -->
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer" id="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-logo">THE GADGET HUB STORE</h3>
+                    <p class="footer-description">
+                        Discover trending gadgets and innovative tech products from around the world.
+                    </p>
+                    <div class="footer-social" id="footerSocial">
+                        <!-- Populated by JavaScript from Firebase -->
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-heading">Explore</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="pages/shop.html">Shop</a></li>
+                        <li><a href="pages/trending.html">Trending</a></li>
+                        <li><a href="pages/deals.html">Deals</a></li>
+                        <li><a href="pages/categories.html">Categories</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-heading">Customer</h4>
+                    <ul class="footer-links">
+                        <li><a href="pages/account.html">Account</a></li>
+                        <li><a href="pages/favorites.html">Favorites</a></li>
+                        <li><a href="pages/contact.html">Contact</a></li>
+                        <li><a href="pages/privacy.html">Privacy Policy</a></li>
+                        <li><a href="pages/terms.html">Terms</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-heading">Follow</h4>
+                    <ul class="footer-links" id="footerFollowLinks">
+                        <!-- Populated by JavaScript from Firebase -->
+                        <li><a href="#" data-social="facebook">Facebook</a></li>
+                        <li><a href="#" data-social="instagram">Instagram</a></li>
+                        <li><a href="#" data-social="youtube">YouTube</a></li>
+                        <li><a href="#" data-social="tiktok">TikTok</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="footer-copyright">
+                    &copy; 2026 The Gadget Hub Store. All rights reserved.
+                </p>
+                <p class="footer-affiliate-disclosure">
+                    As an affiliate partner, we may earn from qualifying purchases through our links.
+                </p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true">
+        <!-- Toast notifications will be inserted here by JavaScript -->
+    </div>
+    
+    <!-- JavaScript Modules - Root-level paths -->
+    <script type="module" src="js/firebase.js"></script>
+    <script type="module" src="js/ui.js"></script>
+    <script type="module" src="js/app.js"></script>
+    
+</body>
+</html>
