@@ -5,6 +5,7 @@
 
 import {
   isFirebaseInitialized,
+  authReady,
   db,
   storage,
   collection,
@@ -45,20 +46,25 @@ import {
 let isAdmin = false;
 
 async function checkAdminAccess() {
-  if (!isAuthenticated()) {
+  // Wait for Firebase auth state to be ready
+  const user = await authReady;
+  
+  if (!user) {
     redirectToLogin();
     return false;
   }
-
-  const user = getCurrentUser();
   
   try {
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      isAdmin = userData.isAdmin === true || userData.role === 'admin';
+    if (!userDoc.exists()) {
+      console.error('User document not found in Firestore');
+      showUnauthorizedPage();
+      return false;
     }
+    
+    const userData = userDoc.data();
+    isAdmin = userData.isAdmin === true || userData.role === 'admin';
 
     if (!isAdmin) {
       showUnauthorizedPage();
@@ -476,7 +482,12 @@ if (document.readyState === 'loading') {
     if (path.includes('/admin/')) {
       const hasAccess = await checkAdminAccess();
       
-      if (hasAccess && path.includes('index.html')) {
+      // Support both /admin/ and /admin/index.html
+      const isAdminDashboard = path.includes('index.html') || 
+                               path.endsWith('/admin/') || 
+                               path.endsWith('/admin');
+      
+      if (hasAccess && isAdminDashboard) {
         initializeAdminDashboard();
       }
     }
@@ -488,7 +499,12 @@ if (document.readyState === 'loading') {
     if (path.includes('/admin/')) {
       const hasAccess = await checkAdminAccess();
       
-      if (hasAccess && path.includes('index.html')) {
+      // Support both /admin/ and /admin/index.html
+      const isAdminDashboard = path.includes('index.html') || 
+                               path.endsWith('/admin/') || 
+                               path.endsWith('/admin');
+      
+      if (hasAccess && isAdminDashboard) {
         initializeAdminDashboard();
       }
     }
