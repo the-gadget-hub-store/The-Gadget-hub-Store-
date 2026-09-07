@@ -1,0 +1,135 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ================================
+    // HELPER FUNCTIONS
+    // ================================
+    
+    // Check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Check if user is admin
+    function isAdmin() {
+      return isSignedIn() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Check if user owns the resource
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // Validate email format
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+    
+    // ================================
+    // USERS COLLECTION
+    // ================================
+    
+    match /users/{userId} {
+      // Users can read their own document
+      allow read: if isOwner(userId);
+      
+      // Users can create their own document on signup
+      allow create: if isOwner(userId) && 
+                      request.resource.data.keys().hasAll(['email']) &&
+                      isValidEmail(request.resource.data.email);
+      
+      // Users can update their own document (except admin status)
+      allow update: if isOwner(userId) && 
+                      !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'role']);
+      
+      // Only admins can delete user documents
+      allow delete: if isAdmin();
+      
+      // User favorites subcollection
+      match /favorites/{productId} {
+        // Users can read, create, and delete their own favorites
+        allow read, create, delete: if isOwner(userId);
+        
+        // Prevent updates (should delete and recreate instead)
+        allow update: if false;
+      }
+    }
+    
+    // ================================
+    // PRODUCTS COLLECTION
+    // ================================
+    
+    match /products/{productId} {
+      // Anyone can read products
+      allow read: if true;
+      
+      // Only admins can create, update, or delete products
+      allow create, update, delete: if isAdmin();
+      
+      // Validate product data structure on create/update
+      allow create, update: if isAdmin() &&
+                              request.resource.data.keys().hasAll(['title', 'basePrice']) &&
+                              request.resource.data.basePrice is number &&
+                              request.resource.data.basePrice >= 0;
+    }
+    
+    // ================================
+    // CATEGORIES COLLECTION
+    // ================================
+    
+    match /categories/{categoryId} {
+      // Anyone can read categories
+      allow read: if true;
+      
+      // Only admins can create, update, or delete categories
+      allow create, update, delete: if isAdmin();
+      
+      // Validate category data structure
+      allow create, update: if isAdmin() &&
+                              request.resource.data.keys().hasAll(['name']);
+    }
+    
+    // ================================
+    // SETTINGS COLLECTION
+    // ================================
+    
+    match /settings/{settingId} {
+      // Anyone can read public settings
+      allow read: if true;
+      
+      // Only admins can create or update settings
+      allow create, update: if isAdmin();
+      
+      // Prevent deletion of global settings
+      allow delete: if false;
+    }
+    
+    // ================================
+    // NEWSLETTER SUBSCRIBERS
+    // ================================
+    
+    match /newsletterSubscribers/{subscriberId} {
+      // Only admins can read subscribers
+      allow read: if isAdmin();
+      
+      // Anyone can create a subscription (but only with valid email)
+      allow create: if request.resource.data.keys().hasAll(['email', 'subscribedAt']) &&
+                      isValidEmail(request.resource.data.email) &&
+                      request.resource.data.subscribedAt == request.time;
+      
+      // Only admins can update or delete
+      allow update, delete: if isAdmin();
+    }
+    
+    // ================================
+    // DENY ALL OTHER COLLECTIONS
+    // ================================
+    
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
