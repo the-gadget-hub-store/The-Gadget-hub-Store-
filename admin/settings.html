@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Store Settings - The Gadget Hub Store Admin">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    
+    <title>Store Settings - Admin - The Gadget Hub Store</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+    
+    <style>
+        .settings-section { background: var(--color-bg-glass); border: 1px solid var(--color-border); border-radius: var(--radius-xl); padding: var(--spacing-xl); margin-bottom: var(--spacing-xl); }
+        .settings-section h2 { margin-bottom: var(--spacing-lg); font-size: 1.5rem; }
+        .form-group { margin-bottom: var(--spacing-md); }
+        .form-label { display: block; margin-bottom: var(--spacing-xs); font-weight: var(--font-weight-medium); color: var(--color-text-primary); }
+        .form-input, .form-textarea, .form-select { width: 100%; padding: var(--spacing-sm); background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary); font-family: var(--font-family); font-size: 0.9375rem; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        .form-hint { font-size: 0.8125rem; color: var(--color-text-muted); margin-top: var(--spacing-xs); }
+        .currency-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--spacing-sm); }
+        .currency-item { display: flex; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-xs); }
+        .search-tag { display: inline-flex; align-items: center; gap: var(--spacing-xs); padding: var(--spacing-xs) var(--spacing-sm); background: var(--color-bg-elevated); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-right: var(--spacing-xs); margin-bottom: var(--spacing-xs); }
+        .search-tag button { background: none; border: none; color: var(--color-text-tertiary); cursor: pointer; padding: 0; }
+        .add-search-container { display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-sm); }
+    </style>
+</head>
+<body>
+    
+    <nav class="nav" id="mainNav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="../index.html" class="logo">THE GADGET HUB STORE ADMIN</a>
+            </div>
+            
+            <ul class="nav-links">
+                <li><a href="index.html" class="nav-link">Dashboard</a></li>
+                <li><a href="products.html" class="nav-link">Products</a></li>
+                <li><a href="categories.html" class="nav-link">Categories</a></li>
+                <li><a href="settings.html" class="nav-link active" aria-current="page">Settings</a></li>
+            </ul>
+            
+            <div class="nav-actions">
+                <a href="../index.html" class="nav-icon-btn" aria-label="View Store">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    </svg>
+                </a>
+                
+                <button class="nav-icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <main class="container" style="padding-top: var(--spacing-2xl); padding-bottom: var(--spacing-3xl);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
+            <h1>Store Settings</h1>
+            <button class="btn btn-primary" id="saveSettingsBtn">
+                <span class="btn-text">Save All Settings</span>
+                <span class="btn-loading"><span class="spinner-small"></span></span>
+            </button>
+        </div>
+        
+        <div id="settingsContainer">
+            <div class="products-loading"><div class="spinner"></div><p>Loading settings...</p></div>
+        </div>
+    </main>
+    
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+    
+    <script type="module" src="../js/firebase.js"></script>
+    <script type="module" src="../js/ui.js"></script>
+    <script type="module">
+        import { loadSettings, updateSettings } from '../js/admin.js';
+        import { showToast, setButtonLoading, escapeHtml } from '../js/ui.js';
+        
+        let currentSettings = {};
+        let popularSearches = [];
+        
+        const ALL_CURRENCIES = [
+            { code: 'USD', name: 'US Dollar' },
+            { code: 'GBP', name: 'Pound Sterling' },
+            { code: 'EUR', name: 'Euro' },
+            { code: 'CAD', name: 'Canadian Dollar' },
+            { code: 'AUD', name: 'Australian Dollar' },
+            { code: 'CNY', name: 'Chinese Yuan' },
+            { code: 'JPY', name: 'Japanese Yen' },
+            { code: 'KRW', name: 'South Korean Won' },
+            { code: 'INR', name: 'Indian Rupee' },
+            { code: 'PKR', name: 'Pakistani Rupee' },
+            { code: 'BDT', name: 'Bangladeshi Taka' },
+            { code: 'NPR', name: 'Nepalese Rupee' },
+            { code: 'AED', name: 'UAE Dirham' },
+            { code: 'SAR', name: 'Saudi Riyal' },
+            { code: 'TRY', name: 'Turkish Lira' },
+            { code: 'MYR', name: 'Malaysian Ringgit' },
+            { code: 'IDR', name: 'Indonesian Rupiah' },
+            { code: 'SGD', name: 'Singapore Dollar' },
+            { code: 'THB', name: 'Thai Baht' },
+            { code: 'ZAR', name: 'South African Rand' }
+        ];
+        
+        async function init() {
+            await loadCurrentSettings();
+            setupEventListeners();
+        }
+        
+        async function loadCurrentSettings() {
+            try {
+                currentSettings = await loadSettings() || {};
+                popularSearches = currentSettings.popularSearches || [];
+                renderSettings();
+            } catch (error) {
+                console.error('Error loading settings:', error);
+                document.getElementById('settingsContainer').innerHTML = '<p style="color: var(--color-error);">Failed to load settings</p>';
+            }
+        }
+        
+        function renderSettings() {
+            const container = document.getElementById('settingsContainer');
+            const supportedCurrencies = currentSettings.supportedCurrencies || ALL_CURRENCIES;
+            const defaultCurrency = currentSettings.defaultCurrency || 'USD';
+            const socialLinks = currentSettings.socialLinks || {};
+            
+            container.innerHTML = `
+                <div class="settings-section">
+                    <h2>Currency Settings</h2>
+                    <div class="form-group">
+                        <label class="form-label">Default Currency</label>
+                        <select class="form-select" id="defaultCurrency">
+                            ${ALL_CURRENCIES.map(c => `<option value="${c.code}" ${c.code === defaultCurrency ? 'selected' : ''}>${c.name} (${c.code})</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Supported Currencies</label>
+                        <p class="form-hint">Select which currencies customers can choose from</p>
+                        <div class="currency-list" id="currencyList">
+                            ${ALL_CURRENCIES.map(c => {
+                                const isSupported = supportedCurrencies.some(sc => sc.code === c.code);
+                                return `
+                                    <label class="currency-item">
+                                        <input type="checkbox" value="${c.code}" ${isSupported ? 'checked' : ''}>
+                                        <span>${c.name} (${c.code})</span>
+                                    </label>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>Social Media Links</h2>
+                    <div class="form-group">
+                        <label class="form-label">Facebook URL</label>
+                        <input type="url" class="form-input" id="facebookUrl" value="${escapeHtml(socialLinks.facebook || '')}" placeholder="https://facebook.com/yourpage">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Instagram URL</label>
+                        <input type="url" class="form-input" id="instagramUrl" value="${escapeHtml(socialLinks.instagram || '')}" placeholder="https://instagram.com/yourprofile">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">YouTube URL</label>
+                        <input type="url" class="form-input" id="youtubeUrl" value="${escapeHtml(socialLinks.youtube || '')}" placeholder="https://youtube.com/yourchannel">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">TikTok URL</label>
+                        <input type="url" class="form-input" id="tiktokUrl" value="${escapeHtml(socialLinks.tiktok || '')}" placeholder="https://tiktok.com/@yourprofile">
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>Search Settings</h2>
+                    <div class="form-group">
+                        <label class="form-label">Popular Searches</label>
+                        <p class="form-hint">These appear in the search modal when users haven't typed anything yet</p>
+                        <div id="popularSearchesList">${renderPopularSearches()}</div>
+                        <div class="add-search-container">
+                            <input type="text" class="form-input" id="newSearchTerm" placeholder="Add search term" style="flex: 1;">
+                            <button type="button" class="btn btn-outline" id="addSearchBtn">Add</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderPopularSearches() {
+            if (popularSearches.length === 0) {
+                return '<p style="color: var(--color-text-muted); font-size: 0.875rem;">No popular searches configured</p>';
+            }
+            return popularSearches.map((term, index) => `
+                <span class="search-tag">
+                    ${escapeHtml(term)}
+                    <button onclick="window.removeSearch(${index})" aria-label="Remove">&times;</button>
+                </span>
+            `).join('');
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('saveSettingsBtn').addEventListener('click', handleSave);
+            
+            const addSearchBtn = document.getElementById('addSearchBtn');
+            const newSearchInput = document.getElementById('newSearchTerm');
+            
+            if (addSearchBtn) {
+                addSearchBtn.addEventListener('click', () => {
+                    const term = newSearchInput.value.trim();
+                    if (term && !popularSearches.includes(term)) {
+                        popularSearches.push(term);
+                        document.getElementById('popularSearchesList').innerHTML = renderPopularSearches();
+                        newSearchInput.value = '';
+                    }
+                });
+            }
+            
+            if (newSearchInput) {
+                newSearchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addSearchBtn.click();
+                    }
+                });
+            }
+        }
+        
+        window.removeSearch = function(index) {
+            popularSearches.splice(index, 1);
+            document.getElementById('popularSearchesList').innerHTML = renderPopularSearches();
+        };
+        
+        async function handleSave() {
+            const btn = document.getElementById('saveSettingsBtn');
+            setButtonLoading(btn, true);
+            
+            const selectedCurrencies = [];
+            document.querySelectorAll('#currencyList input[type="checkbox"]:checked').forEach(cb => {
+                const currency = ALL_CURRENCIES.find(c => c.code === cb.value);
+                if (currency) selectedCurrencies.push(currency);
+            });
+            
+            if (selectedCurrencies.length === 0) {
+                showToast('Please select at least one currency', 'error');
+                setButtonLoading(btn, false);
+                return;
+            }
+            
+            const settingsData = {
+                defaultCurrency: document.getElementById('defaultCurrency').value,
+                supportedCurrencies: selectedCurrencies,
+                socialLinks: {
+                    facebook: document.getElementById('facebookUrl').value.trim(),
+                    instagram: document.getElementById('instagramUrl').value.trim(),
+                    youtube: document.getElementById('youtubeUrl').value.trim(),
+                    tiktok: document.getElementById('tiktokUrl').value.trim()
+                },
+                popularSearches: popularSearches
+            };
+            
+            try {
+                await updateSettings(settingsData);
+                showToast('Settings saved successfully', 'success');
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showToast('Failed to save settings', 'error');
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
