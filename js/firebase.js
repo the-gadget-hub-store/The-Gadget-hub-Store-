@@ -104,6 +104,26 @@ try {
 }
 
 /* ================================
+   AUTH READY PROMISE
+   ================================ */
+
+/**
+ * Promise that resolves when Firebase auth state is ready
+ * This prevents race conditions when checking authentication on page load
+ */
+export const authReady = new Promise((resolve) => {
+  if (!auth) {
+    resolve(null);
+    return;
+  }
+  
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    unsubscribe();
+    resolve(user);
+  });
+});
+
+/* ================================
    FIREBASE SERVICE EXPORTS
    ================================ */
 
