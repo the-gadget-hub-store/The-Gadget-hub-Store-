@@ -28,6 +28,18 @@ service cloud.firestore {
       return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
     }
     
+    // Validate product data
+    function isValidProduct() {
+      return request.resource.data.keys().hasAll(['title', 'basePrice']) &&
+             request.resource.data.basePrice is number &&
+             request.resource.data.basePrice >= 0;
+    }
+    
+    // Validate category data
+    function isValidCategory() {
+      return request.resource.data.keys().hasAll(['name']);
+    }
+    
     // ================================
     // USERS COLLECTION
     // ================================
@@ -66,14 +78,10 @@ service cloud.firestore {
       // Anyone can read products
       allow read: if true;
       
-      // Only admins can create, update, or delete products
-      allow create, update, delete: if isAdmin();
-      
-      // Validate product data structure on create/update
-      allow create, update: if isAdmin() &&
-                              request.resource.data.keys().hasAll(['title', 'basePrice']) &&
-                              request.resource.data.basePrice is number &&
-                              request.resource.data.basePrice >= 0;
+      // Only admins can write, with validation
+      allow create: if isAdmin() && isValidProduct();
+      allow update: if isAdmin() && isValidProduct();
+      allow delete: if isAdmin();
     }
     
     // ================================
@@ -84,12 +92,10 @@ service cloud.firestore {
       // Anyone can read categories
       allow read: if true;
       
-      // Only admins can create, update, or delete categories
-      allow create, update, delete: if isAdmin();
-      
-      // Validate category data structure
-      allow create, update: if isAdmin() &&
-                              request.resource.data.keys().hasAll(['name']);
+      // Only admins can write, with validation
+      allow create: if isAdmin() && isValidCategory();
+      allow update: if isAdmin() && isValidCategory();
+      allow delete: if isAdmin();
     }
     
     // ================================
