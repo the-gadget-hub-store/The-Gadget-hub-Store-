@@ -1,0 +1,69 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ================================
+    // HELPER FUNCTIONS
+    // ================================
+    
+    // Check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Check if user is admin
+    function isAdmin() {
+      return isSignedIn() && 
+             firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    // Validate image file
+    function isValidImage() {
+      return request.resource.size < 5 * 1024 * 1024 &&
+             request.resource.contentType.matches('image/(jpeg|png|webp|gif)');
+    }
+    
+    // Validate category image file
+    function isValidCategoryImage() {
+      return request.resource.size < 3 * 1024 * 1024 &&
+             request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+    
+    // ================================
+    // PRODUCT IMAGES
+    // ================================
+    
+    match /products/{allPaths=**} {
+      // Anyone can read product images
+      allow read: if true;
+      
+      // Only admins can upload, update, or delete product images
+      allow create: if isAdmin() && isValidImage();
+      allow update: if isAdmin() && isValidImage();
+      allow delete: if isAdmin();
+    }
+    
+    // ================================
+    // CATEGORY IMAGES
+    // ================================
+    
+    match /categories/{allPaths=**} {
+      // Anyone can read category images
+      allow read: if true;
+      
+      // Only admins can upload, update, or delete category images
+      allow create: if isAdmin() && isValidCategoryImage();
+      allow update: if isAdmin() && isValidCategoryImage();
+      allow delete: if isAdmin();
+    }
+    
+    // ================================
+    // DENY ALL OTHER PATHS
+    // ================================
+    
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
