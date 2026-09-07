@@ -77,7 +77,7 @@ async function initializeApp() {
   await initializeGlobalFeatures();
   
   // Initialize page-specific features
-  initializePageSpecificFeatures();
+  await initializePageSpecificFeatures();
   
   console.log('✅ Application initialized');
 }
@@ -427,7 +427,9 @@ async function loadSocialLinks() {
     const settingsDoc = await getDoc(doc(db, 'settings', 'global'));
     
     if (!settingsDoc.exists()) {
-      showEmptyState(socialContainer, 'Social links not configured');
+      if (socialContainer) {
+        socialContainer.innerHTML = '<p style="color: var(--color-text-tertiary);">No social links configured</p>';
+      }
       return;
     }
     
@@ -440,7 +442,7 @@ async function loadSocialLinks() {
   } catch (error) {
     console.error('Error loading social links:', error);
     if (socialContainer) {
-      showError(socialContainer, 'Failed to load social links');
+      socialContainer.innerHTML = '<p style="color: var(--color-text-muted);">Could not load social links</p>';
     }
   }
 }
@@ -622,7 +624,7 @@ async function updateFavoritesBadge() {
 /**
  * Initialize page-specific features based on current page
  */
-function initializePageSpecificFeatures() {
+async function initializePageSpecificFeatures() {
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
   
@@ -631,7 +633,7 @@ function initializePageSpecificFeatures() {
   switch (page) {
     case 'index.html':
     case '':
-      initializeHomePage();
+      await initializeHomePage();
       break;
     case 'shop.html':
       console.log('Shop page - will be initialized by products module');
@@ -665,28 +667,27 @@ function initializePageSpecificFeatures() {
 /**
  * Initialize homepage-specific features
  */
-function initializeHomePage() {
+async function initializeHomePage() {
   console.log('🏠 Initializing homepage features...');
   
-  // Homepage-specific initialization will be completed
-  // when products and categories modules are created
-  
-  // For now, show loading states in sections
-  const sections = [
-    { id: 'categoriesGrid', message: 'Loading categories...' },
-    { id: 'trendingProductsGrid', message: 'Loading trending products...' },
-    { id: 'trendingCollectionGrid', message: 'Loading collection...' },
-    { id: 'dealCard', message: 'Loading deal...' }
-  ];
-  
-  sections.forEach(section => {
-    const element = document.getElementById(section.id);
-    if (element) {
-      showLoading(element, section.message);
+  // Import and call homepage initialization from respective modules
+  try {
+    // Initialize categories
+    const categoriesModule = await import('./categories.js');
+    if (categoriesModule.initializeHomepageCategories) {
+      await categoriesModule.initializeHomepageCategories();
     }
-  });
-  
-  console.log('✅ Homepage initialization complete (waiting for data modules)');
+    
+    // Initialize products
+    const productsModule = await import('./products.js');
+    if (productsModule.initializeHomepageProducts) {
+      await productsModule.initializeHomepageProducts();
+    }
+    
+    console.log('✅ Homepage initialization complete');
+  } catch (error) {
+    console.error('Error initializing homepage modules:', error);
+  }
 }
 
 /**
