@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View product details - The Gadget Hub Store">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    
+    <title>Product - The Gadget Hub Store</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+    
+    <nav class="nav" id="mainNav" role="navigation" aria-label="Main navigation">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="../index.html" class="logo" aria-label="The Gadget Hub Store Home">THE GADGET HUB STORE</a>
+            </div>
+            
+            <ul class="nav-links" id="navLinks">
+                <li><a href="../index.html" class="nav-link">Home</a></li>
+                <li><a href="shop.html" class="nav-link">Shop</a></li>
+                <li><a href="categories.html" class="nav-link">Categories</a></li>
+                <li><a href="trending.html" class="nav-link">Trending</a></li>
+                <li><a href="deals.html" class="nav-link">Deals</a></li>
+            </ul>
+            
+            <div class="nav-actions">
+                <div class="currency-selector" id="currencySelector">
+                    <button class="currency-btn" id="currencyBtn" aria-label="Select currency" aria-haspopup="true" aria-expanded="false">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            <path d="M2 12h20"/>
+                        </svg>
+                        <span id="selectedCurrency">USD</span>
+                    </button>
+                    <div class="currency-dropdown" id="currencyDropdown" role="menu"></div>
+                </div>
+                
+                <button class="nav-icon-btn" id="searchBtn" aria-label="Search products">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                </button>
+                
+                <a href="favorites.html" class="nav-icon-btn" aria-label="View favorites">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                    <span class="favorites-badge" id="favoritesBadge" aria-live="polite">0</span>
+                </a>
+                
+                <a href="account.html" class="nav-icon-btn" aria-label="Account">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </a>
+                
+                <button class="nav-icon-btn theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                    </svg>
+                </button>
+                
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle mobile menu" aria-expanded="false">
+                    <span class="hamburger"></span>
+                    <span class="hamburger"></span>
+                    <span class="hamburger"></span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-menu-content">
+                <ul class="mobile-nav-links">
+                    <li><a href="../index.html" class="mobile-nav-link">Home</a></li>
+                    <li><a href="shop.html" class="mobile-nav-link">Shop</a></li>
+                    <li><a href="categories.html" class="mobile-nav-link">Categories</a></li>
+                    <li><a href="trending.html" class="mobile-nav-link">Trending</a></li>
+                    <li><a href="deals.html" class="mobile-nav-link">Deals</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="search-modal" id="searchModal" role="dialog" aria-modal="true" aria-labelledby="searchModalTitle">
+        <div class="search-modal-content">
+            <div class="search-modal-header">
+                <h2 id="searchModalTitle" class="sr-only">Search Products</h2>
+                <button class="search-close" id="searchClose" aria-label="Close search">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="search-input-wrapper">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="search" id="searchInput" class="search-input" placeholder="Search gadgets, categories..." aria-label="Search products">
+            </div>
+            <div class="search-results" id="searchResults" aria-live="polite"></div>
+        </div>
+    </div>
+    
+    <main class="container" style="padding-top: var(--spacing-2xl); padding-bottom: var(--spacing-3xl);">
+        <div id="productDetail">
+            <div class="products-loading">
+                <div class="spinner"></div>
+                <p>Loading product...</p>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 class="footer-logo">THE GADGET HUB STORE</h3>
+                    <p class="footer-description">Discover trending gadgets and innovative tech products from around the world.</p>
+                    <div class="footer-social" id="footerSocial"></div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-heading">Explore</h4>
+                    <ul class="footer-links">
+                        <li><a href="../index.html">Home</a></li>
+                        <li><a href="shop.html">Shop</a></li>
+                        <li><a href="trending.html">Trending</a></li>
+                        <li><a href="deals.html">Deals</a></li>
+                        <li><a href="categories.html">Categories</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-heading">Customer</h4>
+                    <ul class="footer-links">
+                        <li><a href="account.html">Account</a></li>
+                        <li><a href="favorites.html">Favorites</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4 class="footer-heading">Follow</h4>
+                    <ul class="footer-links" id="footerFollowLinks">
+                        <li><a href="#" data-social="facebook">Facebook</a></li>
+                        <li><a href="#" data-social="instagram">Instagram</a></li>
+                        <li><a href="#" data-social="youtube">YouTube</a></li>
+                        <li><a href="#" data-social="tiktok">TikTok</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p class="footer-copyright">&copy; 2026 The Gadget Hub Store. All rights reserved.</p>
+                <p class="footer-affiliate-disclosure">As an affiliate partner, we may earn from qualifying purchases through our links.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+    
+    <script type="module" src="../js/firebase.js"></script>
+    <script type="module" src="../js/ui.js"></script>
+    <script type="module" src="../js/app.js"></script>
+    <script type="module" src="../js/search.js"></script>
+    
+    <script type="module">
+        import { loadProductById, getFormattedPrice } from '../js/products.js';
+        import { toggleFavorite, isProductFavorited } from '../js/favorites.js';
+        import { showError, showToast, escapeHtml } from '../js/ui.js';
+        import { getCurrentCurrency } from '../js/app.js';
+        
+        async function initializeProductPage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+            
+            if (!productId) {
+                showError('productDetail', 'Product not found');
+                return;
+            }
+            
+            try {
+                const product = await loadProductById(productId);
+                renderProductDetail(product);
+                
+                const isFavorited = await isProductFavorited(productId);
+                updateFavoriteButton(isFavorited);
+                
+                document.title = `${product.title} - The Gadget Hub Store`;
+            } catch (error) {
+                console.error('Error loading product:', error);
+                showError('productDetail', 'Product not found');
+            }
+        }
+        
+        function renderProductDetail(product) {
+            const container = document.getElementById('productDetail');
+            const currency = getCurrentCurrency();
+            
+            const basePrice = product.basePrice || product.price || 0;
+            const originalPrice = product.originalPrice || basePrice;
+            const discount = product.discount || 0;
+            
+            const currentPrice = getFormattedPrice(basePrice, currency);
+            const originalPriceFormatted = getFormattedPrice(originalPrice, currency);
+            
+            const images = product.images || [product.thumbnail];
+            const mainImage = images[0] || '/assets/images/placeholder.jpg';
+            
+            const rating = product.rating || 0;
+            const stars = renderStars(rating);
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-2xl); margin-bottom: var(--spacing-2xl);">
+                    <div class="product-gallery">
+                        <div style="width: 100%; padding-top: 100%; position: relative; background: var(--color-bg-secondary); border-radius: var(--radius-xl); overflow: hidden; margin-bottom: var(--spacing-md);">
+                            <img src="${escapeHtml(mainImage)}" alt="${escapeHtml(product.title)}" id="mainImage" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                        ${images.length > 1 ? `
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: var(--spacing-sm);">
+                                ${images.map((img, i) => `
+                                    <img src="${escapeHtml(img)}" alt="Thumbnail ${i + 1}" class="thumbnail" data-index="${i}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-md); cursor: pointer; border: 2px solid ${i === 0 ? 'var(--color-accent)' : 'var(--color-border)'};">
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="product-info">
+                        <p style="color: var(--color-text-muted); text-transform: uppercase; font-size: 0.875rem; letter-spacing: 0.5px; margin-bottom: var(--spacing-xs);">${escapeHtml(product.category || 'Gadgets')}</p>
+                        <h1 style="font-size: 2rem; margin-bottom: var(--spacing-md);">${escapeHtml(product.title)}</h1>
+                        
+                        <div style="display: flex; align-items: center; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                            <div class="product-stars">${stars}</div>
+                            <span style="color: var(--color-text-tertiary);">(${product.reviewCount || 0} reviews)</span>
+                        </div>
+                        
+                        <div style="margin-bottom: var(--spacing-lg);">
+                            <div style="display: flex; align-items: baseline; gap: var(--spacing-md); margin-bottom: var(--spacing-xs);">
+                                <span style="font-size: 2.5rem; font-weight: var(--font-weight-bold); color: var(--color-accent);">${currentPrice}</span>
+                                ${discount > 0 ? `
+                                    <span style="font-size: 1.25rem; color: var(--color-text-muted); text-decoration: line-through;">${originalPriceFormatted}</span>
+                                    <span style="padding: 4px var(--spacing-sm); background: var(--color-error-light); color: var(--color-error); font-weight: var(--font-weight-semibold); border-radius: var(--radius-sm);">-${discount}%</span>
+                                ` : ''}
+                            </div>
+                            <p style="font-size: 0.875rem; color: var(--color-text-muted);">Price shown is an estimate in ${currency}. Final price on AliExpress may vary.</p>
+                        </div>
+                        
+                        ${product.description ? `
+                            <div style="margin-bottom: var(--spacing-lg);">
+                                <p style="color: var(--color-text-secondary); line-height: 1.7;">${escapeHtml(product.description)}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
+                            ${product.affiliateUrl ? `
+                                <a href="${escapeHtml(product.affiliateUrl)}" class="btn btn-primary" target="_blank" rel="noopener noreferrer" style="flex: 1;">
+                                    Shop on AliExpress
+                                </a>
+                            ` : `
+                                <button class="btn btn-outline" disabled style="flex: 1;">Unavailable</button>
+                            `}
+                            <button class="btn btn-outline" id="favoriteBtn" data-product-id="${product.id}" style="width: 56px; padding: 0;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        ${product.specifications && Object.keys(product.specifications).length > 0 ? `
+                            <div style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-lg);">
+                                <h3 style="margin-bottom: var(--spacing-md);">Specifications</h3>
+                                <dl style="display: grid; grid-template-columns: auto 1fr; gap: var(--spacing-sm) var(--spacing-lg);">
+                                    ${Object.entries(product.specifications).map(([key, value]) => `
+                                        <dt style="font-weight: var(--font-weight-semibold); color: var(--color-text-tertiary);">${escapeHtml(key)}:</dt>
+                                        <dd style="color: var(--color-text-secondary);">${escapeHtml(String(value))}</dd>
+                                    `).join('')}
+                                </dl>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            setupProductHandlers(product, images);
+        }
+        
+        function renderStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+            
+            let html = '';
+            
+            for (let i = 0; i < fullStars; i++) {
+                html += `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+            }
+            
+            if (hasHalfStar) {
+                html += `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" style="opacity: 0.5;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+            }
+            
+            for (let i = 0; i < emptyStars; i++) {
+                html += `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.3;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+            }
+            
+            return html;
+        }
+        
+        function setupProductHandlers(product, images) {
+            const favoriteBtn = document.getElementById('favoriteBtn');
+            if (favoriteBtn) {
+                favoriteBtn.addEventListener('click', async () => {
+                    const newState = await toggleFavorite(product.id);
+                    updateFavoriteButton(newState);
+                });
+            }
+            
+            const thumbnails = document.querySelectorAll('.thumbnail');
+            const mainImage = document.getElementById('mainImage');
+            
+            thumbnails.forEach((thumb, index) => {
+                thumb.addEventListener('click', () => {
+                    if (mainImage) {
+                        mainImage.src = images[index];
+                    }
+                    
+                    thumbnails.forEach(t => t.style.borderColor = 'var(--color-border)');
+                    thumb.style.borderColor = 'var(--color-accent)';
+                });
+            });
+        }
+        
+        function updateFavoriteButton(isFavorited) {
+            const btn = document.getElementById('favoriteBtn');
+            if (!btn) return;
+            
+            const svg = btn.querySelector('svg');
+            if (isFavorited) {
+                btn.classList.add('btn-primary');
+                btn.classList.remove('btn-outline');
+                if (svg) svg.setAttribute('fill', 'currentColor');
+            } else {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline');
+                if (svg) svg.setAttribute('fill', 'none');
+            }
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeProductPage);
+        } else {
+            initializeProductPage();
+        }
+    </script>
+</body>
+</html>
