@@ -1,23 +1,17 @@
-/* =========================================
+/* ================================
    THE GADGET HUB STORE
    Categories Module
-   ========================================= */
+   ================================ */
 
 /**
- * Categories module.
+ * Categories Module
  *
- * Responsibilities:
- * - Load categories from Firestore
- * - Load a single category by ID or slug
- * - Render homepage category cards
- * - Render all-categories page
- * - Resolve category pages from URL parameters
- * - Load and render products belonging to a category
- *
- * NOTE:
- * app.js is the single page orchestrator.
- * This module does not automatically initialize
- * itself when imported.
+ * Handles:
+ * - Loading categories from Firestore
+ * - Rendering category cards
+ * - Category navigation
+ * - Product count per category
+ * - Category filtering
  */
 
 import {
@@ -39,705 +33,164 @@ import {
   escapeHtml
 } from './ui.js';
 
-import {
-  loadProductsByCategory,
-  renderProductsGrid
-} from './products.js';
+import { loadProductsByCategory } from './products.js';
 
-/* =========================================
-   CONSTANTS
-   ========================================= */
+/* ================================
+   CATEGORY LOADING
+   ================================ */
 
-const CATEGORIES_COLLECTION = 'categories';
-
-const DEFAULT_CATEGORY_LIMIT = 100;
-
-const CATEGORY_PRODUCT_LIMIT = 100;
-
-/* =========================================
-   DEFAULT CATEGORIES
-   ========================================= */
-
-const DEFAULT_CATEGORIES = [
-  {
-    id: 'smart-gadgets',
-    name: 'Smart Gadgets',
-    slug: 'smart-gadgets',
-    description:
-      'Discover smart gadgets and useful technology for everyday life.',
-    icon: 'smart-gadgets',
-    order: 1,
-    status: 'Active',
-    featured: true
-  },
-  {
-    id: 'mobile-phones',
-    name: 'Mobile Phones',
-    slug: 'mobile-phones',
-    description:
-      'Discover the latest mobile phones with powerful performance, stunning displays, advanced cameras, long-lasting batteries, and modern features.',
-    icon: 'smartphone',
-    order: 2,
-    status: 'Active',
-    featured: true
-  },
-  {
-    id: 'gaming',
-    name: 'Gaming',
-    slug: 'gaming',
-    description:
-      'Gaming devices, accessories and technology for better gaming experiences.',
-    icon: 'gaming',
-    order: 3,
-    status: 'Active',
-    featured: true
-  },
-  {
-    id: 'home',
-    name: 'Home Technology',
-    slug: 'home',
-    description:
-      'Useful technology and smart devices for your home.',
-    icon: 'home',
-    order: 4,
-    status: 'Active',
-    featured: true
-  },
-  {
-    id: 'audio',
-    name: 'Audio',
-    slug: 'audio',
-    description:
-      'Headphones, earbuds, speakers and other audio gadgets.',
-    icon: 'audio',
-    order: 5,
-    status: 'Active',
-    featured: true
-  },
-  {
-    id: 'wearables',
-    name: 'Wearables',
-    slug: 'wearables',
-    description:
-      'Smartwatches, fitness trackers and wearable technology.',
-    icon: 'wearables',
-    order: 6,
-    status: 'Active',
-    featured: true
-  },
-  {
-    id: 'computers',
-    name: 'Computers',
-    slug: 'computers',
-    description:
-      'Computers, laptops, accessories and productivity technology.',
-    icon: 'computer',
-    order: 7,
-    status: 'Active',
-    featured: false
-  },
-  {
-    id: 'car-tech',
-    name: 'Car Technology',
-    slug: 'car-tech',
-    description:
-      'Useful gadgets and technology for cars and travel.',
-    icon: 'car',
-    order: 8,
-    status: 'Active',
-    featured: false
-  }
-];
-
-/* =========================================
-   INTERNAL STATE
-   ========================================= */
-
-let categoriesCache = null;
-
-let categoriesLoadingPromise = null;
-
-/* =========================================
-   CATEGORY HELPERS
-   ========================================= */
-
-function normalizeCategory(rawCategory, id = '') {
-  if (!rawCategory || typeof rawCategory !== 'object') {
-    return null;
+export async function loadCategories() {
+  if (!isFirebaseInitialized()) {
+    throw new Error('Firebase not initialized');
   }
 
-  const normalizedId =
-    String(
-      rawCategory.id ||
-      id ||
-      ''
-    ).trim();
+  try {
+    const categoriesCollection =
+      collection(db, 'categories');
 
-  const name =
-    String(
-      rawCategory.name ||
-      rawCategory.title ||
-      ''
-    ).trim();
+    const querySnapshot =
+      await getDocs(categoriesCollection);
 
-  const slug =
-    String(
-      rawCategory.slug ||
-      createSlug(name) ||
-      ''
-    )
-      .trim()
-      .toLowerCase();
+    const categories = [];
 
-  if (!name && !normalizedId && !slug) {
-    return null;
-  }
+    querySnapshot.forEach((categoryDoc) => {
+      categories.push({
+        id: categoryDoc.id,
+        ...categoryDoc.data()
+      });
+    });
 
-  return {
-    id: normalizedId,
-    name: name || normalizedId || slug,
-    slug,
-    description:
-      String(
-        rawCategory.description ||
-        ''
-      ).trim(),
+    categories.sort((a, b) => {
+      const orderA =
+        a.order !== undefined
+          ? Number(a.order)
+          : Number.POSITIVE_INFINITY;
 
-    icon:
-      String(
-        rawCategory.icon ||
-        rawCategory.iconName ||
-        'category'
-      ).trim(),
+      const orderB =
+        b.order !== undefined
+          ? Number(b.order)
+          : Number.POSITIVE_INFINITY;
 
-    image:
-      String(
-        rawCategory.image ||
-        rawCategory.imageUrl ||
-        ''
-      ).trim(),
-
-    imageUrl:
-      String(
-        rawCategory.imageUrl ||
-        rawCategory.image ||
-        ''
-      ).trim(),
-
-    thumbnail:
-      String(
-        rawCategory.thumbnail ||
-        rawCategory.thumbnailUrl ||
-        ''
-      ).trim(),
-
-    thumbnailUrl:
-      String(
-        rawCategory.thumbnailUrl ||
-        rawCategory.thumbnail ||
-        ''
-      ).trim(),
-
-    order:
-      normalizeOrder(
-        rawCategory.order
-      ),
-
-    status:
-      normalizeStatus(
-        rawCategory.status
-      ),
-
-    featured:
-      Boolean(
-        rawCategory.featured
-      )
-  };
-}
-
-function normalizeOrder(value) {
-  const numeric =
-    Number(value);
-
-  if (
-    Number.isFinite(numeric)
-  ) {
-    return numeric;
-  }
-
-  return 999999;
-}
-
-function normalizeStatus(value) {
-  if (
-    value === undefined ||
-    value === null
-  ) {
-    return 'Active';
-  }
-
-  const status =
-    String(value)
-      .trim()
-      .toLowerCase();
-
-  if (
-    status === 'active' ||
-    status === 'enabled' ||
-    status === 'true'
-  ) {
-    return 'Active';
-  }
-
-  if (
-    status === 'inactive' ||
-    status === 'disabled' ||
-    status === 'false'
-  ) {
-    return 'Inactive';
-  }
-
-  return String(value).trim();
-}
-
-function isCategoryActive(category) {
-  if (!category) {
-    return false;
-  }
-
-  const status =
-    String(
-      category.status || 'Active'
-    )
-      .trim()
-      .toLowerCase();
-
-  return (
-    status === 'active' ||
-    status === 'enabled' ||
-    status === 'true'
-  );
-}
-
-function createSlug(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .replace(
-      /[^\w\s-]/g,
-      ''
-    )
-    .replace(
-      /\s+/g,
-      '-'
-    )
-    .replace(
-      /-+/g,
-      '-'
-    )
-    .replace(
-      /^-|-$/g,
-      ''
-    );
-}
-
-/* =========================================
-   LOAD ALL CATEGORIES
-   ========================================= */
-
-export async function loadCategories(
-  options = {}
-) {
-  const {
-    includeInactive = false,
-    forceRefresh = false,
-    limitCount = DEFAULT_CATEGORY_LIMIT
-  } = options;
-
-  if (
-    !forceRefresh &&
-    categoriesCache
-  ) {
-    return filterAndSortCategories(
-      categoriesCache,
-      includeInactive
-    );
-  }
-
-  if (
-    categoriesLoadingPromise &&
-    !forceRefresh
-  ) {
-    const categories =
-      await categoriesLoadingPromise;
-
-    return filterAndSortCategories(
-      categories,
-      includeInactive
-    );
-  }
-
-  if (
-    !isFirebaseInitialized()
-  ) {
-    const fallback =
-      DEFAULT_CATEGORIES.map(
-        (category) =>
-          normalizeCategory(
-            category,
-            category.id
-          )
-      ).filter(Boolean);
-
-    categoriesCache =
-      fallback;
-
-    return filterAndSortCategories(
-      fallback,
-      includeInactive
-    );
-  }
-
-  categoriesLoadingPromise =
-    (async () => {
-      try {
-        const categoriesRef =
-          collection(
-            db,
-            CATEGORIES_COLLECTION
-          );
-
-        let snapshot;
-
-        /*
-         * We intentionally load the collection
-         * without an orderBy query.
-         *
-         * This avoids requiring a Firestore
-         * index just to display categories.
-         * Sorting is handled safely in JavaScript.
-         */
-        if (
-          Number.isFinite(
-            Number(limitCount)
-          ) &&
-          Number(limitCount) > 0
-        ) {
-          const categoriesQuery =
-            query(
-              categoriesRef,
-              limit(
-                Number(limitCount)
-              )
-            );
-
-          snapshot =
-            await getDocs(
-              categoriesQuery
-            );
-        } else {
-          snapshot =
-            await getDocs(
-              categoriesRef
-            );
-        }
-
-        const categories =
-          snapshot.docs
-            .map((categoryDoc) =>
-              normalizeCategory(
-                categoryDoc.data(),
-                categoryDoc.id
-              )
-            )
-            .filter(Boolean);
-
-        categoriesCache =
-          categories;
-
-        return categories;
-      } catch (error) {
-        console.error(
-          'Failed to load categories from Firebase:',
-          error
-        );
-
-        /*
-         * If Firebase fails, use the safe defaults
-         * instead of leaving the page permanently
-         * stuck on a loading state.
-         */
-        const fallback =
-          DEFAULT_CATEGORIES
-            .map((category) =>
-              normalizeCategory(
-                category,
-                category.id
-              )
-            )
-            .filter(Boolean);
-
-        categoriesCache =
-          fallback;
-
-        return fallback;
-      } finally {
-        categoriesLoadingPromise =
-          null;
-      }
-    })();
-
-  const categories =
-    await categoriesLoadingPromise;
-
-  return filterAndSortCategories(
-    categories,
-    includeInactive
-  );
-}
-
-function filterAndSortCategories(
-  categories,
-  includeInactive
-) {
-  const safeCategories =
-    Array.isArray(categories)
-      ? categories
-      : [];
-
-  const filtered =
-    includeInactive
-      ? safeCategories
-      : safeCategories.filter(
-          isCategoryActive
-        );
-
-  return [...filtered].sort(
-    (a, b) => {
-      const orderDifference =
-        Number(a.order || 999999) -
-        Number(b.order || 999999);
-
-      if (
-        orderDifference !== 0
-      ) {
-        return orderDifference;
+      if (orderA !== orderB) {
+        return orderA - orderB;
       }
 
-      return String(
-        a.name || ''
-      ).localeCompare(
-        String(
-          b.name || ''
-        )
-      );
-    }
-  );
-}
+      return String(a.name || '')
+        .localeCompare(
+          String(b.name || '')
+        );
+    });
 
-/* =========================================
-   LOAD CATEGORY BY ID
-   ========================================= */
+    console.log(
+      `✅ Loaded ${categories.length} categories`
+    );
+
+    return categories;
+  } catch (error) {
+    console.error(
+      'Error loading categories:',
+      error
+    );
+
+    throw error;
+  }
+}
 
 export async function loadCategoryById(
   categoryId
 ) {
-  const id =
-    String(
-      categoryId || ''
-    ).trim();
-
-  if (!id) {
-    return null;
+  if (!isFirebaseInitialized()) {
+    throw new Error('Firebase not initialized');
   }
 
-  if (
-    categoriesCache
-  ) {
-    const cached =
-      categoriesCache.find(
-        (category) =>
-          category.id === id
-      );
-
-    if (cached) {
-      return cached;
-    }
-  }
-
-  if (
-    !isFirebaseInitialized()
-  ) {
-    return (
-      DEFAULT_CATEGORIES.find(
-        (category) =>
-          category.id === id
-      ) || null
+  if (!categoryId) {
+    throw new Error(
+      'Category ID is required'
     );
   }
 
   try {
-    const categoryRef =
-      doc(
-        db,
-        CATEGORIES_COLLECTION,
-        id
-      );
-
-    const snapshot =
+    const categoryDoc =
       await getDoc(
-        categoryRef
+        doc(
+          db,
+          'categories',
+          categoryId
+        )
       );
 
-    if (!snapshot.exists()) {
-      return null;
+    if (!categoryDoc.exists()) {
+      throw new Error(
+        'Category not found'
+      );
     }
 
-    return normalizeCategory(
-      snapshot.data(),
-      snapshot.id
-    );
+    return {
+      id: categoryDoc.id,
+      ...categoryDoc.data()
+    };
   } catch (error) {
     console.error(
-      `Failed to load category by ID "${id}":`,
+      'Error loading category:',
       error
     );
 
-    return null;
+    throw error;
   }
 }
-
-/* =========================================
-   LOAD CATEGORY BY SLUG
-   ========================================= */
 
 export async function loadCategoryBySlug(
   slug
 ) {
-  const normalizedSlug =
-    String(
-      slug || ''
-    )
-      .trim()
-      .toLowerCase();
+  if (!isFirebaseInitialized()) {
+    throw new Error('Firebase not initialized');
+  }
 
-  if (!normalizedSlug) {
+  if (!slug) {
     return null;
   }
 
-  if (
-    categoriesCache
-  ) {
-    const cached =
-      categoriesCache.find(
-        (category) =>
-          String(
-            category.slug || ''
-          ).toLowerCase() ===
-          normalizedSlug
-      );
-
-    if (cached) {
-      return cached;
-    }
-  }
-
-  if (
-    !isFirebaseInitialized()
-  ) {
-    return (
-      DEFAULT_CATEGORIES.find(
-        (category) =>
-          String(
-            category.slug || ''
-          ).toLowerCase() ===
-          normalizedSlug
-      ) || null
-    );
-  }
-
   try {
-    const categoriesRef =
-      collection(
-        db,
-        CATEGORIES_COLLECTION
-      );
+    const categoriesCollection =
+      collection(db, 'categories');
 
-    const categoryQuery =
-      query(
-        categoriesRef,
-        where(
-          'slug',
-          '==',
-          normalizedSlug
-        ),
-        limit(1)
-      );
+    const q = query(
+      categoriesCollection,
+      where('slug', '==', slug),
+      limit(1)
+    );
 
-    const snapshot =
-      await getDocs(
-        categoryQuery
-      );
+    const querySnapshot =
+      await getDocs(q);
 
-    if (
-      snapshot.empty
-    ) {
+    if (querySnapshot.empty) {
       return null;
     }
 
     const categoryDoc =
-      snapshot.docs[0];
+      querySnapshot.docs[0];
 
-    return normalizeCategory(
-      categoryDoc.data(),
-      categoryDoc.id
-    );
+    return {
+      id: categoryDoc.id,
+      ...categoryDoc.data()
+    };
   } catch (error) {
     console.error(
-      `Failed to load category by slug "${normalizedSlug}":`,
+      'Error loading category by slug:',
       error
     );
 
-    /*
-     * If the slug query fails for any reason,
-     * try the local cache/fallback collection.
-     */
-    try {
-      const categories =
-        await loadCategories({
-          includeInactive: true
-        });
-
-      return (
-        categories.find(
-          (category) =>
-            String(
-              category.slug || ''
-            ).toLowerCase() ===
-            normalizedSlug
-        ) || null
-      );
-    } catch (fallbackError) {
-      console.error(
-        'Category slug fallback failed:',
-        fallbackError
-      );
-
-      return null;
-    }
+    throw error;
   }
 }
 
-/* =========================================
-   GET CATEGORY PRODUCT COUNT
-   ========================================= */
-
 export async function getCategoryProductCount(
-  categoryId,
-  categorySlug = '',
-  categoryName = ''
+  categoryId
 ) {
-  if (!categoryId) {
+  if (
+    !isFirebaseInitialized() ||
+    !categoryId
+  ) {
     return 0;
   }
 
@@ -745,17 +198,13 @@ export async function getCategoryProductCount(
     const products =
       await loadProductsByCategory(
         categoryId,
-        1000,
-        categorySlug,
-        categoryName
+        1000
       );
 
-    return Array.isArray(products)
-      ? products.length
-      : 0;
+    return products.length;
   } catch (error) {
-    console.warn(
-      `Unable to count products for category "${categoryId}":`,
+    console.error(
+      'Error getting category product count:',
       error
     );
 
@@ -763,339 +212,464 @@ export async function getCategoryProductCount(
   }
 }
 
-/* =========================================
-   CATEGORY CARD
-   ========================================= */
+/* ================================
+   CATEGORY FALLBACK DATA
+   ================================ */
+
+function getDefaultCategories() {
+  return [
+    {
+      id: 'smart-gadgets',
+      name: 'Smart Gadgets',
+      slug: 'smart-gadgets',
+      description:
+        'Innovative smart devices for modern living',
+      icon: 'smart-gadgets',
+      productCount: 0
+    },
+    {
+      id: 'mobile-accessories',
+      name: 'Mobile Accessories',
+      slug: 'mobile-accessories',
+      description:
+        'Essential accessories for your mobile devices',
+      icon: 'mobile',
+      productCount: 0
+    },
+    {
+      id: 'gaming',
+      name: 'Gaming',
+      slug: 'gaming',
+      description:
+        'Gaming gear and accessories',
+      icon: 'gaming',
+      productCount: 0
+    },
+    {
+      id: 'smart-home',
+      name: 'Smart Home',
+      slug: 'smart-home',
+      description:
+        'Connected devices for your smart home',
+      icon: 'home',
+      productCount: 0
+    },
+    {
+      id: 'audio',
+      name: 'Audio',
+      slug: 'audio',
+      description:
+        'Headphones, speakers, and audio equipment',
+      icon: 'audio',
+      productCount: 0
+    },
+    {
+      id: 'wearables',
+      name: 'Wearables',
+      slug: 'wearables',
+      description:
+        'Smartwatches and fitness trackers',
+      icon: 'wearables',
+      productCount: 0
+    },
+    {
+      id: 'computer-accessories',
+      name: 'Computer Accessories',
+      slug: 'computer-accessories',
+      description:
+        'Keyboards, mice, and PC peripherals',
+      icon: 'computer',
+      productCount: 0
+    },
+    {
+      id: 'car-gadgets',
+      name: 'Car Gadgets',
+      slug: 'car-gadgets',
+      description:
+        'Tech accessories for your vehicle',
+      icon: 'car',
+      productCount: 0
+    }
+  ];
+}
+
+/* ================================
+   CATEGORY RENDERING
+   ================================ */
 
 export function renderCategoryCard(
   category
 ) {
-  const safeCategory =
-    normalizeCategory(
-      category,
-      category?.id || ''
-    );
-
-  if (!safeCategory) {
-    return '';
-  }
-
-  const categoryId =
-    escapeHtml(
-      safeCategory.id
-    );
-
-  const categoryName =
-    escapeHtml(
-      safeCategory.name
-    );
-
-  const categorySlug =
-    escapeHtml(
-      safeCategory.slug
-    );
-
-  const description =
-    escapeHtml(
-      safeCategory.description
-    );
-
-  const icon =
-    renderCategoryIcon(
-      safeCategory.icon
-    );
-
-  const image =
-    safeCategory.imageUrl ||
-    safeCategory.image ||
-    safeCategory.thumbnailUrl ||
-    safeCategory.thumbnail ||
+  const imageUrl =
+    category.image ||
+    category.thumbnail ||
     '';
 
-  const safeImage =
-    escapeHtml(
-      image
-    );
+  const iconName =
+    category.icon || 'category';
 
-  const href =
-    safeCategory.slug
+  const productCount =
+    Number(category.productCount || 0);
+
+  const categoryId =
+    String(category.id || '');
+
+  const categoryName =
+    category.name ||
+    'Untitled Category';
+
+  const categoryLink =
+    category.slug
       ? `pages/categories.html?category=${encodeURIComponent(
-          safeCategory.slug
+          category.slug
         )}`
       : `pages/categories.html?id=${encodeURIComponent(
-          safeCategory.id
+          categoryId
         )}`;
 
-  const safeHref =
-    escapeHtml(
-      href
-    );
-
-  const imageMarkup =
-    safeImage
-      ? `
-        <img
-          src="${safeImage}"
-          alt="${categoryName}"
-          class="category-card-image"
-          loading="lazy"
-          decoding="async"
-          onerror="this.style.display='none'; this.nextElementSibling.hidden=false;"
-        >
-        <div
-          class="category-card-icon"
-          hidden
-          aria-hidden="true"
-        >
-          ${icon}
-        </div>
-      `
-      : `
-        <div
-          class="category-card-icon"
-          aria-hidden="true"
-        >
-          ${icon}
-        </div>
-      `;
-
   return `
-    <article
+    <a
+      href="${escapeHtml(categoryLink)}"
       class="category-card"
-      data-category-id="${categoryId}"
-      data-category-slug="${categorySlug}"
+      data-category-id="${escapeHtml(categoryId)}"
     >
-      <a
-        href="${safeHref}"
-        class="category-card-link"
-        aria-label="Browse ${categoryName}"
-      >
-        <div class="category-card-media">
-          ${imageMarkup}
-        </div>
+      <div class="category-card-content">
 
-        <div class="category-card-content">
-          <h3 class="category-card-title">
-            ${categoryName}
-          </h3>
-
+        <div class="category-icon">
           ${
-            description
+            imageUrl
               ? `
-                <p class="category-card-description">
-                  ${description}
-                </p>
+                <img
+                  src="${escapeHtml(
+                    String(imageUrl)
+                  )}"
+                  alt="${escapeHtml(
+                    categoryName
+                  )}"
+                  style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: var(--radius-xl);
+                  "
+                >
               `
-              : ''
+              : renderCategoryIcon(
+                  iconName
+                )
           }
-
-          <span class="category-card-action">
-            Explore
-            <span aria-hidden="true">→</span>
-          </span>
         </div>
-      </a>
-    </article>
+
+        <h3 class="category-name">
+          ${escapeHtml(categoryName)}
+        </h3>
+
+        <p class="category-count">
+          ${productCount}
+          ${
+            productCount === 1
+              ? 'Product'
+              : 'Products'
+          }
+        </p>
+
+      </div>
+    </a>
   `;
 }
-
-/* =========================================
-   CATEGORY ICONS
-   ========================================= */
 
 function renderCategoryIcon(
   iconName
 ) {
-  const icon =
-    String(
-      iconName || 'category'
-    )
-      .trim()
-      .toLowerCase();
+  const icons = {
+    'smart-gadgets': `
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <rect
+          x="2"
+          y="2"
+          width="20"
+          height="8"
+          rx="2"
+          ry="2"
+        />
+        <rect
+          x="2"
+          y="14"
+          width="20"
+          height="8"
+          rx="2"
+          ry="2"
+        />
+        <line
+          x1="6"
+          y1="6"
+          x2="6.01"
+          y2="6"
+        />
+        <line
+          x1="6"
+          y1="18"
+          x2="6.01"
+          y2="18"
+        />
+      </svg>
+    `,
 
-  switch (icon) {
-    case 'smart-gadgets':
-    case 'smart':
-    case 'smart-gadget':
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          aria-hidden="true"
-        >
-          <rect x="3" y="3" width="7" height="7" rx="1"/>
-          <rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <rect x="14" y="14" width="7" height="7" rx="1"/>
-        </svg>
-      `;
+    mobile: `
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <rect
+          x="5"
+          y="2"
+          width="14"
+          height="20"
+          rx="2"
+          ry="2"
+        />
+        <line
+          x1="12"
+          y1="18"
+          x2="12.01"
+          y2="18"
+        />
+      </svg>
+    `,
 
-    case 'smartphone':
-    case 'mobile':
-    case 'mobile-phone':
-    case 'phones':
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          aria-hidden="true"
-        >
-          <rect x="6" y="2" width="12" height="20" rx="2"/>
-          <line x1="10" y1="5" x2="14" y2="5"/>
-          <line x1="11" y1="18" x2="13" y2="18"/>
-        </svg>
-      `;
+    gaming: `
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <line
+          x1="6"
+          y1="12"
+          x2="10"
+          y2="12"
+        />
+        <line
+          x1="8"
+          y1="10"
+          x2="8"
+          y2="14"
+        />
+        <line
+          x1="15"
+          y1="13"
+          x2="15.01"
+          y2="13"
+        />
+        <line
+          x1="18"
+          y1="11"
+          x2="18.01"
+          y2="11"
+        />
+        <rect
+          x="2"
+          y="6"
+          width="20"
+          height="12"
+          rx="2"
+        />
+      </svg>
+    `,
 
-    case 'gaming':
-    case 'game':
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          aria-hidden="true"
-        >
-          <path d="M6.5 8.5h11a4 4 0 0 1 3.8 5.2l-1.2 4a2 2 0 0 1-3.5.7l-2.1-2.4H9.5l-2.1 2.4a2 2 0 0 1-3.5-.7l-1.2-4A4 4 0 0 1 6.5 8.5Z"/>
-          <path d="M8 11v4"/>
-          <path d="M6 13h4"/>
-          <circle cx="16" cy="12" r=".8"/>
-          <circle cx="18" cy="14" r=".8"/>
-        </svg>
-      `;
+    home: `
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path
+          d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+        />
+        <polyline
+          points="9 22 9 12 15 12 15 22"
+        />
+      </svg>
+    `,
 
-    case 'home':
-    case 'home-tech':
-    case 'home-technology':
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          aria-hidden="true"
-        >
-          <path d="M3 10.5 12 3l9 7.5"/>
-          <path d="M5 9.5V21h14V9.5"/>
-          <path d="M9 21v-6h6v6"/>
-        </svg>
-      `;
+    audio: `
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path
+          d="M3 18v-6a9 9 0 0 1 18 0v6"
+        />
+        <path
+          d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"
+        />
+      </svg>
+    `,
 
-    case 'audio':
-    case 'headphones':
-    case 'earbuds':
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          aria-hidden="true"
-        >
-          <path d="M4 13v-1a8 8 0 0 1 16 0v1"/>
-          <path d="M4 13h3v6H5a1 1 0 0 1-1-1v-5Z"/>
-          <path d="M20 13h-3v6h2a1 1 0 0 0 1-1v-5Z"/>
-        </svg>
-      `;
+    wearables: `
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <circle
+          cx="12"
+          cy="12"
+          r="7"
+        />
+        <polyline
+          points="12 9 12 12 13.5 13.5"
+        />
+        <path
+          d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"
+        />
+      </svg>
+    `,
 
-    case 'wearables':
-    case 'watch':
-    case 'smartwatch':
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          aria-hidden="true"
-        >
-          <path d="M8 3h8l1 4H7l1-4Z"/>
-          <rect x="6" y="7" width="12" height="10" rx="2"/>
-          <path d="m8 21-1-4h10l-1 4H8Z"/>
-          <path d="M10 10h4"/>
-          <path d="M12 10v4"/>
-        </svg>
-      `;
+    computer: `
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <rect
+          x="2"
+          y="3"
+          width="20"
+          height="14"
+          rx="2"
+          ry="2"
+        />
+        <line
+          x1="8"
+          y1="21"
+          x2="16"
+          y2="21"
+        />
+        <line
+          x1="12"
+          y1="17"
+          x2="12"
+          y2="21"
+        />
+      </svg>
+    `,
 
-    case 'computer':
-    case 'computers':
-    case 'laptop':
-    case 'laptops':
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          aria-hidden="true"
-        >
-          <rect x="5" y="3" width="14" height="11" rx="1.5"/>
-          <path d="M3 18h18"/>
-          <path d="M8 18l1 2h6l1-2"/>
-        </svg>
-      `;
+    car: `
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path
+          d="M5 11l1.5-4.5h11L19 11m-14 0v7a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-7"
+        />
+        <circle
+          cx="8"
+          cy="15"
+          r="1"
+        />
+        <circle
+          cx="16"
+          cy="15"
+          r="1"
+        />
+      </svg>
+    `,
 
-    case 'car':
-    case 'car-tech':
-    case 'automotive':
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          aria-hidden="true"
-        >
-          <path d="m5 11 2-5h10l2 5"/>
-          <path d="M4 11h16v7H4z"/>
-          <path d="M7 18v2"/>
-          <path d="M17 18v2"/>
-          <circle cx="7" cy="15" r="1"/>
-          <circle cx="17" cy="15" r="1"/>
-        </svg>
-      `;
+    category: `
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <rect
+          x="3"
+          y="3"
+          width="7"
+          height="7"
+        />
+        <rect
+          x="14"
+          y="3"
+          width="7"
+          height="7"
+        />
+        <rect
+          x="14"
+          y="14"
+          width="7"
+          height="7"
+        />
+        <rect
+          x="3"
+          y="14"
+          width="7"
+          height="7"
+        />
+      </svg>
+    `
+  };
 
-    default:
-      return `
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          aria-hidden="true"
-        >
-          <circle cx="12" cy="12" r="9"/>
-          <path d="M12 8v8"/>
-          <path d="M8 12h8"/>
-        </svg>
-      `;
-  }
+  return (
+    icons[iconName] ||
+    icons.category
+  );
 }
-
-/* =========================================
-   RENDER CATEGORIES GRID
-   ========================================= */
 
 export async function renderCategoriesGrid(
   categories,
   containerId
 ) {
   const container =
-    typeof containerId === 'string'
-      ? document.getElementById(
-          containerId
-        )
-      : containerId;
+    document.getElementById(containerId);
 
   if (!container) {
     console.warn(
-      `Category container not found: ${containerId}`
+      `Container ${containerId} not found`
     );
-
     return;
   }
 
@@ -1105,263 +679,245 @@ export async function renderCategoriesGrid(
   ) {
     showEmptyState(
       container,
-      'No categories are available right now.'
+      'No categories found'
     );
-
     return;
   }
 
   try {
-    /*
-     * Product counts are useful when the UI has
-     * a count element, but they must never prevent
-     * category cards from rendering.
-     */
-    const cards =
+    const categoriesWithCounts =
       await Promise.all(
         categories.map(
           async (category) => {
-            try {
-              const count =
-                await getCategoryProductCount(
-                  category.id,
-                  category.slug,
-                  category.name
-                );
+            const productCount =
+              await getCategoryProductCount(
+                category.id
+              );
 
-              return {
-                category,
-                count
-              };
-            } catch (error) {
-              return {
-                category,
-                count: 0
-              };
-            }
+            return {
+              ...category,
+              productCount
+            };
           }
         )
       );
 
-    container.innerHTML =
-      cards
-        .map(
-          ({
-            category,
-            count
-          }) => {
-            const card =
-              renderCategoryCard(
-                category
-              );
-
-            if (!card) {
-              return '';
-            }
-
-            /*
-             * If the card markup contains a
-             * category-product-count element,
-             * populate it without changing the
-             * card's basic structure.
-             */
-            return card.replace(
-              '</article>',
-              `
-                <span
-                  class="category-product-count"
-                  data-category-product-count="${escapeHtml(
-                    category.id
-                  )}"
-                  hidden
-                >
-                  ${count}
-                </span>
-              </article>
-              `
-            );
-          }
+    const html =
+      categoriesWithCounts
+        .map((category) =>
+          renderCategoryCard(category)
         )
         .join('');
 
-    container
-      .classList
-      .add('categories-loaded');
+    container.innerHTML = html;
+
+    console.log(
+      `✅ Rendered ${categories.length} categories in ${containerId}`
+    );
   } catch (error) {
     console.error(
-      'Failed to render categories grid:',
+      'Error rendering category grid:',
       error
     );
 
     showError(
       container,
-      'Unable to display categories right now. Please try again.'
+      'Failed to load category information'
     );
   }
 }
 
-/* =========================================
-   HOMEPAGE CATEGORIES
-   ========================================= */
+/* ================================
+   HOMEPAGE INITIALIZATION
+   ================================ */
 
 export async function initializeHomepageCategories() {
-  const container =
+  console.log(
+    '🏠 Initializing homepage categories...'
+  );
+
+  const categoriesContainer =
     document.getElementById(
       'categoriesGrid'
     );
 
-  if (!container) {
+  if (!categoriesContainer) {
+    console.warn(
+      'Categories container not found on homepage'
+    );
     return;
   }
 
   showLoading(
-    container
+    categoriesContainer,
+    'Loading categories...'
   );
 
   try {
-    const categories =
-      await loadCategories({
-        includeInactive: false
-      });
-
-    const featuredCategories =
-      categories.filter(
-        (category) =>
-          category.featured === true
+    if (!isFirebaseInitialized()) {
+      showError(
+        categoriesContainer,
+        'Unable to load categories'
       );
 
-    /*
-     * If no category is explicitly marked
-     * featured, show all active categories.
-     */
-    const categoriesToRender =
-      featuredCategories.length > 0
-        ? featuredCategories
-        : categories;
+      console.warn(
+        'Cannot load categories - Firebase not initialized'
+      );
+
+      return;
+    }
+
+    const categories =
+      await loadCategories();
+
+    if (categories.length === 0) {
+      showEmptyState(
+        categoriesContainer,
+        'Categories not yet configured'
+      );
+
+      console.log(
+        'ℹ️ No categories found in Firestore - Admin should add categories'
+      );
+
+      return;
+    }
 
     await renderCategoriesGrid(
-      categoriesToRender,
-      container
+      categories,
+      'categoriesGrid'
     );
   } catch (error) {
     console.error(
-      'Homepage categories initialization failed:',
+      'Error initializing homepage categories:',
       error
     );
 
     showError(
-      container,
-      'Unable to load categories. Please refresh the page.'
+      categoriesContainer,
+      'Failed to load categories'
     );
+
+    return;
   }
+
+  console.log(
+    '✅ Homepage categories initialized'
+  );
 }
 
-/* =========================================
-   ALL CATEGORIES PAGE
-   ========================================= */
+/* ================================
+   CATEGORIES PAGE INITIALIZATION
+   ================================ */
 
 export async function initializeCategoriesPage() {
-  const container =
+  console.log(
+    '📂 Initializing categories page...'
+  );
+
+  const categoriesContainer =
     document.getElementById(
       'allCategoriesGrid'
     );
 
-  if (!container) {
+  if (!categoriesContainer) {
+    console.warn(
+      'All categories container not found'
+    );
     return;
   }
 
   showLoading(
-    container
+    categoriesContainer,
+    'Loading categories...'
   );
 
   try {
+    if (!isFirebaseInitialized()) {
+      showError(
+        categoriesContainer,
+        'Service unavailable'
+      );
+
+      return;
+    }
+
     const categories =
-      await loadCategories({
-        includeInactive: false
-      });
+      await loadCategories();
+
+    if (categories.length === 0) {
+      showEmptyState(
+        categoriesContainer,
+        'No categories available'
+      );
+
+      return;
+    }
 
     await renderCategoriesGrid(
       categories,
-      container
+      'allCategoriesGrid'
     );
   } catch (error) {
     console.error(
-      'Categories page initialization failed:',
+      'Error initializing categories page:',
       error
     );
 
     showError(
-      container,
-      'Unable to load categories. Please refresh the page.'
-    );
-  }
-}
-
-/* =========================================
-   CATEGORY PRODUCT PAGE
-   ========================================= */
-
-export async function loadCategoryProducts(
-  categoryId,
-  containerId,
-  categorySlug = '',
-  categoryName = ''
-) {
-  const container =
-    typeof containerId === 'string'
-      ? document.getElementById(
-          containerId
-        )
-      : containerId;
-
-  if (!container) {
-    console.warn(
-      `Category products container not found: ${containerId}`
+      categoriesContainer,
+      'Failed to load categories'
     );
 
     return;
   }
 
+  console.log(
+    '✅ Categories page initialized'
+  );
+}
+
+/* ================================
+   CATEGORY FILTERING
+   ================================ */
+
+export async function loadCategoryProducts(
+  categoryId,
+  containerId
+) {
+  const container =
+    document.getElementById(containerId);
+
+  if (!container) {
+    console.warn(
+      `Container ${containerId} not found`
+    );
+    return;
+  }
+
   showLoading(
-    container
+    container,
+    'Loading products...'
   );
 
   try {
+    if (!isFirebaseInitialized()) {
+      showError(
+        container,
+        'Service unavailable'
+      );
+
+      return;
+    }
+
     let category = null;
 
-    /*
-     * First try the Firestore document ID.
-     */
-    if (categoryId) {
+    try {
       category =
         await loadCategoryById(
           categoryId
         );
-    }
-
-    /*
-     * If no category was found by ID,
-     * try the slug.
-     */
-    if (
-      !category &&
-      categorySlug
-    ) {
-      category =
-        await loadCategoryBySlug(
-          categorySlug
-        );
-    }
-
-    /*
-     * Final fallback:
-     * try the URL's category value as an ID
-     * or slug.
-     */
-    if (
-      !category &&
-      categoryId
-    ) {
+    } catch (idError) {
       category =
         await loadCategoryBySlug(
           categoryId
@@ -1371,405 +927,291 @@ export async function loadCategoryProducts(
     if (!category) {
       showError(
         container,
-        'Category not found.'
+        'Category not found'
       );
 
       return;
     }
-
-    if (
-      !isCategoryActive(category)
-    ) {
-      showError(
-        container,
-        'This category is currently unavailable.'
-      );
-
-      return;
-    }
-
-    updateCategoryPageHeader(
-      category
-    );
 
     const products =
       await loadProductsByCategory(
-        category.id,
-        CATEGORY_PRODUCT_LIMIT,
-        category.slug,
-        category.name
+        category.id
       );
 
-    if (
-      !Array.isArray(products) ||
-      products.length === 0
-    ) {
+    if (products.length === 0) {
       showEmptyState(
         container,
-        `No products are available in ${category.name} yet.`
+        `No products in ${category.name} yet`
       );
 
       return;
     }
 
-    /*
-     * products.js already contains the complete
-     * product-card rendering logic.
-     */
-    renderProductsGrid(
-      products,
-      container
+    const {
+      renderProductsGrid
+    } = await import(
+      './products.js'
     );
 
-    container
-      .classList
-      .add('category-products-loaded');
+    renderProductsGrid(
+      products,
+      containerId
+    );
   } catch (error) {
     console.error(
-      'Failed to load category products:',
+      'Error loading category products:',
       error
     );
 
     showError(
       container,
-      'Unable to load products for this category. Please try again.'
+      'Failed to load products'
     );
   }
 }
 
-/* =========================================
-   CATEGORY URL RESOLUTION
-   ========================================= */
+/* ================================
+   CATEGORY NAVIGATION
+   ================================ */
 
-function getCategoryParametersFromUrl() {
-  const params =
+export function getCategoryFromUrl() {
+  const urlParams =
     new URLSearchParams(
       window.location.search
     );
 
-  const category =
-    String(
-      params.get('category') ||
-      ''
-    ).trim();
-
-  const id =
-    String(
-      params.get('id') ||
-      ''
-    ).trim();
-
-  return {
-    category,
-    id
-  };
+  return (
+    urlParams.get('category') ||
+    urlParams.get('id')
+  );
 }
 
-async function resolveCategoryFromUrl() {
-  const {
-    category,
-    id
-  } =
-    getCategoryParametersFromUrl();
-
-  /*
-   * Preferred format:
-   * ?category=mobile-phones
-   */
-  if (category) {
-    const bySlug =
-      await loadCategoryBySlug(
-        category
-      );
-
-    if (bySlug) {
-      return bySlug;
-    }
-
-    /*
-     * Some older links may use the category
-     * parameter as a document ID.
-     */
-    const byId =
-      await loadCategoryById(
-        category
-      );
-
-    if (byId) {
-      return byId;
-    }
-  }
-
-  /*
-   * Legacy/alternate format:
-   * ?id=DOCUMENT_ID
-   */
-  if (id) {
-    const byId =
-      await loadCategoryById(
-        id
-      );
-
-    if (byId) {
-      return byId;
-    }
-
-    const bySlug =
-      await loadCategoryBySlug(
-        id
-      );
-
-    if (bySlug) {
-      return bySlug;
-    }
-  }
-
-  return null;
-}
-
-/* =========================================
-   CATEGORY PAGE HEADER
-   ========================================= */
-
-function updateCategoryPageHeader(
-  category
+export function updateCategoryPageTitle(
+  categoryName
 ) {
-  if (!category) {
+  const safeCategoryName =
+    categoryName ||
+    'Categories';
+
+  const pageTitle =
+    document.querySelector('h1');
+
+  if (pageTitle) {
+    pageTitle.textContent =
+      safeCategoryName;
+  }
+
+  document.title =
+    `${safeCategoryName} - The Gadget Hub Store`;
+}
+
+/* ================================
+   CATEGORY BREADCRUMB
+   ================================ */
+
+export function renderCategoryBreadcrumb(
+  category,
+  containerId = 'breadcrumb'
+) {
+  const container =
+    document.getElementById(
+      containerId
+    );
+
+  if (!container) {
     return;
   }
 
-  const name =
-    String(
-      category.name || ''
-    ).trim();
-
-  const description =
-    String(
-      category.description || ''
-    ).trim();
-
-  const titleElements =
-    document.querySelectorAll(
-      '[data-category-title]'
+  const categoryName =
+    escapeHtml(
+      category?.name ||
+      'Category'
     );
 
-  titleElements.forEach(
-    (element) => {
-      element.textContent =
-        name;
-    }
-  );
+  container.innerHTML = `
+    <nav
+      aria-label="Breadcrumb"
+      style="
+        padding: var(--spacing-md) 0;
+        font-size: 0.875rem;
+      "
+    >
+      <ol
+        style="
+          display: flex;
+          gap: var(--spacing-xs);
+          list-style: none;
+          color: var(--color-text-tertiary);
+        "
+      >
+        <li>
+          <a
+            href="../index.html"
+            style="
+              color: var(--color-text-tertiary);
+              text-decoration: none;
+            "
+          >
+            Home
+          </a>
+        </li>
 
-  const descriptionElements =
-    document.querySelectorAll(
-      '[data-category-description]'
-    );
+        <li aria-hidden="true">/</li>
 
-  descriptionElements.forEach(
-    (element) => {
-      element.textContent =
-        description;
-    }
-  );
+        <li>
+          <a
+            href="categories.html"
+            style="
+              color: var(--color-text-tertiary);
+              text-decoration: none;
+            "
+          >
+            Categories
+          </a>
+        </li>
 
-  const breadcrumbElements =
-    document.querySelectorAll(
-      '[data-category-breadcrumb]'
-    );
+        <li aria-hidden="true">/</li>
 
-  breadcrumbElements.forEach(
-    (element) => {
-      element.textContent =
-        name;
-    }
-  );
-
-  /*
-   * Compatibility with common existing IDs.
-   */
-  const titleById =
-    document.getElementById(
-      'categoryTitle'
-    );
-
-  if (titleById) {
-    titleById.textContent =
-      name;
-  }
-
-  const descriptionById =
-    document.getElementById(
-      'categoryDescription'
-    );
-
-  if (descriptionById) {
-    descriptionById.textContent =
-      description;
-  }
-
-  const breadcrumbById =
-    document.getElementById(
-      'categoryBreadcrumb'
-    );
-
-  if (breadcrumbById) {
-    breadcrumbById.textContent =
-      name;
-  }
-
-  if (name) {
-    document.title =
-      `${name} | The Gadget Hub Store`;
-  }
+        <li
+          aria-current="page"
+          style="
+            color: var(--color-text-primary);
+            font-weight: var(--font-weight-semibold);
+          "
+        >
+          ${categoryName}
+        </li>
+      </ol>
+    </nav>
+  `;
 }
 
-/* =========================================
-   INITIALIZE CATEGORY PAGE
-   ========================================= */
+/* ================================
+   AUTO-INITIALIZATION
+   ================================ */
 
-export async function initializeCategoryPage() {
+/**
+ * Categories page keeps its own auto-initialization.
+ *
+ * Homepage initialization is intentionally NOT
+ * performed here because app.js is now the single
+ * homepage orchestrator.
+ */
+function autoInitialize() {
+  const path =
+    window.location.pathname;
+
+  const page =
+    path.substring(
+      path.lastIndexOf('/') + 1
+    ) || 'index.html';
+
   /*
-   * If this is the general categories page,
-   * render all categories.
-   *
-   * If a category parameter exists,
-   * render products for that category.
+   * Homepage:
+   * app.js handles initialization.
    */
-  const {
-    category,
-    id
-  } =
-    getCategoryParametersFromUrl();
-
-  const categoryProductsContainer =
-    document.getElementById(
-      'categoryProductsGrid'
-    );
-
-  const allCategoriesContainer =
-    document.getElementById(
-      'allCategoriesGrid'
-    );
-
-  const hasCategoryParameter =
-    Boolean(
-      category ||
-      id
-    );
-
   if (
-    hasCategoryParameter ||
-    categoryProductsContainer
+    page === 'index.html' ||
+    page === ''
   ) {
-    if (
-      !categoryProductsContainer
-    ) {
-      /*
-       * If a category URL was opened but
-       * the expected product grid does not
-       * exist in the HTML, do not silently fail.
-       */
-      console.error(
-        'Category product container #categoryProductsGrid was not found.'
-      );
+    return;
+  }
 
-      return;
-    }
+  if (page !== 'categories.html') {
+    return;
+  }
 
-    showLoading(
-      categoryProductsContainer
+  const categoryParam =
+    getCategoryFromUrl();
+
+  if (categoryParam) {
+    console.log(
+      `📂 Loading category: ${categoryParam}`
     );
 
-    try {
-      const resolvedCategory =
-        await resolveCategoryFromUrl();
+    (async () => {
+      try {
+        let category = null;
 
-      if (!resolvedCategory) {
-        showError(
-          categoryProductsContainer,
-          'The requested category could not be found.'
+        try {
+          category =
+            await loadCategoryById(
+              categoryParam
+            );
+        } catch (idError) {
+          category =
+            await loadCategoryBySlug(
+              categoryParam
+            );
+        }
+
+        if (!category) {
+          const container =
+            document.getElementById(
+              'categoryProductsGrid'
+            );
+
+          if (container) {
+            showError(
+              container,
+              'Category not found'
+            );
+          }
+
+          return;
+        }
+
+        updateCategoryPageTitle(
+          category.name
         );
 
-        return;
-      }
-
-      if (
-        !isCategoryActive(
-          resolvedCategory
-        )
-      ) {
-        showError(
-          categoryProductsContainer,
-          'This category is currently unavailable.'
+        renderCategoryBreadcrumb(
+          category
         );
 
-        return;
+        await loadCategoryProducts(
+          category.id,
+          'categoryProductsGrid'
+        );
+      } catch (error) {
+        console.error(
+          'Error loading category:',
+          error
+        );
+
+        const container =
+          document.getElementById(
+            'categoryProductsGrid'
+          );
+
+        if (container) {
+          showError(
+            container,
+            'Failed to load category'
+          );
+        }
       }
-
-      updateCategoryPageHeader(
-        resolvedCategory
-      );
-
-      await loadCategoryProducts(
-        resolvedCategory.id,
-        categoryProductsContainer,
-        resolvedCategory.slug,
-        resolvedCategory.name
-      );
-    } catch (error) {
-      console.error(
-        'Category page initialization failed:',
-        error
-      );
-
-      showError(
-        categoryProductsContainer,
-        'Unable to load this category. Please refresh the page.'
-      );
-    }
+    })();
 
     return;
   }
 
-  if (
-    allCategoriesContainer
-  ) {
-    await initializeCategoriesPage();
-  }
+  initializeCategoriesPage();
 }
 
-/* =========================================
-   CACHE CONTROL
-   ========================================= */
-
-export function clearCategoriesCache() {
-  categoriesCache =
-    null;
-
-  categoriesLoadingPromise =
-    null;
-}
-
-/* =========================================
-   PUBLIC HELPERS
-   ========================================= */
-
-export function getCachedCategories() {
-  return Array.isArray(
-    categoriesCache
-  )
-    ? [...categoriesCache]
-    : [];
-}
-
-export function isActiveCategory(
-  category
+if (
+  document.readyState ===
+  'loading'
 ) {
-  return isCategoryActive(
-    category
+  document.addEventListener(
+    'DOMContentLoaded',
+    autoInitialize,
+    { once: true }
   );
+} else {
+  autoInitialize();
 }
 
-export {
-  DEFAULT_CATEGORIES
-};
+console.log(
+  '📦 Categories module loaded'
+);
