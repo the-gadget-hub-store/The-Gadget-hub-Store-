@@ -320,10 +320,10 @@ export function renderCategoryCard(
 
   const categoryLink =
     category.slug
-      ? `pages/categories.html?category=${encodeURIComponent(
+      ? `categories.html?category=${encodeURIComponent(
           category.slug
         )}`
-      : `pages/categories.html?id=${encodeURIComponent(
+      : `categories.html?id=${encodeURIComponent(
           categoryId
         )}`;
 
