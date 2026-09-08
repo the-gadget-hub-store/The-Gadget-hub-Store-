@@ -1,20 +1,25 @@
 /* ================================
    THE GADGET HUB STORE
-   Application Bootstrap & Main Logic
+   App Module
    ================================ */
 
 /**
- * Main Application Module
- * 
- * Coordinates:
- * - Firebase initialization check
- * - UI components
- * - Authentication state
- * - Page-specific features
- * - Global functionality
+ * Global application controller.
+ *
+ * Responsibilities:
+ * - Firebase/auth startup
+ * - Global UI features
+ * - Currency selection and live exchange rates
+ * - Automatic currency detection from browser locale/region
+ * - Homepage/page-specific module initialization
+ * - Global error handling
+ *
+ * NOTE:
+ * Product/category modules do NOT auto-initialize the homepage.
+ * This module is the single page orchestrator.
  */
 
-import { 
+import {
   isFirebaseInitialized,
   getCurrentUser,
   isAuthenticated,
@@ -24,723 +29,1739 @@ import {
   doc,
   addDoc,
   collection,
-  getDocs,
-  query,
-  orderBy,
-  limit,
   serverTimestamp
 } from './firebase.js';
 
 import {
   showToast,
-  showLoading,
-  showEmptyState,
-  showError,
-  setButtonLoading,
   closeDropdown,
   toggleDropdown,
-  escapeHtml,
-  debounce
+  escapeHtml
 } from './ui.js';
 
 /* ================================
-   GLOBAL STATE
+   APPLICATION STATE
    ================================ */
 
 let currentUser = null;
-let appSettings = null;
+let appSettings = {};
 let supportedCurrencies = [];
 let selectedCurrency = 'USD';
 
+let exchangeRates = {};
+let exchangeRatesDate = null;
+let exchangeRatesSource = 'fallback';
+let currencyInitializationPromise = null;
+
+const CURRENCY_CACHE_KEY =
+  'gadgetHubExchangeRates_v2';
+
+const CURRENCY_CACHE_TTL =
+  6 * 60 * 60 * 1000;
+
+const SELECTED_CURRENCY_KEY =
+  'selectedCurrency';
+
 /* ================================
-   INITIALIZATION
+   DEFAULT CURRENCIES
    ================================ */
 
-/**
- * Initialize application
- */
-async function initializeApp() {
-  console.log('🚀 Initializing The Gadget Hub Store...');
-  
-  // Check Firebase initialization
-  if (!isFirebaseInitialized()) {
-    console.warn('⚠️ Firebase not initialized - some features may be limited');
-    showToast('Some features may be limited due to connection issues', 'warning', 5000);
-  } else {
-    console.log('✅ Firebase ready');
+const DEFAULT_CURRENCIES = [
+  {
+    code: 'USD',
+    name: 'US Dollar',
+    symbol: '$',
+    country: 'United States'
+  },
+  {
+    code: 'GBP',
+    name: 'British Pound',
+    symbol: '£',
+    country: 'United Kingdom'
+  },
+  {
+    code: 'EUR',
+    name: 'Euro',
+    symbol: '€',
+    country: 'European Union'
+  },
+  {
+    code: 'CAD',
+    name: 'Canadian Dollar',
+    symbol: 'C$',
+    country: 'Canada'
+  },
+  {
+    code: 'AUD',
+    name: 'Australian Dollar',
+    symbol: 'A$',
+    country: 'Australia'
+  },
+  {
+    code: 'CNY',
+    name: 'Chinese Yuan',
+    symbol: '¥',
+    country: 'China'
+  },
+  {
+    code: 'JPY',
+    name: 'Japanese Yen',
+    symbol: '¥',
+    country: 'Japan'
+  },
+  {
+    code: 'KRW',
+    name: 'South Korean Won',
+    symbol: '₩',
+    country: 'South Korea'
+  },
+  {
+    code: 'INR',
+    name: 'Indian Rupee',
+    symbol: '₹',
+    country: 'India'
+  },
+  {
+    code: 'PKR',
+    name: 'Pakistani Rupee',
+    symbol: '₨',
+    country: 'Pakistan'
+  },
+  {
+    code: 'BDT',
+    name: 'Bangladeshi Taka',
+    symbol: '৳',
+    country: 'Bangladesh'
+  },
+  {
+    code: 'NPR',
+    name: 'Nepalese Rupee',
+    symbol: 'Rs.',
+    country: 'Nepal'
+  },
+  {
+    code: 'AED',
+    name: 'UAE Dirham',
+    symbol: 'د.إ',
+    country: 'United Arab Emirates'
+  },
+  {
+    code: 'SAR',
+    name: 'Saudi Riyal',
+    symbol: '﷼',
+    country: 'Saudi Arabia'
+  },
+  {
+    code: 'TRY',
+    name: 'Turkish Lira',
+    symbol: '₺',
+    country: 'Türkiye'
+  },
+  {
+    code: 'MYR',
+    name: 'Malaysian Ringgit',
+    symbol: 'RM',
+    country: 'Malaysia'
+  },
+  {
+    code: 'IDR',
+    name: 'Indonesian Rupiah',
+    symbol: 'Rp',
+    country: 'Indonesia'
+  },
+  {
+    code: 'SGD',
+    name: 'Singapore Dollar',
+    symbol: 'S$',
+    country: 'Singapore'
+  },
+  {
+    code: 'THB',
+    name: 'Thai Baht',
+    symbol: '฿',
+    country: 'Thailand'
+  },
+  {
+    code: 'ZAR',
+    name: 'South African Rand',
+    symbol: 'R',
+    country: 'South Africa'
   }
-  
-  // Setup authentication state listener
-  setupAuthStateListener();
-  
-  // Initialize global features
-  await initializeGlobalFeatures();
-  
-  // Initialize page-specific features
-  await initializePageSpecificFeatures();
-  
-  console.log('✅ Application initialized');
+];
+
+/*
+ * Fallback values are only used when the live API cannot be reached.
+ * Product prices remain stored in USD in Firestore.
+ */
+const FALLBACK_EXCHANGE_RATES = {
+  USD: 1.0,
+  GBP: 0.79,
+  EUR: 0.92,
+  CAD: 1.36,
+  AUD: 1.52,
+  CNY: 7.24,
+  JPY: 149.50,
+  KRW: 1320.00,
+  INR: 83.12,
+  PKR: 278.50,
+  BDT: 109.75,
+  NPR: 132.95,
+  AED: 3.67,
+  SAR: 3.75,
+  TRY: 32.15,
+  MYR: 4.72,
+  IDR: 15625.00,
+  SGD: 1.34,
+  THB: 35.80,
+  ZAR: 18.65
+};
+
+const REGION_TO_CURRENCY = {
+  US: 'USD',
+  GB: 'GBP',
+  UK: 'GBP',
+  IE: 'EUR',
+  DE: 'EUR',
+  FR: 'EUR',
+  ES: 'EUR',
+  IT: 'EUR',
+  NL: 'EUR',
+  BE: 'EUR',
+  AT: 'EUR',
+  PT: 'EUR',
+  FI: 'EUR',
+  GR: 'EUR',
+  LU: 'EUR',
+  CY: 'EUR',
+  MT: 'EUR',
+  CA: 'CAD',
+  AU: 'AUD',
+  NZ: 'AUD',
+  CN: 'CNY',
+  HK: 'CNY',
+  MO: 'CNY',
+  JP: 'JPY',
+  KR: 'KRW',
+  IN: 'INR',
+  PK: 'PKR',
+  BD: 'BDT',
+  NP: 'NPR',
+  AE: 'AED',
+  SA: 'SAR',
+  TR: 'TRY',
+  MY: 'MYR',
+  ID: 'IDR',
+  SG: 'SGD',
+  TH: 'THB',
+  ZA: 'ZAR'
+};
+
+/* ================================
+   APPLICATION STARTUP
+   ================================ */
+
+async function initializeApp() {
+  try {
+    console.log('🚀 Initializing The Gadget Hub Store...');
+
+    if (!isFirebaseInitialized()) {
+      console.warn(
+        '⚠️ Firebase is not initialized. Firebase-dependent features may be unavailable.'
+      );
+    }
+
+    subscribeToAuthState((user) => {
+      currentUser = user || null;
+
+      updateAuthUI();
+      updateFavoritesBadgeSafe();
+    });
+
+    await initializeCurrencySelector();
+    initializeGlobalFeatures();
+    await initializePageFeatures();
+
+    console.log('✅ Application initialized');
+  } catch (error) {
+    console.error('❌ Application initialization failed:', error);
+    showToast(
+      'Some website features could not be initialized.',
+      'warning'
+    );
+  }
 }
 
 /* ================================
-   AUTHENTICATION STATE
+   AUTH UI
    ================================ */
 
-/**
- * Setup authentication state listener
- */
-function setupAuthStateListener() {
-  subscribeToAuthState((user) => {
-    currentUser = user;
-    updateAuthUI();
-    updateFavoritesBadge();
+function updateAuthUI() {
+  const authLinks =
+    document.querySelectorAll('[data-auth-required]');
+
+  authLinks.forEach((element) => {
+    element.hidden = !currentUser;
+  });
+
+  const guestLinks =
+    document.querySelectorAll('[data-guest-only]');
+
+  guestLinks.forEach((element) => {
+    element.hidden = Boolean(currentUser);
+  });
+
+  const userNameElements =
+    document.querySelectorAll('[data-user-name]');
+
+  userNameElements.forEach((element) => {
+    element.textContent =
+      currentUser?.displayName ||
+      currentUser?.email ||
+      'Account';
   });
 }
 
-/**
- * Update authentication UI elements
- */
-function updateAuthUI() {
-  const accountLink = document.querySelector('a[href*="account.html"]');
-  
-  if (accountLink && currentUser) {
-    // User is signed in - could update with user info
-    accountLink.setAttribute('title', `Account: ${currentUser.email}`);
+async function updateFavoritesBadgeSafe() {
+  const badge =
+    document.getElementById('favoritesBadge');
+
+  if (!badge) {
+    return;
   }
-  
-  console.log('🔐 Auth UI updated:', currentUser ? 'Signed in' : 'Signed out');
+
+  if (!isAuthenticated()) {
+    badge.textContent = '0';
+    return;
+  }
+
+  try {
+    const { loadUserFavorites } =
+      await import('./products.js');
+
+    const favorites =
+      await loadUserFavorites();
+
+    badge.textContent =
+      String(favorites.length);
+  } catch (error) {
+    console.warn(
+      'Unable to update favorites badge:',
+      error
+    );
+
+    badge.textContent = '0';
+  }
 }
 
 /* ================================
    GLOBAL FEATURES
    ================================ */
 
-/**
- * Initialize global features present on all pages
- */
-async function initializeGlobalFeatures() {
-  console.log('🌍 Initializing global features...');
-  
-  // Initialize currency selector
-  await initializeCurrencySelector();
-  
-  // Load social links
-  await loadSocialLinks();
-  
-  // Initialize newsletter form
+function initializeGlobalFeatures() {
+  initializeCurrencySelector();
+  initializeSocialLinks();
   initializeNewsletterForm();
-  
-  // Setup favorites badge
-  updateFavoritesBadge();
-  
-  console.log('✅ Global features initialized');
+  initializeDropdowns();
 }
 
 /* ================================
-   CURRENCY SELECTOR
+   CURRENCY SYSTEM
    ================================ */
 
-/**
- * Initialize currency selector
- */
 async function initializeCurrencySelector() {
-  try {
-    // Load supported currencies from settings or use defaults
-    supportedCurrencies = await loadSupportedCurrencies();
-    
-    // Load saved currency preference or detect
-    selectedCurrency = loadCurrencyPreference();
-    
-    // Populate currency dropdown
-    populateCurrencyDropdown();
-    
-    // Setup currency selector button
-    setupCurrencySelector();
-    
-    console.log(`💱 Currency selector initialized: ${selectedCurrency}`);
-  } catch (error) {
-    console.error('Error initializing currency selector:', error);
-    // Use USD as fallback
-    selectedCurrency = 'USD';
-    populateCurrencyDropdownFallback();
+  if (currencyInitializationPromise) {
+    return currencyInitializationPromise;
   }
+
+  currencyInitializationPromise =
+    (async () => {
+      try {
+        await loadSupportedCurrencies();
+
+        const savedCurrency =
+          loadCurrencyPreference();
+
+        selectedCurrency =
+          isSupportedCurrency(savedCurrency)
+            ? savedCurrency
+            : 'USD';
+
+        await loadExchangeRates();
+
+        populateCurrencySelector();
+        setupCurrencySelector();
+        updateCurrencyUI();
+
+        console.log(
+          `💱 Currency initialized: ${selectedCurrency} (${exchangeRatesSource})`
+        );
+      } catch (error) {
+        console.error(
+          'Currency initialization failed:',
+          error
+        );
+
+        exchangeRates = {
+          ...FALLBACK_EXCHANGE_RATES
+        };
+
+        exchangeRatesSource = 'fallback';
+
+        populateCurrencySelector();
+        setupCurrencySelector();
+        updateCurrencyUI();
+      }
+    })();
+
+  return currencyInitializationPromise;
 }
 
-/**
- * Load supported currencies from Firebase settings
- */
 async function loadSupportedCurrencies() {
-  if (!isFirebaseInitialized()) {
-    return getDefaultCurrencies();
+  if (
+    !isFirebaseInitialized()
+  ) {
+    supportedCurrencies =
+      [...DEFAULT_CURRENCIES];
+
+    return;
   }
-  
+
   try {
-    const settingsDoc = await getDoc(doc(db, 'settings', 'global'));
-    
-    if (settingsDoc.exists()) {
-      const settings = settingsDoc.data();
-      appSettings = settings;
-      
-      if (settings.supportedCurrencies && Array.isArray(settings.supportedCurrencies)) {
-        return settings.supportedCurrencies;
+    const settingsRef =
+      doc(db, 'settings', 'global');
+
+    const snapshot =
+      await getDoc(settingsRef);
+
+    if (snapshot.exists()) {
+      const data =
+        snapshot.data() || {};
+
+      appSettings = data;
+
+      const firebaseCurrencies =
+        Array.isArray(
+          data.supportedCurrencies
+        )
+          ? data.supportedCurrencies
+          : [];
+
+      if (firebaseCurrencies.length > 0) {
+        supportedCurrencies =
+          normalizeSupportedCurrencies(
+            firebaseCurrencies
+          );
       }
     }
-    
-    return getDefaultCurrencies();
+
+    if (
+      supportedCurrencies.length === 0
+    ) {
+      supportedCurrencies =
+        [...DEFAULT_CURRENCIES];
+    }
   } catch (error) {
-    console.error('Error loading currencies from Firebase:', error);
-    return getDefaultCurrencies();
+    console.warn(
+      'Unable to load currency settings from Firebase. Using defaults.',
+      error
+    );
+
+    supportedCurrencies =
+      [...DEFAULT_CURRENCIES];
   }
 }
 
-/**
- * Get default supported currencies (exact 20 from specification)
- */
-function getDefaultCurrencies() {
-  return [
-    { code: 'USD', name: 'US Dollar', symbol: '$', country: 'United States' },
-    { code: 'GBP', name: 'Pound Sterling', symbol: '£', country: 'United Kingdom' },
-    { code: 'EUR', name: 'Euro', symbol: '€', country: 'Eurozone' },
-    { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', country: 'Canada' },
-    { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', country: 'Australia' },
-    { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', country: 'China' },
-    { code: 'JPY', name: 'Japanese Yen', symbol: '¥', country: 'Japan' },
-    { code: 'KRW', name: 'South Korean Won', symbol: '₩', country: 'South Korea' },
-    { code: 'INR', name: 'Indian Rupee', symbol: '₹', country: 'India' },
-    { code: 'PKR', name: 'Pakistani Rupee', symbol: '₨', country: 'Pakistan' },
-    { code: 'BDT', name: 'Bangladeshi Taka', symbol: '৳', country: 'Bangladesh' },
-    { code: 'NPR', name: 'Nepalese Rupee', symbol: 'Rs', country: 'Nepal' },
-    { code: 'AED', name: 'UAE Dirham', symbol: 'د.إ', country: 'UAE' },
-    { code: 'SAR', name: 'Saudi Riyal', symbol: 'ر.س', country: 'Saudi Arabia' },
-    { code: 'TRY', name: 'Turkish Lira', symbol: '₺', country: 'Turkey' },
-    { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM', country: 'Malaysia' },
-    { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp', country: 'Indonesia' },
-    { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$', country: 'Singapore' },
-    { code: 'THB', name: 'Thai Baht', symbol: '฿', country: 'Thailand' },
-    { code: 'ZAR', name: 'South African Rand', symbol: 'R', country: 'South Africa' }
-  ];
+function normalizeSupportedCurrencies(
+  currencies
+) {
+  const defaultsByCode =
+    new Map(
+      DEFAULT_CURRENCIES.map(
+        (currency) => [
+          currency.code,
+          currency
+        ]
+      )
+    );
+
+  return currencies
+    .map((item) => {
+      if (typeof item === 'string') {
+        return (
+          defaultsByCode.get(item) || {
+            code: item,
+            name: item,
+            symbol: item,
+            country: ''
+          }
+        );
+      }
+
+      if (!item || !item.code) {
+        return null;
+      }
+
+      const code =
+        String(item.code).toUpperCase();
+
+      const fallback =
+        defaultsByCode.get(code);
+
+      return {
+        code,
+        name:
+          item.name ||
+          fallback?.name ||
+          code,
+        symbol:
+          item.symbol ||
+          fallback?.symbol ||
+          code,
+        country:
+          item.country ||
+          fallback?.country ||
+          ''
+      };
+    })
+    .filter(Boolean);
 }
 
-/**
- * Load currency preference with priority
- */
+function isSupportedCurrency(currency) {
+  return supportedCurrencies.some(
+    (item) =>
+      item.code === currency
+  );
+}
+
 function loadCurrencyPreference() {
-  // Priority 1: Explicit user selection (localStorage)
   try {
-    const savedCurrency = localStorage.getItem('selectedCurrency');
-    if (savedCurrency) {
-      console.log('💱 Using saved currency preference:', savedCurrency);
-      return savedCurrency;
+    const saved =
+      localStorage.getItem(
+        SELECTED_CURRENCY_KEY
+      );
+
+    if (
+      saved &&
+      isSupportedCurrency(
+        saved.toUpperCase()
+      )
+    ) {
+      return saved.toUpperCase();
     }
   } catch (error) {
-    console.warn('Cannot access localStorage for currency preference');
+    console.warn(
+      'Unable to read saved currency preference:',
+      error
+    );
   }
-  
-  // Priority 2: Browser locale detection (basic fallback)
-  try {
-    const locale = navigator.language || navigator.userLanguage || 'en-US';
-    const currencyMap = {
-      'en-US': 'USD',
-      'en-GB': 'GBP',
-      'en-CA': 'CAD',
-      'en-AU': 'AUD',
-      'zh-CN': 'CNY',
-      'ja-JP': 'JPY',
-      'ko-KR': 'KRW',
-      'hi-IN': 'INR',
-      'ur-PK': 'PKR',
-      'bn-BD': 'BDT',
-      'ne-NP': 'NPR',
-      'ar-AE': 'AED',
-      'ar-SA': 'SAR',
-      'tr-TR': 'TRY',
-      'ms-MY': 'MYR',
-      'id-ID': 'IDR',
-      'zh-SG': 'SGD',
-      'th-TH': 'THB',
-      'af-ZA': 'ZAR'
-    };
-    
-    if (currencyMap[locale]) {
-      console.log('💱 Using locale-based currency:', currencyMap[locale]);
-      return currencyMap[locale];
-    }
-    
-    // Try matching just the country code
-    const countryCode = locale.split('-')[1];
-    for (const [loc, curr] of Object.entries(currencyMap)) {
-      if (loc.endsWith(countryCode)) {
-        console.log('💱 Using country-based currency:', curr);
-        return curr;
-      }
-    }
-  } catch (error) {
-    console.warn('Error detecting locale currency:', error);
+
+  const detected =
+    detectCurrencyFromBrowser();
+
+  if (
+    detected &&
+    isSupportedCurrency(detected)
+  ) {
+    return detected;
   }
-  
-  // Priority 3: Default from settings or USD
-  if (appSettings && appSettings.defaultCurrency) {
-    return appSettings.defaultCurrency;
+
+  const defaultCurrency =
+    appSettings?.defaultCurrency;
+
+  if (
+    defaultCurrency &&
+    isSupportedCurrency(
+      String(defaultCurrency).toUpperCase()
+    )
+  ) {
+    return String(
+      defaultCurrency
+    ).toUpperCase();
   }
-  
+
   return 'USD';
 }
 
-/**
- * Populate currency dropdown
- */
-function populateCurrencyDropdown() {
-  const dropdown = document.getElementById('currencyDropdown');
-  if (!dropdown) return;
-  
-  dropdown.innerHTML = supportedCurrencies.map(currency => `
-    <button 
-      class="currency-option ${currency.code === selectedCurrency ? 'active' : ''}" 
-      data-currency="${currency.code}"
-      role="menuitem"
-    >
-      <div class="currency-option-label">
-        <span class="currency-option-name">${escapeHtml(currency.name)}</span>
-        <span class="currency-option-code">${escapeHtml(currency.code)} (${escapeHtml(currency.symbol)})</span>
-      </div>
-    </button>
-  `).join('');
-  
-  // Add click handlers
-  dropdown.querySelectorAll('.currency-option').forEach(option => {
-    option.addEventListener('click', () => {
-      const currency = option.dataset.currency;
-      selectCurrency(currency);
-    });
-  });
-}
+function detectCurrencyFromBrowser() {
+  const languages = [];
 
-/**
- * Populate currency dropdown with fallback
- */
-function populateCurrencyDropdownFallback() {
-  const dropdown = document.getElementById('currencyDropdown');
-  if (!dropdown) return;
-  
-  const fallbackCurrencies = getDefaultCurrencies();
-  
-  dropdown.innerHTML = fallbackCurrencies.slice(0, 5).map(currency => `
-    <button 
-      class="currency-option ${currency.code === selectedCurrency ? 'active' : ''}" 
-      data-currency="${currency.code}"
-      role="menuitem"
-    >
-      <div class="currency-option-label">
-        <span class="currency-option-name">${escapeHtml(currency.name)}</span>
-        <span class="currency-option-code">${escapeHtml(currency.code)}</span>
-      </div>
-    </button>
-  `).join('');
-}
-
-/**
- * Setup currency selector button
- */
-function setupCurrencySelector() {
-  const currencyBtn = document.getElementById('currencyBtn');
-  const currencyDropdown = document.getElementById('currencyDropdown');
-  
-  if (!currencyBtn) return;
-  
-  // Update button text
-  updateCurrencyButton();
-  
-  // Toggle dropdown on click
-  currencyBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleDropdown('currencyDropdown');
-    currencyBtn.setAttribute('aria-expanded', currencyDropdown?.classList.contains('active') ? 'true' : 'false');
-  });
-}
-
-/**
- * Update currency button display
- */
-function updateCurrencyButton() {
-  const selectedCurrencyEl = document.getElementById('selectedCurrency');
-  if (selectedCurrencyEl) {
-    selectedCurrencyEl.textContent = selectedCurrency;
-  }
-}
-
-/**
- * Select currency
- */
-function selectCurrency(currencyCode) {
-  selectedCurrency = currencyCode;
-  
-  // Save preference
   try {
-    localStorage.setItem('selectedCurrency', currencyCode);
+    if (
+      Array.isArray(
+        navigator.languages
+      )
+    ) {
+      languages.push(
+        ...navigator.languages
+      );
+    }
+
+    if (navigator.language) {
+      languages.push(
+        navigator.language
+      );
+    }
   } catch (error) {
-    console.warn('Cannot save currency preference to localStorage');
+    return null;
   }
-  
-  // Update UI
-  updateCurrencyButton();
-  populateCurrencyDropdown();
-  closeDropdown('currencyDropdown');
-  
-  // Show confirmation
-  const currency = supportedCurrencies.find(c => c.code === currencyCode);
-  showToast(`Currency changed to ${currency ? currency.name : currencyCode}`, 'success');
-  
-  // Trigger currency change event for other modules
-  document.dispatchEvent(new CustomEvent('currencyChanged', { 
-    detail: { currency: currencyCode } 
-  }));
-  
-  console.log('💱 Currency selected:', currencyCode);
+
+  for (const language of languages) {
+    try {
+      const locale =
+        new Intl.Locale(language);
+
+      const region =
+        locale.region?.toUpperCase();
+
+      if (
+        region &&
+        REGION_TO_CURRENCY[region]
+      ) {
+        return REGION_TO_CURRENCY[
+          region
+        ];
+      }
+    } catch (error) {
+      /*
+       * Ignore malformed locale strings and
+       * continue with the next available locale.
+       */
+    }
+  }
+
+  return null;
 }
 
-/**
- * Get current selected currency
- */
+async function loadExchangeRates() {
+  const cached =
+    readCachedExchangeRates();
+
+  if (cached) {
+    exchangeRates =
+      normalizeExchangeRates(
+        cached.rates
+      );
+
+    exchangeRatesDate =
+      cached.date || null;
+
+    exchangeRatesSource =
+      'cache';
+
+    return;
+  }
+
+  try {
+    const liveRates =
+      await fetchLiveExchangeRates();
+
+    exchangeRates =
+      {
+        ...FALLBACK_EXCHANGE_RATES,
+        ...(liveRates?.rates || {})
+      };
+
+    exchangeRatesDate =
+      liveRates?.date ||
+      new Date().toISOString();
+
+    exchangeRatesSource =
+      'live';
+
+    saveCachedExchangeRates(
+      exchangeRates,
+      exchangeRatesDate
+    );
+  } catch (error) {
+    console.warn(
+      'Live exchange-rate request failed. Using fallback rates.',
+      error
+    );
+
+    exchangeRates =
+      {
+        ...FALLBACK_EXCHANGE_RATES
+      };
+
+    exchangeRatesDate = null;
+    exchangeRatesSource =
+      'fallback';
+  }
+}
+
+async function fetchLiveExchangeRates() {
+  const supportedCodes =
+    supportedCurrencies
+      .map((currency) => currency.code)
+      .filter(
+        (code) => code !== 'USD'
+      );
+
+  const quotes =
+    supportedCodes.join(',');
+
+  const endpoint =
+    `https://api.frankfurter.dev/v2/rates?base=USD&quotes=${encodeURIComponent(quotes)}`;
+
+  const response =
+    await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json'
+      },
+      cache: 'no-store'
+    });
+
+  if (!response.ok) {
+    throw new Error(
+      `Exchange-rate API returned HTTP ${response.status}`
+    );
+  }
+
+  const data =
+    await response.json();
+
+  if (!Array.isArray(data)) {
+    throw new Error(
+      'Unexpected exchange-rate API response'
+    );
+  }
+
+  const rates = {
+    USD: 1
+  };
+
+  for (const row of data) {
+    const quote =
+      String(row?.quote || '')
+        .toUpperCase();
+
+    const rate =
+      Number(row?.rate);
+
+    if (
+      quote &&
+      Number.isFinite(rate) &&
+      rate > 0
+    ) {
+      rates[quote] = rate;
+    }
+  }
+
+  if (
+    Object.keys(rates).length <= 1
+  ) {
+    throw new Error(
+      'No usable exchange rates were returned'
+    );
+  }
+
+  /*
+   * If a supported currency was not returned by the
+   * provider, keep its known fallback instead of
+   * breaking price rendering.
+   */
+  for (const currency of supportedCurrencies) {
+    const code = currency.code;
+
+    if (
+      !Number.isFinite(rates[code]) ||
+      rates[code] <= 0
+    ) {
+      rates[code] =
+        FALLBACK_EXCHANGE_RATES[code] ||
+        1;
+    }
+  }
+
+  const rateDate =
+    data.find((row) => row?.date)?.date || null;
+
+  return {
+    rates,
+    date: rateDate
+  };
+}
+
+function normalizeExchangeRates(rates) {
+  const normalized = {
+    ...FALLBACK_EXCHANGE_RATES
+  };
+
+  if (
+    rates &&
+    typeof rates === 'object'
+  ) {
+    Object.entries(rates)
+      .forEach(
+        ([currency, value]) => {
+          const code =
+            String(currency)
+              .toUpperCase();
+
+          const numeric =
+            Number(value);
+
+          if (
+            Number.isFinite(numeric) &&
+            numeric > 0
+          ) {
+            normalized[code] =
+              numeric;
+          }
+        }
+      );
+  }
+
+  normalized.USD = 1;
+
+  return normalized;
+}
+
+function readCachedExchangeRates() {
+  try {
+    const raw =
+      localStorage.getItem(
+        CURRENCY_CACHE_KEY
+      );
+
+    if (!raw) {
+      return null;
+    }
+
+    const cached =
+      JSON.parse(raw);
+
+    if (
+      !cached ||
+      typeof cached !== 'object'
+    ) {
+      return null;
+    }
+
+    const timestamp =
+      Number(cached.timestamp);
+
+    if (
+      !Number.isFinite(timestamp)
+    ) {
+      return null;
+    }
+
+    if (
+      Date.now() - timestamp >
+      CURRENCY_CACHE_TTL
+    ) {
+      return null;
+    }
+
+    const rates =
+      normalizeExchangeRates(
+        cached.rates
+      );
+
+    return {
+      rates,
+      date: cached.date || null
+    };
+  } catch (error) {
+    console.warn(
+      'Unable to read exchange-rate cache:',
+      error
+    );
+
+    return null;
+  }
+}
+
+function saveCachedExchangeRates(
+  rates,
+  date
+) {
+  try {
+    localStorage.setItem(
+      CURRENCY_CACHE_KEY,
+      JSON.stringify({
+        timestamp: Date.now(),
+        date,
+        rates
+      })
+    );
+  } catch (error) {
+    console.warn(
+      'Unable to cache exchange rates:',
+      error
+    );
+  }
+}
+
+function populateCurrencySelector() {
+  const selectors =
+    document.querySelectorAll(
+      '[data-currency-selector]'
+    );
+
+  selectors.forEach((selector) => {
+    selector.innerHTML =
+      supportedCurrencies
+        .map((currency) => {
+          const code =
+            escapeHtml(currency.code);
+
+          const name =
+            escapeHtml(currency.name);
+
+          const symbol =
+            escapeHtml(currency.symbol);
+
+          const selected =
+            currency.code ===
+            selectedCurrency
+              ? ' aria-current="true"'
+              : '';
+
+          return `
+            <button
+              type="button"
+              class="currency-option"
+              data-currency="${code}"
+              ${selected}
+            >
+              <span class="currency-symbol">${symbol}</span>
+              <span class="currency-code">${code}</span>
+              <span class="currency-name">${name}</span>
+            </button>
+          `;
+        })
+        .join('');
+  });
+}
+
+function setupCurrencySelector() {
+  const selectors =
+    document.querySelectorAll(
+      '[data-currency-selector]'
+    );
+
+  selectors.forEach((selector) => {
+    if (
+      selector.dataset.currencyInitialized ===
+      'true'
+    ) {
+      return;
+    }
+
+    selector.dataset.currencyInitialized =
+      'true';
+
+    selector.addEventListener(
+      'click',
+      (event) => {
+        const button =
+          event.target.closest(
+            '[data-currency]'
+          );
+
+        if (!button) {
+          return;
+        }
+
+        const currency =
+          String(
+            button.dataset.currency || ''
+          ).toUpperCase();
+
+        if (
+          !isSupportedCurrency(currency)
+        ) {
+          return;
+        }
+
+        setCurrency(currency);
+      }
+    );
+  });
+
+  const selectorButtons =
+    document.querySelectorAll(
+      '[data-currency-toggle]'
+    );
+
+  selectorButtons.forEach((button) => {
+    if (
+      button.dataset.currencyInitialized ===
+      'true'
+    ) {
+      return;
+    }
+
+    button.dataset.currencyInitialized =
+      'true';
+
+    button.addEventListener(
+      'click',
+      (event) => {
+        event.preventDefault();
+
+        const targetId =
+          button.dataset.currencyToggle;
+
+        if (targetId) {
+          toggleDropdown(targetId);
+        }
+      }
+    );
+  });
+}
+
+function setCurrency(currency) {
+  const normalized =
+    String(currency || '')
+      .toUpperCase();
+
+  if (
+    !isSupportedCurrency(normalized)
+  ) {
+    console.warn(
+      `Unsupported currency: ${normalized}`
+    );
+
+    return;
+  }
+
+  if (
+    selectedCurrency === normalized
+  ) {
+    updateCurrencyUI();
+    return;
+  }
+
+  selectedCurrency =
+    normalized;
+
+  try {
+    localStorage.setItem(
+      SELECTED_CURRENCY_KEY,
+      selectedCurrency
+    );
+  } catch (error) {
+    console.warn(
+      'Unable to save currency preference:',
+      error
+    );
+  }
+
+  updateCurrencyUI();
+
+  document.dispatchEvent(
+    new CustomEvent(
+      'currencyChanged',
+      {
+        detail: {
+          currency:
+            selectedCurrency,
+          rates:
+            { ...exchangeRates },
+          source:
+            exchangeRatesSource,
+          date:
+            exchangeRatesDate
+        }
+      }
+    )
+  );
+
+  closeAllCurrencyDropdowns();
+}
+
+function updateCurrencyUI() {
+  document
+    .querySelectorAll(
+      '[data-current-currency]'
+    )
+    .forEach((element) => {
+      element.textContent =
+        selectedCurrency;
+    });
+
+  document
+    .querySelectorAll(
+      '[data-currency-symbol]'
+    )
+    .forEach((element) => {
+      const currency =
+        supportedCurrencies.find(
+          (item) =>
+            item.code ===
+            selectedCurrency
+        );
+
+      element.textContent =
+        currency?.symbol ||
+        selectedCurrency;
+    });
+
+  document
+    .querySelectorAll(
+      '[data-currency-option]'
+    )
+    .forEach((element) => {
+      const isSelected =
+        element.dataset.currencyOption ===
+        selectedCurrency;
+
+      element.setAttribute(
+        'aria-selected',
+        String(isSelected)
+      );
+    });
+}
+
+function closeAllCurrencyDropdowns() {
+  document
+    .querySelectorAll(
+      '[data-currency-selector]'
+    )
+    .forEach((selector) => {
+      const dropdown =
+        selector.closest(
+          '[data-dropdown]'
+        );
+
+      if (
+        dropdown?.id
+      ) {
+        closeDropdown(dropdown.id);
+      }
+    });
+}
+
 export function getCurrentCurrency() {
   return selectedCurrency;
+}
+
+export function getExchangeRate(
+  currency = null
+) {
+  const code =
+    String(
+      currency || selectedCurrency
+    ).toUpperCase();
+
+  if (code === 'USD') {
+    return 1;
+  }
+
+  const rate =
+    Number(exchangeRates[code]);
+
+  if (
+    Number.isFinite(rate) &&
+    rate > 0
+  ) {
+    return rate;
+  }
+
+  return (
+    Number(
+      FALLBACK_EXCHANGE_RATES[code]
+    ) || 1
+  );
+}
+
+export function getExchangeRates() {
+  return {
+    ...exchangeRates
+  };
+}
+
+export function getExchangeRateInfo() {
+  return {
+    source: exchangeRatesSource,
+    date: exchangeRatesDate,
+    currency: selectedCurrency
+  };
 }
 
 /* ================================
    SOCIAL LINKS
    ================================ */
 
-/**
- * Load social links from Firebase
- */
-async function loadSocialLinks() {
-  const socialContainer = document.getElementById('socialLinks');
-  const footerSocialContainer = document.getElementById('footerSocial');
-  
-  if (!socialContainer && !footerSocialContainer) return;
-  
-  if (!isFirebaseInitialized()) {
-    console.warn('Cannot load social links - Firebase not initialized');
+function initializeSocialLinks() {
+  const links =
+    appSettings?.socialLinks;
+
+  if (
+    !links ||
+    typeof links !== 'object'
+  ) {
     return;
   }
-  
-  try {
-    const settingsDoc = await getDoc(doc(db, 'settings', 'global'));
-    
-    if (!settingsDoc.exists()) {
-      if (socialContainer) {
-        socialContainer.innerHTML = '<p style="color: var(--color-text-tertiary);">No social links configured</p>';
-      }
-      return;
-    }
-    
-    const settings = settingsDoc.data();
-    const socialLinks = settings.socialLinks || {};
-    
-    renderSocialLinks(socialLinks);
-    
-    console.log('✅ Social links loaded');
-  } catch (error) {
-    console.error('Error loading social links:', error);
-    if (socialContainer) {
-      socialContainer.innerHTML = '<p style="color: var(--color-text-muted);">Could not load social links</p>';
-    }
-  }
-}
 
-/**
- * Render social links
- */
-function renderSocialLinks(socialLinks) {
-  const socialContainer = document.getElementById('socialLinks');
-  const footerSocialContainer = document.getElementById('footerSocial');
-  const footerFollowLinks = document.getElementById('footerFollowLinks');
-  
-  const platforms = [
-    { name: 'Facebook', icon: 'facebook', key: 'facebook' },
-    { name: 'Instagram', icon: 'instagram', key: 'instagram' },
-    { name: 'YouTube', icon: 'youtube', key: 'youtube' },
-    { name: 'TikTok', icon: 'tiktok', key: 'tiktok' }
-  ];
-  
-  const icons = {
-    facebook: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>',
-    instagram: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>',
-    youtube: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>',
-    tiktok: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>'
-  };
-  
-  // Render in social section
-  if (socialContainer) {
-    const html = platforms
-      .filter(platform => socialLinks[platform.key])
-      .map(platform => `
-        <a 
-          href="${escapeHtml(socialLinks[platform.key])}" 
-          class="social-link" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          aria-label="${platform.name}"
-        >
-          ${icons[platform.icon]}
-        </a>
-      `).join('');
-    
-    socialContainer.innerHTML = html || '<p style="color: var(--color-text-tertiary);">No social links configured</p>';
-  }
-  
-  // Render in footer social
-  if (footerSocialContainer) {
-    const html = platforms
-      .filter(platform => socialLinks[platform.key])
-      .map(platform => `
-        <a 
-          href="${escapeHtml(socialLinks[platform.key])}" 
-          class="footer-social-link" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          aria-label="${platform.name}"
-        >
-          ${icons[platform.icon]}
-        </a>
-      `).join('');
-    
-    footerSocialContainer.innerHTML = html;
-  }
-  
-  // Update footer follow links
-  if (footerFollowLinks) {
-    const links = footerFollowLinks.querySelectorAll('a[data-social]');
-    links.forEach(link => {
-      const platform = link.dataset.social;
-      if (socialLinks[platform]) {
-        link.href = socialLinks[platform];
-      } else {
-        link.style.display = 'none';
+  document
+    .querySelectorAll(
+      '[data-social-platform]'
+    )
+    .forEach((element) => {
+      const platform =
+        element.dataset.socialPlatform;
+
+      const url =
+        links[platform];
+
+      if (
+        typeof url !== 'string' ||
+        !url.trim()
+      ) {
+        return;
       }
+
+      element.href = url;
+      element.target = '_blank';
+      element.rel =
+        'noopener noreferrer';
     });
-  }
 }
 
 /* ================================
    NEWSLETTER
    ================================ */
 
-/**
- * Initialize newsletter form
- */
 function initializeNewsletterForm() {
-  const newsletterForm = document.getElementById('newsletterForm');
-  if (!newsletterForm) return;
-  
-  newsletterForm.addEventListener('submit', handleNewsletterSubmit);
-  console.log('✅ Newsletter form initialized');
-}
+  const forms =
+    document.querySelectorAll(
+      '[data-newsletter-form]'
+    );
 
-/**
- * Handle newsletter form submission
- */
-async function handleNewsletterSubmit(e) {
-  e.preventDefault();
-  
-  const emailInput = document.getElementById('newsletterEmail');
-  const submitBtn = document.getElementById('newsletterSubmitBtn');
-  
-  if (!emailInput || !submitBtn) return;
-  
-  const email = emailInput.value.trim();
-  
-  // Validate email
-  if (!email || !isValidEmail(email)) {
-    showToast('Please enter a valid email address', 'error');
-    emailInput.focus();
-    return;
-  }
-  
-  if (!isFirebaseInitialized()) {
-    showToast('Service unavailable. Please try again later.', 'error');
-    return;
-  }
-  
-  setButtonLoading(submitBtn, true);
-  
-  try {
-    // Add to Firestore
-    await addDoc(collection(db, 'newsletterSubscribers'), {
-      email: email,
-      subscribedAt: serverTimestamp(),
-      source: 'homepage',
-      active: true
-    });
-    
-    showToast('✅ Successfully subscribed to newsletter!', 'success');
-    emailInput.value = '';
-    
-  } catch (error) {
-    console.error('Newsletter subscription error:', error);
-    
-    if (error.code === 'permission-denied') {
-      showToast('Subscription temporarily unavailable', 'error');
-    } else {
-      showToast('Failed to subscribe. Please try again.', 'error');
+  forms.forEach((form) => {
+    if (
+      form.dataset.newsletterInitialized ===
+      'true'
+    ) {
+      return;
     }
-  } finally {
-    setButtonLoading(submitBtn, false);
-  }
-}
 
-/**
- * Validate email format
- */
-function isValidEmail(email) {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+    form.dataset.newsletterInitialized =
+      'true';
+
+    form.addEventListener(
+      'submit',
+      async (event) => {
+        event.preventDefault();
+
+        const input =
+          form.querySelector(
+            'input[type="email"]'
+          );
+
+        if (!input) {
+          return;
+        }
+
+        const email =
+          input.value.trim();
+
+        if (!email) {
+          showToast(
+            'Please enter your email address.',
+            'warning'
+          );
+          return;
+        }
+
+        if (
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            email
+          )
+        ) {
+          showToast(
+            'Please enter a valid email address.',
+            'warning'
+          );
+          return;
+        }
+
+        if (
+          !isFirebaseInitialized()
+        ) {
+          showToast(
+            'Newsletter service is temporarily unavailable.',
+            'error'
+          );
+          return;
+        }
+
+        const submitButton =
+          form.querySelector(
+            'button[type="submit"]'
+          );
+
+        if (submitButton) {
+          submitButton.disabled = true;
+        }
+
+        try {
+          await addDoc(
+            collection(
+              db,
+              'newsletterSubscribers'
+            ),
+            {
+              email,
+              subscribedAt:
+                serverTimestamp(),
+              source:
+                'homepage',
+              active: true
+            }
+          );
+
+          input.value = '';
+
+          showToast(
+            'Thanks for subscribing!',
+            'success'
+          );
+        } catch (error) {
+          console.error(
+            'Newsletter subscription failed:',
+            error
+          );
+
+          showToast(
+            'Unable to subscribe right now.',
+            'error'
+          );
+        } finally {
+          if (submitButton) {
+            submitButton.disabled = false;
+          }
+        }
+      }
+    );
+  });
 }
 
 /* ================================
-   FAVORITES BADGE
+   DROPDOWNS
    ================================ */
 
-/**
- * Update favorites badge count
- */
-async function updateFavoritesBadge() {
-  const badge = document.getElementById('favoritesBadge');
-  if (!badge) return;
-  
-  if (!isAuthenticated()) {
-    badge.textContent = '0';
-    return;
-  }
-  
-  // This will be properly implemented when favorites module is created
-  // For now, show 0
-  badge.textContent = '0';
+function initializeDropdowns() {
+  document
+    .querySelectorAll(
+      '[data-dropdown-toggle]'
+    )
+    .forEach((button) => {
+      if (
+        button.dataset.dropdownInitialized ===
+        'true'
+      ) {
+        return;
+      }
+
+      button.dataset.dropdownInitialized =
+        'true';
+
+      button.addEventListener(
+        'click',
+        (event) => {
+          event.preventDefault();
+
+          const dropdownId =
+            button.dataset.dropdownToggle;
+
+          if (dropdownId) {
+            toggleDropdown(
+              dropdownId
+            );
+          }
+        }
+      );
+    });
 }
 
 /* ================================
-   PAGE-SPECIFIC INITIALIZATION
+   PAGE INITIALIZATION
    ================================ */
 
-/**
- * Initialize page-specific features based on current page
- */
-async function initializePageSpecificFeatures() {
-  const path = window.location.pathname;
-  const page = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
-  
-  console.log(`📄 Current page: ${page}`);
-  
+async function initializePageFeatures() {
+  const page =
+    getCurrentPageName();
+
+  console.log(
+    `📄 Initializing page: ${page}`
+  );
+
   switch (page) {
     case 'index.html':
     case '':
       await initializeHomePage();
       break;
-    case 'shop.html':
-      console.log('Shop page - will be initialized by products module');
-      break;
-    case 'product.html':
-      console.log('Product page - will be initialized by products module');
-      break;
-    case 'favorites.html':
-      console.log('Favorites page - will be initialized by favorites module');
-      break;
-    case 'account.html':
-      console.log('Account page - will be initialized by auth module');
-      break;
-    case 'trending.html':
-      console.log('Trending page - will be initialized by products module');
-      break;
-    case 'deals.html':
-      console.log('Deals page - will be initialized by products module');
-      break;
+
     case 'categories.html':
-      console.log('Categories page - will be initialized by categories module');
+      await initializeCategoriesPage();
       break;
+
+    case 'shop.html':
+      await initializeShopPage();
+      break;
+
+    case 'product.html':
+    case 'product-details.html':
+      await initializeProductPage();
+      break;
+
+    case 'favorites.html':
+      await initializeFavoritesPage();
+      break;
+
+    case 'account.html':
+      await initializeAccountPage();
+      break;
+
+    case 'trending.html':
+      await initializeTrendingPage();
+      break;
+
+    case 'deals.html':
+      await initializeDealsPage();
+      break;
+
     default:
-      console.log('Unknown page');
+      break;
   }
-  
-  // Update active navigation link
-  updateActiveNavLink(page);
+
+  updateActiveNavigation(page);
 }
 
-/**
- * Initialize homepage-specific features
- */
 async function initializeHomePage() {
-  console.log('🏠 Initializing homepage features...');
-  
-  // Import and call homepage initialization from respective modules
   try {
-    // Initialize categories
-    const categoriesModule = await import('./categories.js');
-    if (categoriesModule.initializeHomepageCategories) {
-      await categoriesModule.initializeHomepageCategories();
-    }
-    
-    // Initialize products
-    const productsModule = await import('./products.js');
-    if (productsModule.initializeHomepageProducts) {
-      await productsModule.initializeHomepageProducts();
-    }
-    
-    console.log('✅ Homepage initialization complete');
+    const {
+      initializeHomepageCategories
+    } = await import(
+      './categories.js'
+    );
+
+    await initializeHomepageCategories();
   } catch (error) {
-    console.error('Error initializing homepage modules:', error);
+    console.error(
+      'Homepage categories initialization failed:',
+      error
+    );
+  }
+
+  try {
+    const {
+      initializeHomepageProducts
+    } = await import(
+      './products.js'
+    );
+
+    await initializeHomepageProducts();
+  } catch (error) {
+    console.error(
+      'Homepage products initialization failed:',
+      error
+    );
   }
 }
 
-/**
- * Update active navigation link
- */
-function updateActiveNavLink(currentPage) {
-  const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
-  
-  navLinks.forEach(link => {
-    link.classList.remove('active');
-    link.removeAttribute('aria-current');
-    
-    const href = link.getAttribute('href');
-    if (!href) return;
-    
-    const linkPage = href.substring(href.lastIndexOf('/') + 1);
-    
-    if (linkPage === currentPage || 
-        (currentPage === '' && linkPage === 'index.html') ||
-        (currentPage === 'index.html' && linkPage === 'index.html')) {
-      link.classList.add('active');
-      link.setAttribute('aria-current', 'page');
+async function initializeCategoriesPage() {
+  try {
+    const {
+      initializeCategoryPage
+    } = await import(
+      './categories.js'
+    );
+
+    await initializeCategoryPage();
+  } catch (error) {
+    console.error(
+      'Categories page initialization failed:',
+      error
+    );
+
+    const container =
+      document.getElementById(
+        'allCategoriesGrid'
+      ) ||
+      document.getElementById(
+        'categoryProductsGrid'
+      );
+
+    if (container) {
+      container.innerHTML =
+        '<div class="error-state">Unable to load categories. Please refresh the page.</div>';
     }
-  });
+  }
+}
+
+async function initializeShopPage() {
+  try {
+    const {
+      initializeShopPage:
+        initializeShop
+    } = await import(
+      './shop.js'
+    );
+
+    if (
+      typeof initializeShop ===
+      'function'
+    ) {
+      await initializeShop();
+    }
+  } catch (error) {
+    /*
+     * shop.js may not exist yet. Do not break
+     * the rest of the application when another
+     * public module is still being built.
+     */
+    console.info(
+      'Shop module initialization skipped:',
+      error
+    );
+  }
+}
+
+async function initializeProductPage() {
+  try {
+    const {
+      initializeProductPage:
+        initializeProduct
+    } = await import(
+      './product.js'
+    );
+
+    if (
+      typeof initializeProduct ===
+      'function'
+    ) {
+      await initializeProduct();
+    }
+  } catch (error) {
+    console.info(
+      'Product details module initialization skipped:',
+      error
+    );
+  }
+}
+
+async function initializeFavoritesPage() {
+  try {
+    const {
+      initializeFavoritesPage:
+        initializeFavorites
+    } = await import(
+      './favorites.js'
+    );
+
+    if (
+      typeof initializeFavorites ===
+      'function'
+    ) {
+      await initializeFavorites();
+    }
+  } catch (error) {
+    console.info(
+      'Favorites module initialization skipped:',
+      error
+    );
+  }
+}
+
+async function initializeAccountPage() {
+  try {
+    const {
+      initializeAccountPage:
+        initializeAccount
+    } = await import(
+      './account.js'
+    );
+
+    if (
+      typeof initializeAccount ===
+      'function'
+    ) {
+      await initializeAccount();
+    }
+  } catch (error) {
+    console.info(
+      'Account module initialization skipped:',
+      error
+    );
+  }
+}
+
+async function initializeTrendingPage() {
+  try {
+    const {
+      initializeTrendingPage:
+        initializeTrending
+    } = await import(
+      './trending.js'
+    );
+
+    if (
+      typeof initializeTrending ===
+      'function'
+    ) {
+      await initializeTrending();
+    }
+  } catch (error) {
+    console.info(
+      'Trending module initialization skipped:',
+      error
+    );
+  }
+}
+
+async function initializeDealsPage() {
+  try {
+    const {
+      initializeDealsPage:
+        initializeDeals
+    } = await import(
+      './deals.js'
+    );
+
+    if (
+      typeof initializeDeals ===
+      'function'
+    ) {
+      await initializeDeals();
+    }
+  } catch (error) {
+    console.info(
+      'Deals module initialization skipped:',
+      error
+    );
+  }
+}
+
+/* ================================
+   NAVIGATION
+   ================================ */
+
+function getCurrentPageName() {
+  const pathname =
+    window.location.pathname || '';
+
+  const lastSegment =
+    pathname
+      .split('/')
+      .filter(Boolean)
+      .pop();
+
+  if (
+    !lastSegment ||
+    !lastSegment.includes('.')
+  ) {
+    return 'index.html';
+  }
+
+  return lastSegment.toLowerCase();
+}
+
+function updateActiveNavigation(
+  currentPage
+) {
+  const normalizedPage =
+    currentPage === 'index.html'
+      ? 'index.html'
+      : currentPage;
+
+  document
+    .querySelectorAll(
+      '[data-nav-page]'
+    )
+    .forEach((link) => {
+      const target =
+        String(
+          link.dataset.navPage || ''
+        ).toLowerCase();
+
+      const active =
+        target === normalizedPage;
+
+      link.classList.toggle(
+        'active',
+        active
+      );
+
+      if (active) {
+        link.setAttribute(
+          'aria-current',
+          'page'
+        );
+      } else {
+        link.removeAttribute(
+          'aria-current'
+        );
+      }
+    });
 }
 
 /* ================================
    GLOBAL ERROR HANDLING
    ================================ */
 
-/**
- * Setup global error handler
- */
-window.addEventListener('error', (event) => {
-  console.error('Global error:', event.error);
-  // Don't show toast for every error, but log it
-});
+function initializeGlobalErrorHandlers() {
+  window.addEventListener(
+    'error',
+    (event) => {
+      console.error(
+        'Global JavaScript error:',
+        event.error || event.message
+      );
+    }
+  );
 
-window.addEventListener('unhandledrejection', (event) => {
-  console.error('Unhandled promise rejection:', event.reason);
-  // Don't show toast for every rejection, but log it
-});
-
-/* ================================
-   START APPLICATION
-   ================================ */
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-  initializeApp();
+  window.addEventListener(
+    'unhandledrejection',
+    (event) => {
+      console.error(
+        'Unhandled promise rejection:',
+        event.reason
+      );
+    }
+  );
 }
 
-// Export for use by other modules
-export { selectedCurrency, appSettings };
+/* ================================
+   DOM STARTUP
+   ================================ */
+
+function startApplication() {
+  initializeGlobalErrorHandlers();
+
+  initializeApp().catch((error) => {
+    console.error(
+      'Fatal application startup error:',
+      error
+    );
+  });
+}
+
+if (
+  document.readyState ===
+  'loading'
+) {
+  document.addEventListener(
+    'DOMContentLoaded',
+    startApplication,
+    { once: true }
+  );
+} else {
+  startApplication();
+}
+
+/* ================================
+   PUBLIC API
+   ================================ */
+
+export {
+  selectedCurrency,
+  appSettings,
+  supportedCurrencies
+};
