@@ -10,15 +10,9 @@
  * - Loading products from Firestore
  * - Rendering product cards
  * - Product filtering and sorting
- * - Live currency conversion
+ * - Currency conversion
  * - Favorites management
  * - Product details
- * - Homepage product sections
- * - Featured deals
- *
- * IMPORTANT:
- * app.js is the single application orchestrator.
- * This module does NOT auto-initialize the homepage.
  */
 
 import {
@@ -47,178 +41,77 @@ import {
   escapeHtml
 } from './ui.js';
 
-import {
-  getCurrentCurrency,
-  getExchangeRate
-} from './app.js';
-
-/* ================================
-   INTERNAL STATE
-   ================================ */
-
-/*
- * Stores product data for grids that have
- * already been rendered.
- *
- * This allows the product prices to be
- * re-rendered when the user changes currency.
- */
-const renderedProductGrids =
-  new Map();
-
-/*
- * Stores the currently displayed featured deal.
- * It is used when the currency changes.
- */
-let currentFeaturedDeal = null;
-
-let currentFeaturedDealContainer = null;
-
-/*
- * Prevents multiple countdown timers from
- * being attached to the same deal container.
- */
-const countdownTimers =
-  new WeakMap();
+import { getCurrentCurrency } from './app.js';
 
 /* ================================
    CURRENCY CONVERSION
    ================================ */
 
-/**
- * Converts a USD-based product price into
- * the selected currency.
- *
- * All product prices in Firestore are treated
- * as USD base prices.
- */
-export function convertCurrency(
-  basePrice,
-  targetCurrency = null
-) {
-  const numericPrice =
-    Number(basePrice);
+const EXCHANGE_RATES = {
+  USD: 1.0,
+  GBP: 0.79,
+  EUR: 0.92,
+  CAD: 1.36,
+  AUD: 1.52,
+  CNY: 7.24,
+  JPY: 149.50,
+  KRW: 1320.00,
+  INR: 83.12,
+  PKR: 278.50,
+  BDT: 109.75,
+  NPR: 132.95,
+  AED: 3.67,
+  SAR: 3.75,
+  TRY: 32.15,
+  MYR: 4.72,
+  IDR: 15625.00,
+  SGD: 1.34,
+  THB: 35.80,
+  ZAR: 18.65
+};
 
-  if (
-    !Number.isFinite(numericPrice)
-  ) {
+function convertCurrency(basePrice, targetCurrency = 'USD') {
+  const numericPrice = Number(basePrice);
+
+  if (!Number.isFinite(numericPrice)) {
     return 0;
   }
 
-  const currency =
-    String(
-      targetCurrency ||
-      getCurrentCurrency() ||
-      'USD'
-    )
-      .trim()
-      .toUpperCase();
-
-  const rate =
-    Number(
-      getExchangeRate(currency)
-    );
-
-  if (
-    !Number.isFinite(rate) ||
-    rate <= 0
-  ) {
-    return numericPrice;
-  }
-
+  const rate = EXCHANGE_RATES[targetCurrency] || 1.0;
   return numericPrice * rate;
 }
 
-/**
- * Formats a numeric value according
- * to the target currency.
- */
-export function formatPrice(
-  price,
-  currency = null
-) {
-  const selectedCurrency =
-    String(
-      currency ||
-      getCurrentCurrency() ||
-      'USD'
-    )
-      .trim()
-      .toUpperCase();
-
+function formatPrice(price, currency = 'USD') {
   try {
-    const numericPrice =
-      Number(price);
+    const numericPrice = Number(price);
 
-    if (
-      !Number.isFinite(numericPrice)
-    ) {
-      return `${selectedCurrency} 0.00`;
+    if (!Number.isFinite(numericPrice)) {
+      return `${currency} 0.00`;
     }
 
-    /*
-     * JPY and KRW normally display without
-     * decimal places.
-     */
-    const zeroDecimalCurrencies = [
-      'JPY',
-      'KRW'
-    ];
+    const zeroDecimalCurrencies = ['JPY', 'KRW'];
+    const minimumFractionDigits =
+      zeroDecimalCurrencies.includes(currency) ? 0 : 2;
+    const maximumFractionDigits =
+      zeroDecimalCurrencies.includes(currency) ? 0 : 2;
 
-    const useZeroDecimals =
-      zeroDecimalCurrencies.includes(
-        selectedCurrency
-      );
-
-    return new Intl.NumberFormat(
-      'en-US',
-      {
-        style: 'currency',
-        currency: selectedCurrency,
-        minimumFractionDigits:
-          useZeroDecimals
-            ? 0
-            : 2,
-        maximumFractionDigits:
-          useZeroDecimals
-            ? 0
-            : 2
-      }
-    ).format(numericPrice);
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits,
+      maximumFractionDigits
+    }).format(numericPrice);
   } catch (error) {
-    console.error(
-      'Error formatting price:',
-      error
-    );
-
-    return `${selectedCurrency} ${Number(
-      price || 0
-    ).toFixed(2)}`;
+    console.error('Error formatting price:', error);
+    return `${currency} ${Number(price || 0).toFixed(2)}`;
   }
 }
 
-/**
- * Returns a product price already converted
- * and formatted for the current currency.
- */
-export function getFormattedPrice(
-  basePrice,
-  targetCurrency = null
-) {
-  const currency =
-    targetCurrency ||
-    getCurrentCurrency();
+export function getFormattedPrice(basePrice, targetCurrency = null) {
+  const currency = targetCurrency || getCurrentCurrency();
+  const convertedPrice = convertCurrency(basePrice, currency);
 
-  const convertedPrice =
-    convertCurrency(
-      basePrice,
-      currency
-    );
-
-  return formatPrice(
-    convertedPrice,
-    currency
-  );
+  return formatPrice(convertedPrice, currency);
 }
 
 /* ================================
@@ -226,48 +119,27 @@ export function getFormattedPrice(
    ================================ */
 
 export async function loadProducts() {
-  if (
-    !isFirebaseInitialized()
-  ) {
-    throw new Error(
-      'Firebase not initialized'
-    );
+  if (!isFirebaseInitialized()) {
+    throw new Error('Firebase not initialized');
   }
 
   try {
-    const productsCollection =
-      collection(
-        db,
-        'products'
-      );
-
-    const querySnapshot =
-      await getDocs(
-        productsCollection
-      );
+    const productsCollection = collection(db, 'products');
+    const querySnapshot = await getDocs(productsCollection);
 
     const products = [];
 
-    querySnapshot.forEach(
-      (productDoc) => {
-        products.push({
-          id: productDoc.id,
-          ...productDoc.data()
-        });
-      }
-    );
+    querySnapshot.forEach((productDoc) => {
+      products.push({
+        id: productDoc.id,
+        ...productDoc.data()
+      });
+    });
 
-    console.log(
-      `✅ Loaded ${products.length} products`
-    );
-
+    console.log(`✅ Loaded ${products.length} products`);
     return products;
   } catch (error) {
-    console.error(
-      'Error loading products:',
-      error
-    );
-
+    console.error('Error loading products:', error);
     throw error;
   }
 }
@@ -277,54 +149,28 @@ export async function loadProductsByFilter(
   value,
   maxResults = 50
 ) {
-  if (
-    !isFirebaseInitialized()
-  ) {
-    throw new Error(
-      'Firebase not initialized'
-    );
+  if (!isFirebaseInitialized()) {
+    throw new Error('Firebase not initialized');
   }
 
   try {
-    const productsCollection =
-      collection(
-        db,
-        'products'
-      );
+    const productsCollection = collection(db, 'products');
 
-    const safeLimit =
-      Number(maxResults);
+    const q = query(
+      productsCollection,
+      where(field, '==', value),
+      limit(maxResults)
+    );
 
-    const q =
-      query(
-        productsCollection,
-        where(
-          field,
-          '==',
-          value
-        ),
-        limit(
-          Number.isFinite(
-            safeLimit
-          ) && safeLimit > 0
-            ? safeLimit
-            : 50
-        )
-      );
-
-    const querySnapshot =
-      await getDocs(q);
-
+    const querySnapshot = await getDocs(q);
     const products = [];
 
-    querySnapshot.forEach(
-      (productDoc) => {
-        products.push({
-          id: productDoc.id,
-          ...productDoc.data()
-        });
-      }
-    );
+    querySnapshot.forEach((productDoc) => {
+      products.push({
+        id: productDoc.id,
+        ...productDoc.data()
+      });
+    });
 
     console.log(
       `✅ Loaded ${products.length} products with ${field}=${value}`
@@ -332,18 +178,12 @@ export async function loadProductsByFilter(
 
     return products;
   } catch (error) {
-    console.error(
-      `Error loading products by ${field}:`,
-      error
-    );
-
+    console.error('Error loading filtered products:', error);
     throw error;
   }
 }
 
-export async function loadTrendingProducts(
-  maxResults = 8
-) {
+export async function loadTrendingProducts(maxResults = 8) {
   try {
     return await loadProductsByFilter(
       'trending',
@@ -351,18 +191,12 @@ export async function loadTrendingProducts(
       maxResults
     );
   } catch (error) {
-    console.error(
-      'Error loading trending products:',
-      error
-    );
-
+    console.error('Error loading trending products:', error);
     return [];
   }
 }
 
-export async function loadFeaturedProducts(
-  maxResults = 8
-) {
+export async function loadFeaturedProducts(maxResults = 8) {
   try {
     return await loadProductsByFilter(
       'featured',
@@ -370,225 +204,43 @@ export async function loadFeaturedProducts(
       maxResults
     );
   } catch (error) {
-    console.error(
-      'Error loading featured products:',
-      error
-    );
-
+    console.error('Error loading featured products:', error);
     return [];
   }
 }
 
-/* ================================
-   CATEGORY PRODUCT LOADING
-   ================================ */
-
-/**
- * Loads products for a category.
- *
- * Primary lookup:
- *   categoryId
- *
- * Fallback lookups:
- *   categorySlug
- *   category
- *   categoryName
- *
- * The fallback support is important because
- * existing Firestore product documents may
- * use different category fields.
- */
 export async function loadProductsByCategory(
   categoryId,
-  maxResults = 50,
-  categorySlug = '',
-  categoryName = ''
+  maxResults = 50
 ) {
-  if (
-    !isFirebaseInitialized()
-  ) {
-    console.warn(
-      'Firebase is not initialized while loading category products.'
+  try {
+    return await loadProductsByFilter(
+      'categoryId',
+      categoryId,
+      maxResults
     );
-
+  } catch (error) {
+    console.error('Error loading products by category:', error);
     return [];
   }
-
-  const safeCategoryId =
-    String(
-      categoryId || ''
-    ).trim();
-
-  const safeCategorySlug =
-    String(
-      categorySlug || ''
-    )
-      .trim()
-      .toLowerCase();
-
-  const safeCategoryName =
-    String(
-      categoryName || ''
-    ).trim();
-
-  /*
-   * Build possible category identifiers.
-   * Empty values are excluded.
-   */
-  const attempts = [];
-
-  if (safeCategoryId) {
-    attempts.push({
-      field: 'categoryId',
-      value: safeCategoryId
-    });
-  }
-
-  if (safeCategorySlug) {
-    attempts.push({
-      field: 'categorySlug',
-      value: safeCategorySlug
-    });
-  }
-
-  if (safeCategoryName) {
-    attempts.push({
-      field: 'category',
-      value: safeCategoryName
-    });
-  }
-
-  if (safeCategorySlug) {
-    attempts.push({
-      field: 'category',
-      value: safeCategorySlug
-    });
-  }
-
-  /*
-   * Some existing products may store the
-   * Firestore category document ID in a field
-   * named "category".
-   */
-  if (
-    safeCategoryId
-  ) {
-    attempts.push({
-      field: 'category',
-      value: safeCategoryId
-    });
-  }
-
-  if (
-    attempts.length === 0
-  ) {
-    return [];
-  }
-
-  const seenKeys =
-    new Set();
-
-  for (
-    const attempt of attempts
-  ) {
-    const key =
-      `${attempt.field}:${attempt.value}`;
-
-    if (
-      seenKeys.has(key)
-    ) {
-      continue;
-    }
-
-    seenKeys.add(key);
-
-    try {
-      const products =
-        await loadProductsByFilter(
-          attempt.field,
-          attempt.value,
-          maxResults
-        );
-
-      if (
-        Array.isArray(products) &&
-        products.length > 0
-      ) {
-        console.log(
-          `✅ Category products found using ${attempt.field}=${attempt.value}`
-        );
-
-        return products;
-      }
-    } catch (error) {
-      /*
-       * A failed fallback query must not stop
-       * the remaining category lookup attempts.
-       */
-      console.warn(
-        `Category lookup failed for ${attempt.field}=${attempt.value}:`,
-        error
-      );
-    }
-  }
-
-  console.warn(
-    'No products found for category:',
-    {
-      categoryId:
-        safeCategoryId,
-      categorySlug:
-        safeCategorySlug,
-      categoryName:
-        safeCategoryName
-    }
-  );
-
-  return [];
 }
 
-/* ================================
-   PRODUCT DETAILS
-   ================================ */
-
-export async function loadProductById(
-  productId
-) {
-  if (
-    !isFirebaseInitialized()
-  ) {
-    throw new Error(
-      'Firebase not initialized'
-    );
+export async function loadProductById(productId) {
+  if (!isFirebaseInitialized()) {
+    throw new Error('Firebase not initialized');
   }
 
-  const id =
-    String(
-      productId || ''
-    ).trim();
-
-  if (!id) {
-    throw new Error(
-      'Product ID is required'
-    );
+  if (!productId) {
+    throw new Error('Product ID is required');
   }
 
   try {
-    const productDoc =
-      await getDoc(
-        doc(
-          db,
-          'products',
-          id
-        )
-      );
+    const productDoc = await getDoc(
+      doc(db, 'products', productId)
+    );
 
-    if (
-      !productDoc.exists()
-    ) {
-      throw new Error(
-        'Product not found'
-      );
+    if (!productDoc.exists()) {
+      throw new Error('Product not found');
     }
 
     return {
@@ -596,127 +248,68 @@ export async function loadProductById(
       ...productDoc.data()
     };
   } catch (error) {
-    console.error(
-      'Error loading product:',
-      error
-    );
-
+    console.error('Error loading product:', error);
     throw error;
   }
 }
 
-/* ================================
-   DEAL PRODUCTS
-   ================================ */
-
-export async function loadDealProducts(
-  maxResults = 8
-) {
-  if (
-    !isFirebaseInitialized()
-  ) {
+export async function loadDealProducts(maxResults = 8) {
+  if (!isFirebaseInitialized()) {
     return [];
   }
 
   try {
-    const productsCollection =
-      collection(
-        db,
-        'products'
-      );
+    const productsCollection = collection(db, 'products');
 
-    /*
-     * Keep the existing Firestore query
-     * so current deal functionality remains
-     * compatible with the existing data model.
-     */
-    const q =
-      query(
-        productsCollection,
-        where(
-          'discount',
-          '>',
-          0
-        ),
-        orderBy(
-          'discount',
-          'desc'
-        ),
-        limit(
-          maxResults
-        )
-      );
+    const q = query(
+      productsCollection,
+      where('discount', '>', 0),
+      orderBy('discount', 'desc'),
+      limit(maxResults)
+    );
 
-    const querySnapshot =
-      await getDocs(q);
+    const querySnapshot = await getDocs(q);
 
     const products = [];
+    const now = new Date();
 
-    const now =
-      new Date();
+    querySnapshot.forEach((productDoc) => {
+      const data = productDoc.data();
 
-    querySnapshot.forEach(
-      (productDoc) => {
-        const data =
-          productDoc.data();
+      let isValidDeal = true;
 
-        let isValidDeal =
-          true;
+      if (data.dealExpiration) {
+        let expirationDate;
 
         if (
-          data.dealExpiration
+          data.dealExpiration &&
+          typeof data.dealExpiration.toDate === 'function'
         ) {
-          let expirationDate;
-
-          if (
-            typeof data
-              .dealExpiration
-              .toDate ===
-            'function'
-          ) {
-            expirationDate =
-              data.dealExpiration.toDate();
-          } else {
-            expirationDate =
-              new Date(
-                data.dealExpiration
-              );
-          }
-
-          if (
-            Number.isNaN(
-              expirationDate.getTime()
-            ) ||
-            expirationDate <= now
-          ) {
-            isValidDeal =
-              false;
-          }
+          expirationDate = data.dealExpiration.toDate();
+        } else {
+          expirationDate = new Date(data.dealExpiration);
         }
 
         if (
-          isValidDeal
+          Number.isNaN(expirationDate.getTime()) ||
+          expirationDate <= now
         ) {
-          products.push({
-            id:
-              productDoc.id,
-            ...data
-          });
+          isValidDeal = false;
         }
       }
-    );
 
-    console.log(
-      `✅ Loaded ${products.length} deal products`
-    );
+      if (isValidDeal) {
+        products.push({
+          id: productDoc.id,
+          ...data
+        });
+      }
+    });
 
+    console.log(`✅ Loaded ${products.length} deal products`);
     return products;
   } catch (error) {
-    console.error(
-      'Error loading deal products:',
-      error
-    );
-
+    console.error('Error loading deal products:', error);
     return [];
   }
 }
@@ -729,58 +322,26 @@ export function renderProductCard(
   product,
   currency = null
 ) {
-  if (
-    !product ||
-    typeof product !== 'object'
-  ) {
-    return '';
-  }
-
   const selectedCurrency =
-    String(
-      currency ||
-      getCurrentCurrency() ||
-      'USD'
-    )
-      .trim()
-      .toUpperCase();
+    currency || getCurrentCurrency();
 
   const basePrice =
-    Number(
-      product.basePrice ??
-      product.price ??
-      0
-    );
+    Number(product.basePrice ?? product.price ?? 0);
 
   const originalPrice =
-    Number(
-      product.originalPrice ??
-      basePrice
-    );
+    Number(product.originalPrice ?? basePrice);
 
   const discount =
-    Number(
-      product.discount ??
-      0
-    );
+    Number(product.discount ?? 0);
 
   const currentPrice =
-    convertCurrency(
-      basePrice,
-      selectedCurrency
-    );
+    convertCurrency(basePrice, selectedCurrency);
 
   const originalPriceConverted =
-    convertCurrency(
-      originalPrice,
-      selectedCurrency
-    );
+    convertCurrency(originalPrice, selectedCurrency);
 
   const formattedCurrentPrice =
-    formatPrice(
-      currentPrice,
-      selectedCurrency
-    );
+    formatPrice(currentPrice, selectedCurrency);
 
   const formattedOriginalPrice =
     formatPrice(
@@ -790,119 +351,67 @@ export function renderProductCard(
 
   const imageUrl =
     product.thumbnail ||
-    (
-      Array.isArray(
-        product.images
-      )
-        ? product.images[0]
-        : ''
-    ) ||
+    (Array.isArray(product.images)
+      ? product.images[0]
+      : '') ||
     '/assets/images/placeholder.jpg';
 
   const rating =
-    Math.min(
-      5,
-      Math.max(
-        0,
-        Number(
-          product.rating || 0
-        )
-      )
-    );
+    Math.min(5, Math.max(0, Number(product.rating || 0)));
 
-  const stars =
-    renderStars(
-      rating
-    );
+  const stars = renderStars(rating);
 
   let badge = '';
 
-  if (
-    product.featured
-  ) {
+  if (product.featured) {
     badge =
       '<span class="product-badge">Featured</span>';
-  } else if (
-    product.trending
-  ) {
+  } else if (product.trending) {
     badge =
       '<span class="product-badge trending">Trending</span>';
-  } else if (
-    product.bestseller
-  ) {
+  } else if (product.bestseller) {
     badge =
       '<span class="product-badge bestseller">Bestseller</span>';
-  } else if (
-    product.newArrival
-  ) {
+  } else if (product.newArrival) {
     badge =
       '<span class="product-badge new">New</span>';
   }
 
   const productId =
-    escapeHtml(
-      String(
-        product.id || ''
-      )
-    );
+    escapeHtml(String(product.id || ''));
 
   const title =
     escapeHtml(
-      product.title ||
-      'Untitled Product'
+      product.title || 'Untitled Product'
     );
 
   const category =
     escapeHtml(
-      product.category ||
-      product.categoryName ||
-      'Gadgets'
+      product.category || 'Gadgets'
     );
 
   const safeImageUrl =
-    escapeHtml(
-      String(
-        imageUrl
-      )
-    );
+    escapeHtml(String(imageUrl));
 
   const affiliateUrl =
     product.affiliateUrl
-      ? escapeHtml(
-          String(
-            product.affiliateUrl
-          )
-        )
+      ? escapeHtml(String(product.affiliateUrl))
       : '';
 
   const reviewCount =
-    Number(
-      product.reviewCount ||
-      0
-    );
+    Number(product.reviewCount || 0);
 
   const safeDiscount =
-    Math.max(
-      0,
-      Math.min(
-        100,
-        discount
-      )
-    );
+    Math.max(0, Math.min(100, discount));
 
   return `
-    <div
-      class="product-card"
-      data-product-id="${productId}"
-    >
+    <div class="product-card" data-product-id="${productId}">
       <div class="product-image-container">
         <img
           src="${safeImageUrl}"
           alt="${title}"
           class="product-image"
           loading="lazy"
-          decoding="async"
-          onerror="this.onerror=null;this.src='/assets/images/placeholder.jpg';"
         >
 
         ${badge}
@@ -922,9 +431,7 @@ export function renderProductCard(
             stroke-width="2"
             aria-hidden="true"
           >
-            <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
-            />
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </button>
       </div>
@@ -997,26 +504,12 @@ export function renderProductCard(
   `;
 }
 
-/* ================================
-   STAR RENDERING
-   ================================ */
-
-function renderStars(
-  rating
-) {
+function renderStars(rating) {
   const safeRating =
-    Math.min(
-      5,
-      Math.max(
-        0,
-        Number(rating) || 0
-      )
-    );
+    Math.min(5, Math.max(0, Number(rating) || 0));
 
   const fullStars =
-    Math.floor(
-      safeRating
-    );
+    Math.floor(safeRating);
 
   const hasHalfStar =
     safeRating % 1 >= 0.5;
@@ -1024,22 +517,12 @@ function renderStars(
   const emptyStars =
     Math.max(
       0,
-      5 -
-        fullStars -
-        (
-          hasHalfStar
-            ? 1
-            : 0
-        )
+      5 - fullStars - (hasHalfStar ? 1 : 0)
     );
 
   let html = '';
 
-  for (
-    let i = 0;
-    i < fullStars;
-    i++
-  ) {
+  for (let i = 0; i < fullStars; i++) {
     html += `
       <svg
         width="16"
@@ -1050,16 +533,12 @@ function renderStars(
         stroke-width="2"
         aria-hidden="true"
       >
-        <polygon
-          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-        />
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
       </svg>
     `;
   }
 
-  if (
-    hasHalfStar
-  ) {
+  if (hasHalfStar) {
     html += `
       <svg
         width="16"
@@ -1071,18 +550,12 @@ function renderStars(
         style="opacity: 0.5;"
         aria-hidden="true"
       >
-        <polygon
-          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-        />
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
       </svg>
     `;
   }
 
-  for (
-    let i = 0;
-    i < emptyStars;
-    i++
-  ) {
+  for (let i = 0; i < emptyStars; i++) {
     html += `
       <svg
         width="16"
@@ -1094,52 +567,12 @@ function renderStars(
         style="opacity: 0.3;"
         aria-hidden="true"
       >
-        <polygon
-          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-        />
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
       </svg>
     `;
   }
 
   return html;
-}
-
-/* ================================
-   PRODUCT GRID
-   ================================ */
-
-/**
- * Resolves either:
- *
- * renderProductsGrid(products, 'gridId')
- *
- * OR:
- *
- * renderProductsGrid(products, domElement)
- */
-function resolveContainer(
-  containerId
-) {
-  if (
-    typeof containerId ===
-    'string'
-  ) {
-    return document.getElementById(
-      containerId
-    );
-  }
-
-  if (
-    containerId &&
-    typeof containerId ===
-    'object' &&
-    typeof containerId.innerHTML ===
-    'string'
-  ) {
-    return containerId;
-  }
-
-  return null;
 }
 
 export function renderProductsGrid(
@@ -1148,84 +581,37 @@ export function renderProductsGrid(
   currency = null
 ) {
   const container =
-    resolveContainer(
-      containerId
-    );
+    document.getElementById(containerId);
 
   if (!container) {
     console.warn(
-      'Product grid container not found:',
-      containerId
+      `Container ${containerId} not found`
     );
-
     return;
   }
 
-  /*
-   * Remember the products associated with
-   * this grid so currency changes can trigger
-   * a fresh render.
-   */
-  if (
-    typeof container.id ===
-      'string' &&
-    container.id
-  ) {
-    renderedProductGrids.set(
-      container.id,
-      {
-        container,
-        products:
-          Array.isArray(products)
-            ? [...products]
-            : []
-      }
-    );
-  }
-
-  if (
-    !Array.isArray(products) ||
-    products.length === 0
-  ) {
+  if (!Array.isArray(products) || products.length === 0) {
     showEmptyState(
       container,
       'No products found'
     );
-
     return;
   }
 
-  const selectedCurrency =
-    currency ||
-    getCurrentCurrency();
+  const html = products
+    .map((product) =>
+      renderProductCard(product, currency)
+    )
+    .join('');
 
-  const html =
-    products
-      .map(
-        (product) =>
-          renderProductCard(
-            product,
-            selectedCurrency
-          )
-      )
-      .join('');
+  container.innerHTML = html;
 
-  container.innerHTML =
-    html;
+  setupFavoriteButtons(container);
 
-  setupFavoriteButtons(
-    container
-  );
-
-  updateFavoriteButtonStates(
-    container
-  );
+  updateFavoriteButtonStates(container);
 
   console.log(
-    `✅ Rendered ${products.length} products in ${
-      container.id ||
-      'product container'
-    }`
+    `✅ Rendered ${products.length} products in ${containerId}`
   );
 }
 
@@ -1233,59 +619,39 @@ export function renderProductsGrid(
    FAVORITES
    ================================ */
 
-function setupFavoriteButtons(
-  container
-) {
+function setupFavoriteButtons(container) {
   const favoriteButtons =
     container.querySelectorAll(
       '.product-favorite'
     );
 
-  favoriteButtons.forEach(
-    (button) => {
-      /*
-       * Avoid attaching duplicate listeners
-       * if the grid is rendered more than once.
-       */
-      if (
-        button.dataset.favoriteInitialized ===
-        'true'
-      ) {
-        return;
-      }
+  favoriteButtons.forEach((button) => {
+    button.addEventListener(
+      'click',
+      async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
 
-      button.dataset.favoriteInitialized =
-        'true';
+        const productId =
+          button.dataset.productId;
 
-      button.addEventListener(
-        'click',
-        async (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-
-          const productId =
-            button.dataset.productId;
-
-          if (!productId) {
-            return;
-          }
-
-          await toggleFavorite(
-            productId,
-            button
-          );
+        if (!productId) {
+          return;
         }
-      );
-    }
-  );
+
+        await toggleFavorite(
+          productId,
+          button
+        );
+      }
+    );
+  });
 }
 
 async function updateFavoriteButtonStates(
   container
 ) {
-  if (
-    !isAuthenticated()
-  ) {
+  if (!isAuthenticated()) {
     return;
   }
 
@@ -1294,45 +660,25 @@ async function updateFavoriteButtonStates(
       await loadUserFavorites();
 
     const favoriteSet =
-      new Set(
-        favorites
-      );
+      new Set(favorites);
 
     const buttons =
       container.querySelectorAll(
         '.product-favorite'
       );
 
-    buttons.forEach(
-      (button) => {
-        const productId =
-          button.dataset.productId;
+    buttons.forEach((button) => {
+      const productId =
+        button.dataset.productId;
 
-        if (
-          favoriteSet.has(
-            productId
-          )
-        ) {
-          button.classList.add(
-            'active'
-          );
-
-          button.setAttribute(
-            'aria-label',
-            'Remove from favorites'
-          );
-        } else {
-          button.classList.remove(
-            'active'
-          );
-
-          button.setAttribute(
-            'aria-label',
-            'Add to favorites'
-          );
-        }
+      if (favoriteSet.has(productId)) {
+        button.classList.add('active');
+        button.setAttribute(
+          'aria-label',
+          'Remove from favorites'
+        );
       }
-    );
+    });
   } catch (error) {
     console.error(
       'Error updating favorite button states:',
@@ -1345,65 +691,48 @@ async function toggleFavorite(
   productId,
   button
 ) {
-  if (
-    !isAuthenticated()
-  ) {
+  if (!isAuthenticated()) {
     showToast(
       'Please sign in to add favorites',
       'warning'
     );
-
     return;
   }
 
-  if (
-    !isFirebaseInitialized()
-  ) {
+  if (!isFirebaseInitialized()) {
     showToast(
       'Service unavailable',
       'error'
     );
-
     return;
   }
 
-  const userId =
-    getUserId();
+  const userId = getUserId();
 
   if (!userId) {
     showToast(
       'Unable to identify your account',
       'error'
     );
-
     return;
   }
 
   const isActive =
-    button.classList.contains(
-      'active'
-    );
+    button.classList.contains('active');
 
   try {
-    const favoriteRef =
-      doc(
-        db,
-        'users',
-        userId,
-        'favorites',
-        productId
-      );
+    const favoriteRef = doc(
+      db,
+      'users',
+      userId,
+      'favorites',
+      productId
+    );
 
-    if (
-      isActive
-    ) {
-      await deleteDoc(
-        favoriteRef
-      );
+    if (isActive) {
+      await deleteDoc(favoriteRef);
 
-      button.classList.remove(
-        'active'
-      );
+      button.classList.remove('active');
 
       button.setAttribute(
         'aria-label',
@@ -1415,18 +744,12 @@ async function toggleFavorite(
         'success'
       );
     } else {
-      await setDoc(
-        favoriteRef,
-        {
-          productId,
-          addedAt:
-            Timestamp.now()
-        }
-      );
+      await setDoc(favoriteRef, {
+        productId,
+        addedAt: Timestamp.now()
+      });
 
-      button.classList.add(
-        'active'
-      );
+      button.classList.add('active');
 
       button.setAttribute(
         'aria-label',
@@ -1461,36 +784,28 @@ export async function loadUserFavorites() {
     return [];
   }
 
-  const userId =
-    getUserId();
+  const userId = getUserId();
 
   if (!userId) {
     return [];
   }
 
   try {
-    const favoritesCollection =
-      collection(
-        db,
-        'users',
-        userId,
-        'favorites'
-      );
+    const favoritesCollection = collection(
+      db,
+      'users',
+      userId,
+      'favorites'
+    );
 
     const querySnapshot =
-      await getDocs(
-        favoritesCollection
-      );
+      await getDocs(favoritesCollection);
 
     const favorites = [];
 
-    querySnapshot.forEach(
-      (favoriteDoc) => {
-        favorites.push(
-          favoriteDoc.id
-        );
-      }
-    );
+    querySnapshot.forEach((favoriteDoc) => {
+      favorites.push(favoriteDoc.id);
+    });
 
     console.log(
       `✅ Loaded ${favorites.length} favorites`
@@ -1509,20 +824,14 @@ export async function loadUserFavorites() {
 
 async function updateFavoritesBadge() {
   const badge =
-    document.getElementById(
-      'favoritesBadge'
-    );
+    document.getElementById('favoritesBadge');
 
   if (!badge) {
     return;
   }
 
-  if (
-    !isAuthenticated()
-  ) {
-    badge.textContent =
-      '0';
-
+  if (!isAuthenticated()) {
+    badge.textContent = '0';
     return;
   }
 
@@ -1531,17 +840,14 @@ async function updateFavoritesBadge() {
       await loadUserFavorites();
 
     badge.textContent =
-      String(
-        favorites.length
-      );
+      String(favorites.length);
   } catch (error) {
     console.error(
       'Error updating favorites badge:',
       error
     );
 
-    badge.textContent =
-      '0';
+    badge.textContent = '0';
   }
 }
 
@@ -1559,9 +865,7 @@ export async function initializeHomepageProducts() {
       'trendingProductsGrid'
     );
 
-  if (
-    trendingContainer
-  ) {
+  if (trendingContainer) {
     showLoading(
       trendingContainer,
       'Loading trending products...'
@@ -1569,13 +873,11 @@ export async function initializeHomepageProducts() {
 
     try {
       const trendingProducts =
-        await loadTrendingProducts(
-          8
-        );
+        await loadTrendingProducts(8);
 
       renderProductsGrid(
         trendingProducts,
-        trendingContainer
+        'trendingProductsGrid'
       );
     } catch (error) {
       console.error(
@@ -1595,9 +897,7 @@ export async function initializeHomepageProducts() {
       'trendingCollectionGrid'
     );
 
-  if (
-    collectionContainer
-  ) {
+  if (collectionContainer) {
     showLoading(
       collectionContainer,
       'Loading collection...'
@@ -1605,13 +905,11 @@ export async function initializeHomepageProducts() {
 
     try {
       const featuredProducts =
-        await loadFeaturedProducts(
-          8
-        );
+        await loadFeaturedProducts(8);
 
       renderProductsGrid(
         featuredProducts,
-        collectionContainer
+        'trendingCollectionGrid'
       );
     } catch (error) {
       console.error(
@@ -1633,15 +931,9 @@ export async function initializeHomepageProducts() {
   );
 }
 
-/* ================================
-   FEATURED DEAL
-   ================================ */
-
 async function initializeFeaturedDeal() {
   const dealContainer =
-    document.getElementById(
-      'dealCard'
-    );
+    document.getElementById('dealCard');
 
   if (!dealContainer) {
     return;
@@ -1654,36 +946,17 @@ async function initializeFeaturedDeal() {
 
   try {
     const dealProducts =
-      await loadDealProducts(
-        1
-      );
+      await loadDealProducts(1);
 
-    if (
-      dealProducts.length ===
-      0
-    ) {
-      currentFeaturedDeal =
-        null;
-
-      currentFeaturedDealContainer =
-        null;
-
+    if (dealProducts.length === 0) {
       showEmptyState(
         dealContainer,
         'No active deals at the moment'
       );
-
       return;
     }
 
-    const deal =
-      dealProducts[0];
-
-    currentFeaturedDeal =
-      deal;
-
-    currentFeaturedDealContainer =
-      dealContainer;
+    const deal = dealProducts[0];
 
     renderFeaturedDeal(
       deal,
@@ -1706,13 +979,6 @@ function renderFeaturedDeal(
   product,
   container
 ) {
-  if (
-    !product ||
-    !container
-  ) {
-    return;
-  }
-
   const currency =
     getCurrentCurrency();
 
@@ -1756,24 +1022,17 @@ function renderFeaturedDeal(
   const imageUrl =
     product.thumbnail ||
     (
-      Array.isArray(
-        product.images
-      )
+      Array.isArray(product.images)
         ? product.images[0]
         : ''
     ) ||
     '/assets/images/placeholder.jpg';
 
-  let expirationDate =
-    null;
+  let expirationDate = null;
 
-  if (
-    product.dealExpiration
-  ) {
+  if (product.dealExpiration) {
     if (
-      typeof product
-        .dealExpiration
-        .toDate ===
+      typeof product.dealExpiration.toDate ===
       'function'
     ) {
       expirationDate =
@@ -1790,16 +1049,13 @@ function renderFeaturedDeal(
         expirationDate.getTime()
       )
     ) {
-      expirationDate =
-        null;
+      expirationDate = null;
     }
   }
 
   const countdownHtml =
     expirationDate
-      ? renderCountdown(
-          expirationDate
-        )
+      ? renderCountdown(expirationDate)
       : '';
 
   const title =
@@ -1810,17 +1066,13 @@ function renderFeaturedDeal(
 
   const safeImageUrl =
     escapeHtml(
-      String(
-        imageUrl
-      )
+      String(imageUrl)
     );
 
   const affiliateUrl =
     product.affiliateUrl
       ? escapeHtml(
-          String(
-            product.affiliateUrl
-          )
+          String(product.affiliateUrl)
         )
       : '';
 
@@ -1829,25 +1081,13 @@ function renderFeaturedDeal(
       0,
       Math.min(
         100,
-        Number(
-          product.discount || 0
-        )
+        Number(product.discount || 0)
       )
     );
 
-  /*
-   * Stop an older countdown timer before
-   * replacing the container's HTML.
-   */
-  stopCountdown(
-    container
-  );
-
   container.innerHTML = `
     <div class="deal-content">
-      <h3>
-        Limited Time Deal!
-      </h3>
+      <h3>Limited Time Deal!</h3>
 
       <p class="deal-title">
         ${title}
@@ -1890,15 +1130,11 @@ function renderFeaturedDeal(
         src="${safeImageUrl}"
         alt="${title}"
         loading="lazy"
-        decoding="async"
-        onerror="this.onerror=null;this.src='/assets/images/placeholder.jpg';"
       >
     </div>
   `;
 
-  if (
-    expirationDate
-  ) {
+  if (expirationDate) {
     startCountdown(
       expirationDate,
       container
@@ -1906,24 +1142,16 @@ function renderFeaturedDeal(
   }
 }
 
-/* ================================
-   DEAL COUNTDOWN
-   ================================ */
-
 function renderCountdown(
   expirationDate
 ) {
   return `
-    <div
-      class="deal-timer"
-      id="dealTimer"
-    >
+    <div class="deal-timer" id="dealTimer">
       <div class="timer-unit">
         <span
           class="timer-value"
           data-unit="days"
         >00</span>
-
         <span class="timer-label">
           Days
         </span>
@@ -1934,7 +1162,6 @@ function renderCountdown(
           class="timer-value"
           data-unit="hours"
         >00</span>
-
         <span class="timer-label">
           Hours
         </span>
@@ -1945,7 +1172,6 @@ function renderCountdown(
           class="timer-value"
           data-unit="minutes"
         >00</span>
-
         <span class="timer-label">
           Minutes
         </span>
@@ -1956,7 +1182,6 @@ function renderCountdown(
           class="timer-value"
           data-unit="seconds"
         >00</span>
-
         <span class="timer-label">
           Seconds
         </span>
@@ -1969,24 +1194,15 @@ function startCountdown(
   expirationDate,
   container
 ) {
-  stopCountdown(
-    container
-  );
-
-  let timerId =
-    null;
+  let timerId = null;
 
   function updateCountdown() {
-    const now =
-      new Date();
-
+    const now = new Date();
     const diff =
       expirationDate.getTime() -
       now.getTime();
 
-    if (
-      diff <= 0
-    ) {
+    if (diff <= 0) {
       const timer =
         container.querySelector(
           '#dealTimer'
@@ -1997,20 +1213,9 @@ function startCountdown(
           '<p style="color: var(--color-error);">Deal Expired</p>';
       }
 
-      if (
-        timerId
-      ) {
-        clearTimeout(
-          timerId
-        );
-
-        timerId =
-          null;
+      if (timerId) {
+        clearTimeout(timerId);
       }
-
-      countdownTimers.delete(
-        container
-      );
 
       return;
     }
@@ -2018,58 +1223,28 @@ function startCountdown(
     const days =
       Math.floor(
         diff /
-        (
-          1000 *
-          60 *
-          60 *
-          24
-        )
+        (1000 * 60 * 60 * 24)
       );
 
     const hours =
       Math.floor(
-        (
-          diff %
-          (
-            1000 *
-            60 *
-            60 *
-            24
-          )
-        ) /
-        (
-          1000 *
-          60 *
-          60
-        )
+        (diff %
+          (1000 * 60 * 60 * 24)) /
+          (1000 * 60 * 60)
       );
 
     const minutes =
       Math.floor(
-        (
-          diff %
-          (
-            1000 *
-            60 *
-            60
-          )
-        ) /
-        (
-          1000 *
-          60
-        )
+        (diff %
+          (1000 * 60 * 60)) /
+          (1000 * 60)
       );
 
     const seconds =
       Math.floor(
-        (
-          diff %
-          (
-            1000 *
-            60
-          )
-        ) /
-        1000
+        (diff %
+          (1000 * 60)) /
+          1000
       );
 
     const daysEl =
@@ -2094,184 +1269,54 @@ function startCountdown(
 
     if (daysEl) {
       daysEl.textContent =
-        String(
-          days
-        ).padStart(
-          2,
-          '0'
-        );
+        String(days).padStart(2, '0');
     }
 
     if (hoursEl) {
       hoursEl.textContent =
-        String(
-          hours
-        ).padStart(
-          2,
-          '0'
-        );
+        String(hours).padStart(2, '0');
     }
 
     if (minutesEl) {
       minutesEl.textContent =
-        String(
-          minutes
-        ).padStart(
-          2,
-          '0'
-        );
+        String(minutes).padStart(2, '0');
     }
 
     if (secondsEl) {
       secondsEl.textContent =
-        String(
-          seconds
-        ).padStart(
-          2,
-          '0'
-        );
+        String(seconds).padStart(2, '0');
     }
 
-    timerId =
-      setTimeout(
-        updateCountdown,
-        1000
-      );
-
-    countdownTimers.set(
-      container,
-      timerId
+    timerId = setTimeout(
+      updateCountdown,
+      1000
     );
   }
 
   updateCountdown();
 }
 
-function stopCountdown(
-  container
-) {
-  if (!container) {
-    return;
-  }
-
-  const timerId =
-    countdownTimers.get(
-      container
-    );
-
-  if (
-    timerId
-  ) {
-    clearTimeout(
-      timerId
-    );
-  }
-
-  countdownTimers.delete(
-    container
-  );
-}
-
 /* ================================
-   CURRENCY CHANGE HANDLING
+   CURRENCY CHANGE LISTENER
    ================================ */
 
 document.addEventListener(
   'currencyChanged',
   () => {
     console.log(
-      '💱 Currency changed, updating visible product prices...'
+      '💱 Currency changed, updating product prices...'
     );
 
     /*
-     * Re-render every product grid that
-     * was previously rendered.
+     * Homepage modules can be refreshed by app.js
+     * or the relevant page module when needed.
      *
-     * No Firestore request is required.
+     * No automatic homepage initialization is
+     * performed here to avoid duplicate Firestore
+     * requests and duplicate rendering.
      */
-    renderedProductGrids.forEach(
-      (entry) => {
-        if (
-          !entry ||
-          !entry.container ||
-          !document.body.contains(
-            entry.container
-          )
-        ) {
-          return;
-        }
-
-        renderProductsGrid(
-          entry.products,
-          entry.container,
-          getCurrentCurrency()
-        );
-      }
-    );
-
-    /*
-     * Re-render the currently visible
-     * featured deal using the new currency.
-     *
-     * The countdown is restarted safely.
-     */
-    if (
-      currentFeaturedDeal &&
-      currentFeaturedDealContainer &&
-      document.body.contains(
-        currentFeaturedDealContainer
-      )
-    ) {
-      renderFeaturedDeal(
-        currentFeaturedDeal,
-        currentFeaturedDealContainer
-      );
-    }
   }
 );
-
-/* ================================
-   CLEANUP
-   ================================ */
-
-/**
- * Removes references to product grids
- * that are no longer attached to the page.
- */
-export function cleanupProductGridCache() {
-  renderedProductGrids.forEach(
-    (entry, key) => {
-      if (
-        !entry ||
-        !entry.container ||
-        !document.body.contains(
-          entry.container
-        )
-      ) {
-        renderedProductGrids.delete(
-          key
-        );
-      }
-    }
-  );
-
-  if (
-    currentFeaturedDealContainer &&
-    !document.body.contains(
-      currentFeaturedDealContainer
-    )
-  ) {
-    stopCountdown(
-      currentFeaturedDealContainer
-    );
-
-    currentFeaturedDeal =
-      null;
-
-    currentFeaturedDealContainer =
-      null;
-  }
-}
 
 /* ================================
    AUTO-INITIALIZATION
@@ -2279,19 +1324,15 @@ export function cleanupProductGridCache() {
 
 /*
  * IMPORTANT:
+ * Homepage initialization is intentionally NOT
+ * performed here.
  *
- * Products are intentionally NOT initialized
- * automatically here.
+ * app.js is now the single orchestrator for
+ * homepage initialization and dynamically loads
+ * this module when needed.
  *
- * app.js is the single page orchestrator.
- *
- * This prevents:
- * - duplicate Firestore requests
- * - duplicate rendering
- * - duplicate event handlers
- * - homepage initialization races
+ * This prevents duplicate initialization because
+ * categories.js also depends on this module.
  */
 
-console.log(
-  '📦 Products module loaded'
-);
+console.log('📦 Products module loaded');
