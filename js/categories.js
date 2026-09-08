@@ -527,7 +527,7 @@ function renderCategoryIcon(
           d="M3 18v-6a9 9 0 0 1 18 0v6"
         />
         <path
-          d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2H3z"
+          d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"
         />
       </svg>
     `,
@@ -600,7 +600,7 @@ function renderCategoryIcon(
         aria-hidden="true"
       >
         <path
-          d="M5 11l1.5-4.5h11L19 11m-14 0v7a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-7"
+          d="M5 11l1.5-4.5h11L19 11m-14 0v7a1 1 0 0 0 1 1h1a2 2 0 0 0 2-2v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-7"
         />
         <circle
           cx="8"
@@ -826,6 +826,8 @@ export async function initializeCategoriesPage() {
     );
     return;
   }
+
+  document.getElementById('categoryProductsGrid').style.display = 'none';
 
   showLoading(
     categoriesContainer,
