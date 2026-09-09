@@ -318,12 +318,19 @@ export function renderCategoryCard(
     category.name ||
     'Untitled Category';
 
+  const categoriesPagePath =
+    window.location.pathname.endsWith(
+      '/categories.html'
+    )
+      ? 'categories.html'
+      : 'pages/categories.html';
+
   const categoryLink =
     category.slug
-      ? `categories.html?category=${encodeURIComponent(
+      ? `${categoriesPagePath}?category=${encodeURIComponent(
           category.slug
         )}`
-      : `categories.html?id=${encodeURIComponent(
+      : `${categoriesPagePath}?id=${encodeURIComponent(
           categoryId
         )}`;
 
